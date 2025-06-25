@@ -1,52 +1,35 @@
 import React, { useState } from 'react';
-import TicketsPage from './pages/TicketsPage';
-import LoginForm from './components/LoginForm';
-import RegisterForm from './components/RegisterForm';
-import Sidebar from './components/Sidebar';
-import './App.css';
+import { Routes, Route, useLocation } from 'react-router-dom';
+import Navbar from './components/Navbar.jsx';
+import Sidebar from './components/Sidebar.jsx';
+import Home from './components/Home.jsx';
+import Login from './components/Login.jsx';
+import ResetPassword from './components/ResetPassword.jsx';
+import EmailVerify from './components/EmailVerify.jsx';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   const [token, setToken] = useState('');
-  // const [showRegister, setShowRegister] = useState(false);
+  const location = useLocation();
 
-  // const handleLoginSuccess = (token) => {
-  //   setToken(token);
-  //   setShowRegister(false);
-  // };
-
-  // const handleLogout = () => {
-  //   setToken('');
-  // };
-
-  // if (!token) {
-  //   return (
-  //     <div style={{ maxWidth: 400, margin: '50px auto' }}>
-  //       {showRegister ? (
-  //         <>
-  //           <RegisterForm onSuccess={() => setShowRegister(false)} />
-  //           <p>
-  //             Already have an account?{' '}
-  //             <button onClick={() => setShowRegister(false)}>Login</button>
-  //           </p>
-  //         </>
-  //       ) : (
-  //         <>
-  //           <LoginForm onSuccess={handleLoginSuccess} />
-  //           <p>
-  //             Don't have an account?{' '}
-  //             <button onClick={() => setShowRegister(true)}>Register</button>
-  //           </p>
-  //         </>
-  //       )}
-  //     </div>
-  //   );
-  // }
+  // check if it's an auth route
+  const isAuthPage = ['/login', '/reset-password', '/email-verify'].includes(location.pathname);
 
   return (
-    <div style={{ display: 'flex' }}>
-      <Sidebar />
-      <div style={{ flex: 1 }}>
-        <TicketsPage token={token} />
+    <div>
+      {!isAuthPage && <Navbar />}
+      <div style={{ display: 'flex' }}>
+        {!isAuthPage && <Sidebar />}
+        <div style={{ flex: 1 }}>
+          <ToastContainer />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/email-verify" element={<EmailVerify />} />
+          </Routes>
+        </div>
       </div>
     </div>
   );
