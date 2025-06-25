@@ -1,16 +1,15 @@
 import express from "express";
 import cors from "cors";
-import 'dotenv/config';
+//import 'dotenv/config';
 import cookieParser from "cookie-parser";
 
 import connectDB from "./config/mongodb.js";
 import authRouter from './routes/authRoutes.js'
-//import authMiddleware from "./middleware/authMiddleware.js";
+import authMiddleware from "./middleware/authMiddleware.js";
 import ticketRoutes from './routes/ticketRoutes.js';
 import dotenv from 'dotenv';
 import userRouter from "./routes/userRoutes.js";
 dotenv.config();
-
 
 
 const app = express();
