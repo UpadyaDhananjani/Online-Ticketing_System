@@ -1,8 +1,14 @@
 import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import TicketsPage from './pages/TicketsPage';
 import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
 import Sidebar from './components/Sidebar';
+import TicketList from './components/TicketList';
+import CreateTicket from './components/CreateTicket';
+import { Navigate } from 'react-router-dom';
+import Ticket from './pages/Ticket';
+import AdminDashboard from './admin/AdminDashboard';
 import './App.css';
 
 function App() {
@@ -43,12 +49,23 @@ function App() {
   // }
 
   return (
-    <div style={{ display: 'flex' }}>
-      <Sidebar />
-      <div style={{ flex: 1 }}>
-        <TicketsPage token={token} />
+    <Router>
+      <div className="d-flex" style={{ minHeight: '100vh', background: '#F0F8FF' }}>
+        <Sidebar />
+        <div className="flex-grow-1" style={{ padding: '32px 0' }}>
+          <Routes>
+            <Route path ="/" element={<Navigate to="/tickets" />} />
+            <Route path="/tickets" element={<TicketList />} />
+            <Route path="/create-ticket" element={<CreateTicket />} />
+            <Route path="/login" element={<LoginForm onSuccess={setToken} />} />
+            <Route path="/register" element={<RegisterForm onSuccess={setToken} />} />
+            <Route path="/tickets/:id" element={<Ticket />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            {/* Add other routes here */}
+          </Routes>
+        </div>
       </div>
-    </div>
+    </Router>
   );
 }
 
