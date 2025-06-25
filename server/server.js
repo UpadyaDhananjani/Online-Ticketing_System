@@ -1,15 +1,21 @@
 import express from "express";
 import cors from "cors";
-//import 'dotenv/config';
-import cookieParser from "cookie-parser";
 
+//import 'dotenv/config';
+import dotenv from 'dotenv';
+dotenv.config();
+import cookieParser from "cookie-parser";
 import connectDB from "./config/mongodb.js";
+
 import authRouter from './routes/authRoutes.js'
 import authMiddleware from "./middleware/authMiddleware.js";
 import ticketRoutes from './routes/ticketRoutes.js';
 import dotenv from 'dotenv';
 import userRouter from "./routes/userRoutes.js";
 dotenv.config();
+
+//import authRouter from './routes/authRoutes.js'
+import ticketRoutes from './routes/ticketRoutes.js';
 
 
 const app = express();
@@ -24,13 +30,19 @@ app.use(cors({
 }));
 
 
+
 // API Endpoints
 app.get('/', (req, res)=> res.send("API working "));
 app.use('/api/auth', authRouter)
 app.use('/api/user', userRouter)
 
-app.listen(port, ()=> console.log(`Server started on PORT:${port}`));
 
+// API Endpoints
+app.get('/', (req, res)=> res.send("API working "));
+//app.use('/api/auth', authRouter);
 app.use('/api/tickets', ticketRoutes);
+
+
+app.listen(port, ()=> console.log(`Server started on PORT:${port}`));
 
 
