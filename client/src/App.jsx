@@ -1,72 +1,63 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import Navbar from './components/Navbar.jsx';
+import Sidebar from './components/Sidebar.jsx';
+import Home from './components/Home.jsx';
+import Login from './components/Login.jsx';
+import ResetPassword from './components/ResetPassword.jsx';
+import EmailVerify from './components/EmailVerify.jsx';
 import TicketsPage from './pages/TicketsPage';
-import LoginForm from './components/LoginForm';
-import RegisterForm from './components/RegisterForm';
-import Sidebar from './components/Sidebar';
 import TicketList from './components/TicketList';
 import CreateTicket from './components/CreateTicket';
-import { Navigate } from 'react-router-dom';
 import Ticket from './pages/Ticket';
 import AdminDashboard from './admin/AdminDashboard';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import './App.css';
 
-function App() {
-  const [token, setToken] = useState('');
-  // const [showRegister, setShowRegister] = useState(false);
+// Helper component to use useLocation inside Router
+function App({ token, setToken }) {
+  const location = useLocation();
 
-  // const handleLoginSuccess = (token) => {
-  //   setToken(token);
-  //   setShowRegister(false);
-  // };
-
-  // const handleLogout = () => {
-  //   setToken('');
-  // };
-
-  // if (!token) {
-  //   return (
-  //     <div style={{ maxWidth: 400, margin: '50px auto' }}>
-  //       {showRegister ? (
-  //         <>
-  //           <RegisterForm onSuccess={() => setShowRegister(false)} />
-  //           <p>
-  //             Already have an account?{' '}
-  //             <button onClick={() => setShowRegister(false)}>Login</button>
-  //           </p>
-  //         </>
-  //       ) : (
-  //         <>
-  //           <LoginForm onSuccess={handleLoginSuccess} />
-  //           <p>
-  //             Don't have an account?{' '}
-  //             <button onClick={() => setShowRegister(true)}>Register</button>
-  //           </p>
-  //         </>
-  //       )}
-  //     </div>
-  //   );
-  // }
+  // check if it's an auth route
+  const isAuthPage = [
+    '/login',
+    '/reset-password',
+    '/email-verify',
+    '/register'
+  ].includes(location.pathname);
 
   return (
-    <Router>
+    <div>
+      {!isAuthPage && <Navbar />}
       <div className="d-flex" style={{ minHeight: '100vh', background: '#F0F8FF' }}>
-        <Sidebar />
-        <div className="flex-grow-1" style={{ padding: '32px 0' }}>
+        {!isAuthPage && <Sidebar />}
+        <div className="flex-grow-1" style={{ flex: 1, padding: '32px 0' }}>
+          <ToastContainer />
           <Routes>
-            <Route path ="/" element={<Navigate to="/tickets" />} />
+            {/* Home and Auth */}
+            <Route path="/" element={<Navigate to="/tickets" />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/login" element={<Login onSuccess={setToken} />} />
+            
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/email-verify" element={<EmailVerify />} />
+
+            {/* Ticketing System */}
+            <Route path ="/tickets-page" element={<TicketsPage token={token} />} />
             <Route path="/tickets" element={<TicketList />} />
             <Route path="/create-ticket" element={<CreateTicket />} />
-            <Route path="/login" element={<LoginForm onSuccess={setToken} />} />
-            <Route path="/register" element={<RegisterForm onSuccess={setToken} />} />
             <Route path="/tickets/:id" element={<Ticket />} />
             <Route path="/admin" element={<AdminDashboard />} />
-            {/* Add other routes here */}
+
+            {/* Add any additional routes here */}
           </Routes>
         </div>
       </div>
-    </Router>
+    </div>
   );
 }
+
+
 
 export default App;
