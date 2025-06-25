@@ -1,3 +1,4 @@
+
 import express from 'express';
 
 
@@ -20,3 +21,16 @@ authRouter.post('/reset-password', resetPassword);
 
 
 export default authRouter;
+
+import express from 'express'
+import { register } from '../controllers/authController.js';
+import e from 'express';
+
+const authRouter = express.Router();
+
+// authRouter.post('/register',register);
+// authRouter.post('/login',login);
+// authRouter.post('/logout',logout);
+
+// export default authRouter;
+
