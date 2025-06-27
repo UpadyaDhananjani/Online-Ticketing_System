@@ -1,9 +1,12 @@
 import React, { useContext } from 'react';
 import { assets } from '../assets/assets';
 import { AppContent } from '../context/AppContext';
+import { useNavigate } from 'react-router-dom';
+
 
 const Header = () => {
   const { userData } = useContext(AppContent);
+  const navigate = useNavigate();
 
   
   return (

@@ -7,9 +7,9 @@ import { toast } from "react-toastify";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { backendUrl, setIsLoggedin,setUserData, getUserData } = useContext(AppContent);
+  const { backendUrl, setIsLoggedin, setUserData, getUserData } = useContext(AppContent);
 
-  const [state, setState] = useState("Sign Up"); // 'Sign Up' or 'Login'
+  const [state, setState] = useState("Sign Up");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,11 +27,12 @@ const Login = () => {
         });
 
         if (data.success) {
+          // This line now explicitly says "Sign up successful!"
+          toast.success(data.message || "Sign up successful!"); 
           setIsLoggedin(true);
           await getUserData();
           setUserData(data.user);
           navigate("/");
-
         } else {
           toast.error(data.message);
         }
@@ -42,6 +43,7 @@ const Login = () => {
         });
 
         if (data.success) {
+          toast.success(data.message || "Login successful!");
           setIsLoggedin(true);
           await getUserData();
           navigate("/");
@@ -50,8 +52,8 @@ const Login = () => {
         }
       }
     } catch (error) {
-     
-       toast.error(message);
+      const errorMsg = error.response?.data?.message || error.message || "Something went wrong";
+      toast.error(errorMsg);
     }
   };
 
