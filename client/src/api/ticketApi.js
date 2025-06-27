@@ -21,3 +21,8 @@ export const sendTicketReply = (ticketId, data, token) =>
   axios.post(`/api/admin/tickets/${ticketId}/reply`, data, {
     headers: { Authorization: `Bearer ${token}` }
   });
+
+export const resolveTicket = (ticketId, token) =>
+  axios.patch(`/api/admin/tickets/${ticketId}/resolve`, null, {
+    headers: { Authorization: `Bearer ${token}` }
+  });

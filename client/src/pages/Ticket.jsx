@@ -49,16 +49,32 @@ const Ticket = () => {
       </Row>
       <Row className="mt-4">
         <Col>
-          
-        
           {/* {ticket.conversations && ( */}
-            <MessageHistory 
+          <MessageHistory
             msg={ticket.conversations}
-             description={ticket.description}
-              image={ticket.image}
-            />
+            description={ticket.description}
+            image={ticket.image}
+          />
+          {/* )} */}
 
-          
+          {ticket.messages && ticket.messages.length > 0 ? (
+            ticket.messages.map((msg, idx) => (
+              <div key={idx} className="ticket-message">
+                <div dangerouslySetInnerHTML={{ __html: msg.content }} />
+                <div>
+                  <small>
+                    {msg.authorRole === "admin"
+                      ? "Admin"
+                      : "You"}{" "}
+                    -{" "}
+                    {new Date(msg.date).toLocaleString()}
+                  </small>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div>No messages yet.</div>
+          )}
         </Col>
       </Row>
     </Container>
