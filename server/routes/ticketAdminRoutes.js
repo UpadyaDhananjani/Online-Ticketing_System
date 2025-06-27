@@ -6,6 +6,7 @@ import {
 // import authMiddleware from '../middleware/authMiddleware.js';
 // import adminMiddleware from '../middleware/adminMiddleware.js';
 import upload from '../middleware/uploadMiddleware.js';
+
 import Ticket from '../models/ticketModel.js';
 
 const router = express.Router();
@@ -23,6 +24,7 @@ router.post(
   addAdminReply
 );
 
+
 router.patch('/:id/resolve', async (req, res) => {
   try {
     const ticket = await Ticket.findByIdAndUpdate(
@@ -36,5 +38,6 @@ router.patch('/:id/resolve', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 export default router;

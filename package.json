@@ -104,6 +104,9 @@
     "whatwg-url": "^14.2.0",
     "wrappy": "^1.0.2"
   },
+  "devDependencies": {},
+
+
   "scripts": {
     "start": "node server.js",
     "server": "nodemon server.js"

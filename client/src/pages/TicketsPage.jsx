@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import TicketList from '../components/TicketList';
 import CreateTicket from '../components/CreateTicket';
 import EditTicket from '../components/EditTicket';
+import Ticket from './Ticket';
 import { closeTicket } from '../api/ticketApi';
 import { ClassNames } from '@emotion/react';
 
 function TicketsPage({ token }) {
   const [editingTicket, setEditingTicket] = useState(null);
   const [refresh, setRefresh] = useState(false);
+  const [showReply, setShowReply] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState(null);
 
   const handleEdit = ticket => setEditingTicket(ticket);
   const handleClose = async id => {
@@ -44,6 +47,19 @@ function TicketsPage({ token }) {
           onReopen={handleReopen}
         />
       )}
+      {showReply && selectedTicket && (
+        <TicketReply
+          token={token}
+          ticket={selectedTicket}
+          onBack={() => {
+            setShowReply(false);
+            setRefresh(r => !r); // This will refresh the ticket list
+          }}
+          onStatusChange={newStatus => {
+            // Optionally update local ticket state if needed
+          }}
+        />
+      )}
       <TicketList className="mt-4"
         style={{ maxWidth: 900, margin: '30px auto' , background: 'black' }}
         key={refresh} // force re-mount on refresh
@@ -51,6 +67,10 @@ function TicketsPage({ token }) {
         onEdit={handleEdit}
         onClose={handleClose}
         onReopen={handleReopen}
+        onReply={(ticket) => {
+          setSelectedTicket(ticket);
+          setShowReply(true);
+        }}
       />
     </div>
   );
