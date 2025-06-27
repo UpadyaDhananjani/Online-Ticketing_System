@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 import express from 'express';
 import {
   getAllTickets,
@@ -41,3 +42,16 @@ router.patch('/:id/resolve', async (req, res) => {
 
 
 export default router;
+=======
+import express from 'express';
+import { getAllTickets, addAdminReply } from '../controllers/ticketAdminController.js';
+import upload from '../middleware/uploadMiddleware.js';
+
+const router = express.Router();
+
+// Disabled auth for development
+router.get('/', getAllTickets);
+router.post('/:id/reply', upload.array('attachments', 5), addAdminReply);
+
+export default router;
+>>>>>>> Stashed changes
