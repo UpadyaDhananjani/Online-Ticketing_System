@@ -2,11 +2,7 @@ import userModel from "../models/userModel.js";
 
 export const getUserData = async (req, res) => {
   try {
-    const { userId } = req.body;
-
-    if (!userId) {
-      return res.status(400).json({ success: false, message: "User ID is required" });
-    }
+    const userId = req.user._id; // ✅ Extracted from verified token
 
     const user = await userModel.findById(userId).select('-password -verifyOtp -resetOtp');
 
