@@ -6,6 +6,7 @@ import {
 // import authMiddleware from '../middleware/authMiddleware.js';
 // import adminMiddleware from '../middleware/adminMiddleware.js';
 import upload from '../middleware/uploadMiddleware.js';
+import Ticket from '../models/ticketModel.js';
 
 const router = express.Router();
 
@@ -21,5 +22,19 @@ router.post(
   upload.array('attachments', 5), // up to 5 files
   addAdminReply
 );
+
+router.patch('/:id/resolve', async (req, res) => {
+  try {
+    const ticket = await Ticket.findByIdAndUpdate(
+      req.params.id,
+      { status: 'resolved', updatedAt: Date.now() },
+      { new: true }
+    );
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+    res.json(ticket);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 export default router;

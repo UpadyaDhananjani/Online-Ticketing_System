@@ -23,7 +23,8 @@ const ticketSchema = new mongoose.Schema({
   status: { type: String, enum: ['open', 'closed', 'reopened'], default: 'open' },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
-  image: { type: String, required: false } // Optional image field
+  image: { type: String, required: false }, // Optional image field
+   messages: [messageSchema] // <-- ADD THIS LINE
 });
 
 const Ticket = mongoose.model('Ticket', ticketSchema);
