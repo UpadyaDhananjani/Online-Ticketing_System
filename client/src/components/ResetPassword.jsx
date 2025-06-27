@@ -1,3 +1,4 @@
+// ✅ ResetPassword.jsx (Frontend)
 import React, { useContext, useRef, useState } from 'react';
 import { assets } from '../assets/assets';
 import { useNavigate } from 'react-router-dom';
@@ -19,7 +20,6 @@ const ResetPassword = () => {
 
   const inputRefs = useRef([]);
 
-  // Step 1: Submit Email
   const onSubmitEmail = async (e) => {
     e.preventDefault();
     try {
@@ -35,7 +35,6 @@ const ResetPassword = () => {
     }
   };
 
-  // Step 2: Submit OTP
   const onSubmitOTP = (e) => {
     e.preventDefault();
     const otpArray = inputRefs.current.map((input) => input.value);
@@ -48,7 +47,6 @@ const ResetPassword = () => {
     toast.success('OTP submitted successfully!');
   };
 
-  // Step 3: Submit New Password
   const onSubmitNewPassword = async (e) => {
     e.preventDefault();
     try {
@@ -69,7 +67,6 @@ const ResetPassword = () => {
     }
   };
 
-  // OTP input handling
   const handleInput = (e, index) => {
     const value = e.target.value.replace(/\D/, '');
     const updatedOtp = [...otp];
@@ -110,7 +107,6 @@ const ResetPassword = () => {
       />
 
       <div className="flex gap-6 bg-transparent p-4 sm:p-10">
-        {/* Step 1: Email Input */}
         {!isEmailSent && (
           <form
             onSubmit={onSubmitEmail}
@@ -138,7 +134,6 @@ const ResetPassword = () => {
           </form>
         )}
 
-        {/* Step 2: OTP Input */}
         {isEmailSent && !isOtpSubmitted && (
           <form
             onSubmit={onSubmitOTP}
@@ -173,7 +168,6 @@ const ResetPassword = () => {
           </form>
         )}
 
-        {/* Step 3: New Password */}
         {isEmailSent && isOtpSubmitted && (
           <form
             onSubmit={onSubmitNewPassword}
