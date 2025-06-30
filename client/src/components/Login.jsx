@@ -20,7 +20,7 @@ const Login = () => {
 
     try {
       if (state === "Sign Up") {
-        const { data } = await axios.post(backendUrl + "/api/auth/register", {
+        const { data } = await axios.post(`${backendUrl}/api/auth/register`, {
           name,
           email,
           password,
@@ -37,7 +37,7 @@ const Login = () => {
           toast.error(data.message);
         }
       } else {
-        const { data } = await axios.post(backendUrl + "/api/auth/login", {
+        const { data } = await axios.post(`${backendUrl}/api/auth/login`, {
           email,
           password,
         });
@@ -71,9 +71,7 @@ const Login = () => {
           {state === "Sign Up" ? "Create account" : "Login to your account!"}
         </h2>
         <p className="text-center text-sm mb-6">
-          {state === "Sign Up"
-            ? "Create your account."
-            : "Login to your account."}
+          {state === "Sign Up" ? "Create your account." : "Login to your account."}
         </p>
 
         <form onSubmit={onsubmitHandler}>

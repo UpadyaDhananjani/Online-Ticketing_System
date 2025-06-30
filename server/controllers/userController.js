@@ -4,6 +4,9 @@ export const getUserData = async (req, res) => {
   try {
     const userId = req.user._id; // ✅ Extracted from verified token
 
+        const user = await userModel.findById(userId).select('-password -verifyOtp -resetOtp');
+
+        
     const user = await userModel.findById(userId).select('-password -verifyOtp -resetOtp');
 
     if (!user) {

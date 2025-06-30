@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getTickets } from '../api/ticketApi';
+import { Link } from 'react-router-dom';
 
 function TicketList({ token, onEdit, onClose, onReopen }) {
   const [tickets, setTickets] = useState([]);
@@ -9,8 +10,6 @@ function TicketList({ token, onEdit, onClose, onReopen }) {
       .then(res => setTickets(res.data))
       .catch(err => alert(err.response?.data?.error || err.message));
   }, [token]);
-
- 
 
   return (
     <div style={{ maxWidth: 900, margin: '30px auto' }}>
@@ -41,7 +40,13 @@ function TicketList({ token, onEdit, onClose, onReopen }) {
             </tr>
           ) : (
             tickets.map(ticket => (
-              <tr key={ticket._id} style={{ borderBottom: '1px solid #eee' }}>
+              <tr
+                key={ticket._id}
+                style={{
+                  borderBottom: '1px solid #eee',
+                  background: ticket.status === 'open' ? '#e6ffe6' : undefined // Light green for open
+                }}
+              >
                 <td style={tdStyle}>{ticket.subject}</td>
                 <td style={tdStyle}>
                   {ticket.type
@@ -53,12 +58,11 @@ function TicketList({ token, onEdit, onClose, onReopen }) {
                 </td>
                 <td style={tdStyle}>{ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : '-'}</td>
                 <td style={tdStyle}>
-                  <button
-                    style={actionBtn}
-                    onClick={() => onEdit(ticket)}
-                  >
-                    Edit
-                  </button>
+                  <Link to={`/tickets/${ticket._id}`}>
+                    <button style={{ ...actionBtn, background: '#6c63ff', marginRight: 8 }}>
+                      View
+                    </button>
+                  </Link>
                   {ticket.status === 'open' && (
                     <button
                       style={{ ...actionBtn, background: '#c0392b', color: '#fff', marginLeft: 8 }}

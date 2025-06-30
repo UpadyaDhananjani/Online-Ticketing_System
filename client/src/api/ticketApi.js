@@ -13,3 +13,11 @@ export const updateTicket = (id, data, token) =>
 
 export const closeTicket = (id, token) =>
   axios.patch(`${API_URL}/${id}/close`, {}, { headers: { Authorization: `Bearer ${token}` } });
+
+export const getAllTickets = (token) =>
+  axios.get('/api/admin/tickets', { headers: { Authorization: `Bearer ${token}` } });
+
+export const sendTicketReply = (ticketId, data, token) =>
+  axios.post(`/api/admin/tickets/${ticketId}/reply`, data, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
