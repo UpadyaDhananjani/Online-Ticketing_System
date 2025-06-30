@@ -1,17 +1,20 @@
 import React, { useContext } from 'react';
 import { assets } from '../assets/assets';
 import { AppContent } from '../context/AppContext';
+import { useNavigate } from 'react-router-dom';
+
 
 const Header = () => {
   const { userData } = useContext(AppContent);
+  const navigate = useNavigate();
 
-  
   return (
     <div className='flex flex-col items-center mt-40 px-4 text-center text-gray-800'>
       <img src={assets.header_img} alt="header" className='w-36 h-36 rounded-full mb-6' />
 
       <h1 className='flex items-center gap-2 text-xl sm:text-3xl font-medium mb-2'>
-       Hi {userData ? userData.name : 'Developer'}!  
+        {/* FIX: Corrected conditional rendering syntax */}
+        Hi {userData?.name || 'Developer'}!
 
         <img className='w-8 aspect-square' src={assets.hand_wave} alt="wave" />
       </h1>
