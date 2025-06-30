@@ -1,12 +1,8 @@
 import React, { useState } from 'react';
-import TicketList from '../components/TicketList';
 import CreateTicket from '../components/CreateTicket';
-import EditTicket from '../components/EditTicket';
-import Ticket from './Ticket';
-import { closeTicket } from '../api/ticketApi';
-import { ClassNames } from '@emotion/react';
+import TicketList from '../components/TicketList';
 
-function TicketsPage({ token }) {
+function TicketsPage({ token, filter }) {
   const [editingTicket, setEditingTicket] = useState(null);
   const [refresh, setRefresh] = useState(false);
   const [showReply, setShowReply] = useState(false);
@@ -35,8 +31,10 @@ function TicketsPage({ token }) {
 
   return (
     <div>
-      
-      <CreateTicket token={token} onCreated={() => setRefresh(r => !r)} />
+      {/* Only show CreateTicket if not filtering */}
+      {!filter && (
+        <CreateTicket token={token} onCreated={() => setRefresh(r => !r)} />
+      )}
       {editingTicket && (
         <EditTicket
           token={token}
@@ -60,10 +58,12 @@ function TicketsPage({ token }) {
           }}
         />
       )}
-      <TicketList className="mt-4"
-        style={{ maxWidth: 900, margin: '30px auto' , background: 'black' }}
-        key={refresh} // force re-mount on refresh
+      <TicketList
+        className="mt-4"
+        style={{ maxWidth: 900, margin: '30px auto', background: 'black' }}
+        key={refresh}
         token={token}
+        filter={filter} // Pass filter to TicketList
         onEdit={handleEdit}
         onClose={handleClose}
         onReopen={handleReopen}

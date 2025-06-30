@@ -70,6 +70,15 @@ function CreateTicket({ token, onCreated }) {
                     <option value="service">Service</option>
                   </Form.Select>
                 </Form.Group>
+                  <Form.Group className="mb-3" controlId="formType">
+                  <Form.Label>Assign to</Form.Label>
+                  <Form.Select value={type} onChange={e => setType(e.target.value)}>
+                    <option value="incident">Supervisor</option>
+                    <option value="bug">Engineer</option>
+            
+                  </Form.Select>
+                </Form.Group>
+
                 <Form.Group className="mb-4" controlId="formImage">
                   <Form.Label>Image (jpg, jpeg, png)</Form.Label>
                   <Form.Control
