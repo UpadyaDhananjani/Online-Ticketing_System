@@ -7,9 +7,9 @@ import { toast } from "react-toastify";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { backendUrl, setIsLoggedin,setUserData, getUserData } = useContext(AppContent);
+  const { backendUrl, setIsLoggedin, setUserData, getUserData } = useContext(AppContent);
 
-  const [state, setState] = useState("Sign Up"); // 'Sign Up' or 'Login'
+  const [state, setState] = useState("Sign Up");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,28 +20,30 @@ const Login = () => {
 
     try {
       if (state === "Sign Up") {
-        const { data } = await axios.post(backendUrl + "/api/auth/register", {
+        const { data } = await axios.post(`${backendUrl}/api/auth/register`, {
           name,
           email,
           password,
         });
 
         if (data.success) {
+          // This line now explicitly says "Sign up successful!"
+          toast.success(data.message || "Sign up successful!"); 
           setIsLoggedin(true);
           await getUserData();
           setUserData(data.user);
           navigate("/");
-
         } else {
           toast.error(data.message);
         }
       } else {
-        const { data } = await axios.post(backendUrl + "/api/auth/login", {
+        const { data } = await axios.post(`${backendUrl}/api/auth/login`, {
           email,
           password,
         });
 
         if (data.success) {
+          toast.success(data.message || "Login successful!");
           setIsLoggedin(true);
           await getUserData();
           navigate("/");
@@ -50,8 +52,8 @@ const Login = () => {
         }
       }
     } catch (error) {
-     
-       toast.error(error.response?.data?.message || error.message);
+      const errorMsg = error.response?.data?.message || error.message || "Something went wrong";
+      toast.error(errorMsg);
     }
   };
 
@@ -69,9 +71,7 @@ const Login = () => {
           {state === "Sign Up" ? "Create account" : "Login to your account!"}
         </h2>
         <p className="text-center text-sm mb-6">
-          {state === "Sign Up"
-            ? "Create your account."
-            : "Login to your account."}
+          {state === "Sign Up" ? "Create your account." : "Login to your account."}
         </p>
 
         <form onSubmit={onsubmitHandler}>
