@@ -54,3 +54,8 @@ pids/
 
 # Optional: Output of 'npm pack'
 *.tgz
+client/node_modules/.vite/deps/react_jsx-runtime.js.map
+client/node_modules/.vite/deps/react_jsx-runtime.js.map
+client/node_modules/.vite/deps/react_jsx-runtime.js
+client/node_modules/.vite/deps/_metadata.json
+*.map
