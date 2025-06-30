@@ -30,12 +30,8 @@ const upload = multer({
 
 // POST /api/upload/image
 router.post("/image", upload.single("image"), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: "No file uploaded" });
-  }
-  // Adjust the URL as needed for your deployment
-  const url = `/uploads/${req.file.filename}`;
-  res.json({ url });
+  const fileUrl = `http://localhost:4000/uploads/${req.file.filename}`;
+  res.json({ url: fileUrl });
 });
 
 export default router;

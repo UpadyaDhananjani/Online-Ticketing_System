@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 import express from 'express';
 import {
   getAllTickets,
@@ -25,7 +24,7 @@ router.post(
   addAdminReply
 );
 
-
+// Mark ticket as resolved
 router.patch('/:id/resolve', async (req, res) => {
   try {
     const ticket = await Ticket.findByIdAndUpdate(
@@ -40,18 +39,36 @@ router.patch('/:id/resolve', async (req, res) => {
   }
 });
 
+// Mark ticket as open
+router.patch('/:id/open', async (req, res) => {
+  try {
+    const ticket = await Ticket.findByIdAndUpdate(
+      req.params.id,
+      { status: 'open', updatedAt: Date.now() },
+      { new: true }
+    );
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+    res.json(ticket);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+router.patch('/:id/in progress', async (req, res) => {
+  try {
+    const ticket = await Ticket.findByIdAndUpdate(
+      req.params.id,
+      { status: 'in progress', updatedAt: Date.now() },
+      { new: true }
+    );
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+    res.json(ticket);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 export default router;
-=======
-import express from 'express';
-import { getAllTickets, addAdminReply } from '../controllers/ticketAdminController.js';
-import upload from '../middleware/uploadMiddleware.js';
 
-const router = express.Router();
-
-// Disabled auth for development
-router.get('/', getAllTickets);
-router.post('/:id/reply', upload.array('attachments', 5), addAdminReply);
-
-export default router;
->>>>>>> Stashed changes
