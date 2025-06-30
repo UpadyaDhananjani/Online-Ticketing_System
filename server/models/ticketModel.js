@@ -20,7 +20,7 @@ const ticketSchema = new mongoose.Schema({
     enum: ['incident', 'bug', 'maintenance', 'request', 'service'], 
     required: true 
   },
-  status: { type: String, enum: ['open', 'closed', 'reopened'], default: 'open' },
+  status: { type: String, enum: ['open', 'closed', 'reopened', 'in progress'], default: 'open' },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
   image: { type: String, required: false } // Optional image field
