@@ -1,57 +1,98 @@
 import React from "react";
 import PropTypes from "prop-types";
-import "./MessageHistory.style.css";
+import { Card, Row, Col, Badge } from "react-bootstrap";
 
-export const MessageHistory = ({ msg, description, image }) => (
-  <div>
-    {description && (
-      <div
-        style={{
-          background: "#f8f9fa",
-          padding: "1rem",
-          borderRadius: "8px",
-          marginBottom: "1rem",
-          border: "1px solid #e1e1e1",
-        }}
-      >
-        <strong>Description:</strong>
-        <div style={{ marginTop: 4 }}>{description}</div>
-      </div>
-    )}
-    {image && (
-      <div style={{ marginBottom: "1rem" }}>
-        <strong>Attachment:</strong>
+const MessageHistory = ({ msg, description, image }) => (
+  <Card className="shadow-sm mb-4 border-0" style={{ background: "#f8fafd" }}>
+    <Card.Body>
+      {description && (
+        <Card className="mb-4 border-0 bg-white">
+          <Card.Body>
+            <Card.Title as="h6" className="text-primary mb-2">
+              <i className="bi bi-info-circle me-2"></i>Ticket Description
+            </Card.Title>
+            <Card.Text className="fs-6">{description}</Card.Text>
+          </Card.Body>
+        </Card>
+      )}
+
+      {image && (
+        <Card className="mb-4 border-0 bg-white">
+          <Card.Body>
+            <Card.Title as="h6" className="text-primary mb-2">
+              <i className="bi bi-paperclip me-2"></i>Attachment
+            </Card.Title>
+            <div className="d-flex justify-content-center">
+              <img
+                src={`http://localhost:4000/uploads/${image}`}
+                alt="Ticket Attachment"
+                style={{
+                  maxWidth: "100%",
+                  maxHeight: "220px",
+                  borderRadius: 10,
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                  border: "1px solid #e3e3e3",
+                }}
+              />
+            </div>
+          </Card.Body>
+        </Card>
+      )}
+
+      <h6 className="text-primary mb-3">
+        <i className="bi bi-chat-dots me-2"></i>Message History
+      </h6>
+      {msg && msg.length > 0 ? (
         <div>
-          <img
-            // src={`/uploads/${image}`}
-            src={`http://localhost:3000/uploads/${image}`}
-            alt="Ticket Attachment"
-            style={{
-              maxWidth: "300px",
-              maxHeight: "200px",
-              borderRadius: 8,
-              marginTop: 8,
-            }}
-          />
+          {msg.map((m, i) => (
+            <Row key={i} className="mb-3">
+              <Col
+                xs={12}
+                md={{ span: 10, offset: m.sender === "Admin" ? 2 : 0 }}
+                className={`d-flex ${
+                  m.sender === "Admin"
+                    ? "justify-content-end"
+                    : "justify-content-start"
+                }`}
+              >
+                <div
+                  className="p-3 border rounded-4 shadow-sm"
+                  style={{
+                    background: m.sender === "Admin" ? "#e6f0ff" : "#fff",
+                    minWidth: 180,
+                    maxWidth: 420,
+                    borderTopLeftRadius: m.sender === "Admin" ? 16 : 4,
+                    borderTopRightRadius: m.sender === "Admin" ? 4 : 16,
+                    borderBottomLeftRadius: 16,
+                    borderBottomRightRadius: 16,
+                  }}
+                >
+                  <div className="mb-1 d-flex align-items-center">
+                    <Badge
+                      bg={m.sender === "Admin" ? "primary" : "secondary"}
+                      className="me-2"
+                      style={{ fontSize: 13, padding: "0.35em 0.7em" }}
+                    >
+                      {m.sender}
+                    </Badge>
+                    <span className="text-muted small">
+                      {new Date(m.date).toLocaleString()}
+                    </span>
+                  </div>
+                  <div
+                    style={{ whiteSpace: "pre-wrap", fontSize: 15 }}
+                    dangerouslySetInnerHTML={{ __html: m.message }}
+                  />
+                </div>
+              </Col>
+            </Row>
+          ))}
         </div>
-      </div>
-    )}
-    {msg && msg.length > 0 ? (
-      msg.map((m, i) => (
-        <div key={i} style={{ marginBottom: 12 }}>
-          <div>
-            <strong>{m.sender}</strong>{" "}
-            <span style={{ color: "#888" }}>
-              {new Date(m.date).toLocaleString()}
-            </span>
-          </div>
-          <div>{m.message}</div>
-        </div>
-      ))
-    ) : (
-      <div>No messages yet.</div>
-    )}
-  </div>
+      ) : (
+        <div className="text-muted text-center py-4">No messages yet.</div>
+      )}
+    </Card.Body>
+  </Card>
 );
 
 MessageHistory.propTypes = {
@@ -59,3 +100,5 @@ MessageHistory.propTypes = {
   description: PropTypes.string,
   image: PropTypes.string,
 };
+
+export default MessageHistory;

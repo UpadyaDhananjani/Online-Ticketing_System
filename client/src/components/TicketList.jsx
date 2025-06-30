@@ -1,15 +1,29 @@
 import React, { useEffect, useState } from 'react';
 import { getTickets } from '../api/ticketApi';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { Badge } from 'react-bootstrap';
 
-function TicketList({ token, onEdit, onClose, onReopen }) {
+const statusColors = {
+  open: "success",
+  closed: "danger",
+  resolved: "primary",
+  reopened: "warning"
+};
+
+function TicketList({ token, filter }) {
   const [tickets, setTickets] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     getTickets(token)
       .then(res => setTickets(res.data))
       .catch(err => alert(err.response?.data?.error || err.message));
   }, [token]);
+
+  // Filter tickets by status if filter prop is provided
+  const filteredTickets = filter
+    ? tickets.filter(ticket => ticket.status === filter)
+    : tickets;
 
   return (
     <div style={{ maxWidth: 900, margin: '30px auto' }}>
@@ -24,61 +38,55 @@ function TicketList({ token, onEdit, onClose, onReopen }) {
       }}>
         <thead style={{ background: '#f5f6fa' }}>
           <tr>
-            <th style={thStyle}>Subject</th>
-            <th style={thStyle}>Type</th>
-            <th style={thStyle}>Status</th>
-            <th style={thStyle}>Created</th>
-            <th style={thStyle}>Actions</th>
+            <th style={thStyle}><i className="bi bi-card-text me-1"></i>Subject</th>
+            <th style={thStyle}><i className="bi bi-tag me-1"></i>Type</th>
+            <th style={thStyle}><i className="bi bi-info-circle me-1"></i>Status</th>
+            <th style={thStyle}><i className="bi bi-calendar me-1"></i>Created</th>
           </tr>
         </thead>
         <tbody>
-          {tickets.length === 0 ? (
+          {filteredTickets.length === 0 ? (
             <tr>
-              <td colSpan={5} style={{ textAlign: 'center', padding: 20, color: '#888' }}>
+              <td colSpan={4} style={{ textAlign: 'center', padding: 20, color: '#888' }}>
                 No tickets found.
               </td>
             </tr>
           ) : (
-            tickets.map(ticket => (
+            filteredTickets.map(ticket => (
               <tr
                 key={ticket._id}
                 style={{
                   borderBottom: '1px solid #eee',
-                  background: ticket.status === 'open' ? '#e6ffe6' : undefined // Light green for open
+                  background: ticket.status === 'open' ? '#e6ffe6' : undefined,
+                  cursor: 'pointer',
+                  transition: 'background 0.2s'
                 }}
+                onClick={() => navigate(`/tickets/${ticket._id}`)}
+                onMouseOver={e => e.currentTarget.style.background = '#f0f4ff'}
+                onMouseOut={e => e.currentTarget.style.background = ticket.status === 'open' ? '#e6ffe6' : ''}
               >
-                <td style={tdStyle}>{ticket.subject}</td>
                 <td style={tdStyle}>
-                  {ticket.type
-                    ? ticket.type.charAt(0).toUpperCase() + ticket.type.slice(1)
-                    : '—'}
+                  <i className="bi bi-card-text me-2 text-primary"></i>
+                  {ticket.subject}
                 </td>
-                <td style={{ ...tdStyle, color: ticket.status === 'open' ? '#27ae60' : '#c0392b', fontWeight: 500 }}>
-                  {ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}
-                </td>
-                <td style={tdStyle}>{ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : '-'}</td>
                 <td style={tdStyle}>
-                  <Link to={`/tickets/${ticket._id}`}>
-                    <button style={{ ...actionBtn, background: '#6c63ff', marginRight: 8 }}>
-                      View
-                    </button>
-                  </Link>
-                  {ticket.status === 'open' && (
-                    <button
-                      style={{ ...actionBtn, background: '#c0392b', color: '#fff', marginLeft: 8 }}
-                      onClick={() => onClose(ticket._id)}
-                    >
-                      Close
-                    </button>
-                  )}
-                  {ticket.status === 'closed' && (
-                    <button
-                      style={{ ...actionBtn, background: '#27ae60', color: '#fff', marginLeft: 8 }}
-                      onClick={() => onReopen(ticket._id)}
-                    >
-                      Reopen
-                    </button>
-                  )}
+                  <Badge bg="info" text="dark" className="text-capitalize">
+                    <i className="bi bi-tag me-1"></i>
+                    {ticket.type ? ticket.type.charAt(0).toUpperCase() + ticket.type.slice(1) : '—'}
+                  </Badge>
+                </td>
+                <td style={tdStyle}>
+                  <Badge
+                    bg={statusColors[ticket.status] || "secondary"}
+                    className="px-3 py-2 text-capitalize"
+                  >
+                    <i className="bi bi-info-circle me-1"></i>
+                    {ticket.status}
+                  </Badge>
+                </td>
+                <td style={tdStyle}>
+                  <i className="bi bi-calendar me-2 text-secondary"></i>
+                  {ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : '-'}
                 </td>
               </tr>
             ))
@@ -102,15 +110,6 @@ const tdStyle = {
   padding: '10px 8px',
   fontSize: 15,
   verticalAlign: 'middle'
-};
-
-const actionBtn = {
-  padding: '6px 16px',
-  background: '#2980b9',
-  color: '#fff',
-  border: 'none',
-  borderRadius: 4,
-  cursor: 'pointer'
 };
 
 export default TicketList;
