@@ -1,19 +1,50 @@
 // src/admin/TicketList.jsx
 import React, { useEffect, useState } from "react";
-import { Table, Container, Spinner, Alert, Badge } from "react-bootstrap";
+import { Table, Container, Spinner, Alert, Badge, Form, Row, Col } from "react-bootstrap";
 import { getAllTickets } from "../api/ticketApi";
 
 const statusColors = {
   open: "success",
   closed: "danger",
   resolved: "primary",
-  reopened: "warning"
+  reopened: "warning",
+  "in progress": "warning"
 };
+
+const UNIT_OPTIONS = [
+  "System and Network Administration",
+  "Asyhub Unit",
+  "Statistics Unit",
+  "Audit Unit",
+  "Helpdesk Unit",
+  "Functional Unit"
+];
+
+const STATUS_OPTIONS = [
+  "All",
+  "open",
+  "in progress",
+  "closed",
+  "resolved",
+  "reopened"
+];
+
+const TYPE_OPTIONS = [
+  "All",
+  "incident",
+  "bug",
+  "maintenance",
+  "request",
+  "service"
+];
 
 function TicketList({ token, onSelect }) {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [unitFilter, setUnitFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [typeFilter, setTypeFilter] = useState("All");
 
   useEffect(() => {
     setLoading(true);
@@ -28,11 +59,65 @@ function TicketList({ token, onSelect }) {
       });
   }, [token]);
 
+  const filteredTickets = tickets.filter(ticket => {
+    const unitMatch = unitFilter === "All" || ticket.assignedUnit === unitFilter;
+    const statusMatch = statusFilter === "All" || ticket.status === statusFilter;
+    const typeMatch = typeFilter === "All" || ticket.type === typeFilter;
+    return unitMatch && statusMatch && typeMatch;
+  });
+
   return (
     <Container className="mt-4">
       <h2 className="mb-4 text-primary">
         <i className="bi bi-list-ul me-2"></i>All Tickets
       </h2>
+      <Row className="mb-3">
+        <Col xs={12} md={4} lg={3}>
+          <Form.Select
+            value={unitFilter}
+            onChange={e => setUnitFilter(e.target.value)}
+            aria-label="Filter by Assigned Unit"
+            className="mb-2"
+          >
+            <option value="All">All Units</option>
+            {UNIT_OPTIONS.map(unit => (
+              <option key={unit} value={unit}>{unit}</option>
+            ))}
+          </Form.Select>
+        </Col>
+        <Col xs={12} md={4} lg={3}>
+          <Form.Select
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+            aria-label="Filter by Status"
+            className="mb-2"
+          >
+            {STATUS_OPTIONS.map(status => (
+              <option key={status} value={status}>
+                {status === "All"
+                  ? "All Statuses"
+                  : status.charAt(0).toUpperCase() + status.slice(1)}
+              </option>
+            ))}
+          </Form.Select>
+        </Col>
+        <Col xs={12} md={4} lg={3}>
+          <Form.Select
+            value={typeFilter}
+            onChange={e => setTypeFilter(e.target.value)}
+            aria-label="Filter by Type"
+            className="mb-2"
+          >
+            {TYPE_OPTIONS.map(type => (
+              <option key={type} value={type}>
+                {type === "All"
+                  ? "All Types"
+                  : type.charAt(0).toUpperCase() + type.slice(1)}
+              </option>
+            ))}
+          </Form.Select>
+        </Col>
+      </Row>
       {loading && <Spinner animation="border" />}
       {error && <Alert variant="danger">{error}</Alert>}
       {!loading && !error && (
@@ -48,7 +133,7 @@ function TicketList({ token, onSelect }) {
             </tr>
           </thead>
           <tbody>
-            {tickets.map(ticket => (
+            {filteredTickets.map(ticket => (
               <tr
                 key={ticket._id}
                 style={{

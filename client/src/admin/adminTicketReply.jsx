@@ -13,6 +13,7 @@ function TicketReply({ token, ticket, onBack, onStatusChange }) {
   const [reply, setReply] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [localStatus, setLocalStatus] = useState(ticket.status); // local status for UI
   const quillRef = useRef();
 
   // Quill modules WITHOUT image upload icon
@@ -60,11 +61,14 @@ function TicketReply({ token, ticket, onBack, onStatusChange }) {
     await sendTicketReply(ticket._id, formData, token);
     setReply("");
     setImageFile(null);
-    onBack();
+    setLocalStatus("in progress"); // <-- Update status locally
+    if (onStatusChange) onStatusChange("in progress");
+    // Optionally, refetch ticket details here if you want to sync with backend
   };
 
   const handleResolve = async () => {
     await resolveTicket(ticket._id, token);
+    setLocalStatus("resolved");
     if (onStatusChange) onStatusChange("resolved");
     onBack();
   };
@@ -139,7 +143,11 @@ function TicketReply({ token, ticket, onBack, onStatusChange }) {
                   >
                     Mark as Resolved
                   </Button>
-                  <Button type="submit" variant="success" disabled={!reply.trim() || uploading}>
+                  <Button
+                    type="submit"
+                    variant="success"
+                    disabled={!reply || !reply.trim() || uploading}
+                  >
                     {uploading ? "Uploading..." : "Send Reply"}
                   </Button>
                 </div>
