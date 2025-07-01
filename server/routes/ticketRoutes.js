@@ -1,30 +1,43 @@
 // server/routes/ticketRoutes.js
 import express from 'express';
 import {
-  createTicket,
-  getUserTickets,
-  updateTicket,
-  closeTicket,
-  reopenTicket,
-  upload, // <-- import upload
-  getTicketById,
-  getTicketSummary // <-- IMPORT THE NEW FUNCTION
+  createTicket,
+  getUserTickets,
+  updateTicket,
+  closeTicket,
+  reopenTicket,
+  upload,
+  getTicketById,
+  getTicketSummary// <-- IMPORT THE NEW FUNCTION
+
 } from '../controllers/ticketController.js';
 
 const router = express.Router();
 
+// Create a ticket (with image and assignedUnit)
 router.post('/', upload.single('image'), createTicket);
+
+// Get all tickets for user (or all for admin)
 router.get('/', /*authMiddleware,*/ getUserTickets);
+
+// Update a ticket (including assignedUnit)
 router.put('/:id', /*authMiddleware,*/ updateTicket);
+
+// Close a ticket
 router.patch('/:id/close', /*authMiddleware,*/ closeTicket);
+
+// Reopen a ticket
 router.patch('/:id/reopen', reopenTicket);
-// router.get('/uploads/:filename', (req, res) => {
-//   const filename = req.params.filename
-// })
+
 
 // --- Correct order: Specific '/summary' route BEFORE general '/:id' route ---
 router.get('/summary', getTicketSummary);
 
-router.get('/:id', getTicketById);
+router.get('/:id', getTicketById); // Now this will only be hit if it's not '/summary'
+
+
+
+// Get a ticket by ID
 
 export default router;
+

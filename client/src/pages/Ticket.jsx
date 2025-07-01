@@ -88,6 +88,13 @@ const Ticket = () => {
                     {ticket.createdAt && new Date(ticket.createdAt).toLocaleString()}
                   </div>
                   <div className="mb-2">
+                    <span className="fw-semibold text-secondary">Assigned Unit:</span>{" "}
+                    <Badge bg="secondary" className="text-capitalize">
+                      <i className="bi bi-diagram-3 me-1"></i>
+                      {ticket.assignedUnit || '—'}
+                    </Badge>
+                  </div>
+                  <div className="mb-2">
                     <span className="fw-semibold text-secondary">Status:</span>{" "}
                     <Badge bg={statusColors[ticket.status] || "secondary"} className="px-3 py-2 text-capitalize">
                       {ticket.status}
