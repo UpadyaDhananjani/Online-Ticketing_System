@@ -8,61 +8,67 @@ import { sendTicketReply, resolveTicket } from "../api/ticketApi";
 import { Container, Card, Button, Form, Row, Col, Badge } from "react-bootstrap";
 import MessageHistory from "../components/MessageHistory/MessageHistory";
 
+
 function TicketReply({ token, ticket, onBack, onStatusChange }) {
   const [reply, setReply] = useState("");
+  const [imageFile, setImageFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [localStatus, setLocalStatus] = useState(ticket.status); // local status for UI
   const quillRef = useRef();
 
-  // Custom image upload handler
-  const imageHandler = () => {
-    const input = document.createElement("input");
-    input.setAttribute("type", "file");
-    input.setAttribute("accept", "image/*");
-    input.click();
-
-    input.onchange = async () => {
-      const file = input.files[0];
-      const formData = new FormData();
-      formData.append("image", file);
-
-      // Upload to your backend
-      const res = await axios.post("/api/upload/image", formData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      const url = `http://localhost:4000/uploads/${res.data.filename}`; //res.data.url;
-      const editor = quillRef.current.getQuill();
-      const range = editor.getSelection();
-      editor.insertEmbed(range.index, "image", url);
-    };
-  };
-
-  // Quill modules with custom image handler
+  // Quill modules WITHOUT image upload icon
   const modules = {
     toolbar: {
       container: [
         [
           "bold", "italic", "underline", "strike",
-          "image", "link",
+          "link",
           { list: "ordered" }, { list: "bullet" }
         ]
-      ],
-      handlers: {
-        image: imageHandler
-      }
+      ]
     }
+  };
+
+  const handleImageChange = (e) => {
+    setImageFile(e.target.files[0]);
   };
 
   const handleSubmit = async e => {
     e.preventDefault();
     const formData = new FormData();
     formData.append("content", reply);
+    if (imageFile) {
+      setUploading(true);
+      // Upload image first
+      try {
+        const uploadRes = await axios.post("/api/upload/image", 
+          (() => {
+            const fd = new FormData();
+            fd.append("image", imageFile);
+            return fd;
+          })(),
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        // Append image filename to formData for the reply
+        formData.append("image", uploadRes.data.filename);
+      } catch (err) {
+        alert("Image upload failed.");
+        setUploading(false);
+        return;
+      }
+      setUploading(false);
+    }
     await sendTicketReply(ticket._id, formData, token);
     setReply("");
-    onBack();
+    setImageFile(null);
+    setLocalStatus("in progress"); // <-- Update status locally
+    if (onStatusChange) onStatusChange("in progress");
+    // Optionally, refetch ticket details here if you want to sync with backend
   };
 
   const handleResolve = async () => {
     await resolveTicket(ticket._id, token);
+    setLocalStatus("resolved");
     if (onStatusChange) onStatusChange("resolved");
     onBack();
   };
@@ -86,6 +92,12 @@ function TicketReply({ token, ticket, onBack, onStatusChange }) {
               <h4 className="mb-0">
                 Reply to: <Badge bg="light" text="dark">{ticket.subject}</Badge>
               </h4>
+              <div className="mt-2">
+                <Badge bg="secondary" className="text-capitalize">
+                  <i className="bi bi-diagram-3 me-1"></i>
+                  {ticket.assignedUnit || '—'}
+                </Badge>
+              </div>
             </Card.Header>
             <Card.Body>
               {/* Message History Section */}
@@ -107,6 +119,21 @@ function TicketReply({ token, ticket, onBack, onStatusChange }) {
                     modules={modules}
                   />
                 </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>Attach Image</Form.Label>
+                  <Form.Control
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    disabled={uploading}
+                  />
+                  {imageFile && (
+                    <div className="mt-2 text-success">
+                      <i className="bi bi-image me-1"></i>
+                      {imageFile.name}
+                    </div>
+                  )}
+                </Form.Group>
                 <div className="d-flex justify-content-between">
                   <Button
                     type="button"
@@ -116,8 +143,12 @@ function TicketReply({ token, ticket, onBack, onStatusChange }) {
                   >
                     Mark as Resolved
                   </Button>
-                  <Button type="submit" variant="success" disabled={!reply.trim()}>
-                    Send Reply
+                  <Button
+                    type="submit"
+                    variant="success"
+                    disabled={!reply || !reply.trim() || uploading}
+                  >
+                    {uploading ? "Uploading..." : "Send Reply"}
                   </Button>
                 </div>
               </Form>

@@ -21,6 +21,18 @@ const ticketSchema = new mongoose.Schema({
     required: true 
   },
   status: { type: String, enum: ['open', 'closed', 'reopened', 'resolved', 'in progress'], default: 'open' },
+   assignedUnit: {
+    type: String,
+    enum: [
+      'System and Network Administration',
+      'Asyhub Unit',
+      'Statistics Unit',
+      'Audit Unit',
+      'Helpdesk Unit',
+      'Functional Unit'
+    ],
+    required: true
+  },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
   image: { type: String, required: false }, // Optional image field

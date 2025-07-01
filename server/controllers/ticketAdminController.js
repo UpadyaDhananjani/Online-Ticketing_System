@@ -45,6 +45,12 @@ export const addAdminReply = async (req, res) => {
       content,
       attachments
     });
+    
+     // If not resolved, set status to in progress
+    if (ticket.status !== "resolved") {
+      ticket.status = "in progress";
+    }
+
     ticket.updatedAt = Date.now();
     await ticket.save();
 
