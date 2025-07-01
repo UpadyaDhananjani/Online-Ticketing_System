@@ -30,8 +30,8 @@ router.patch('/:id/close', /*authMiddleware,*/ closeTicket);
 router.patch('/:id/reopen', reopenTicket);
 
 
-// --- FIX: Place the more specific '/summary' route BEFORE the general '/:id' route ---
-router.get('/summary', getTicketSummary); // This route MUST come before router.get('/:id')
+// --- Correct order: Specific '/summary' route BEFORE general '/:id' route ---
+router.get('/summary', getTicketSummary);
 
 router.get('/:id', getTicketById); // Now this will only be hit if it's not '/summary'
 
