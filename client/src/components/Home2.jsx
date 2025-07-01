@@ -1,13 +1,14 @@
 // client/src/components/Home2.jsx
 import React, { useEffect, useState } from "react";
 import { Container, Row, Col, Spinner, Alert, Card, Badge } from "react-bootstrap";
-import { Link } from 'react-router-dom'; // No need for useLocation here anymore
+import { Link } from 'react-router-dom';
+// REMOVED: import '../App.css'; // Styles are now in App.js
 
 const Home2 = () => {
-  const [ticketCounts, setTicketCounts] = useState({
-   open: 0,
-    inProgress: 0,
-    resolved: 0,
+  const [ticketCounts, setTicketCounts] = useState({
+    open: 0,
+    inProgress: 0,
+    resolved: 0,
   });
   const [recentIssues, setRecentIssues] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,9 +25,8 @@ const Home2 = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       setLoading(true);
-      setError(""); // Clear previous errors
+      setError("");
       try {
-        // Fetch ticket summary counts
         const summaryRes = await fetch("/api/tickets/summary");
         if (!summaryRes.ok) {
           const errorText = await summaryRes.text();
@@ -39,8 +39,7 @@ const Home2 = () => {
           resolved: summaryData.resolved || 0,
         });
 
-        // Fetch recent issues
-        const recentIssuesRes = await fetch("/api/tickets?limit=5&sortBy=createdAt&sortOrder=desc"); // Fetch last 5 tickets
+        const recentIssuesRes = await fetch("/api/tickets?limit=5&sortBy=createdAt&sortOrder=desc");
         if (!recentIssuesRes.ok) {
           const errorText = await recentIssuesRes.text();
           throw new Error(`Failed to fetch recent issues: ${recentIssuesRes.status} - ${errorText}`);
@@ -58,16 +57,13 @@ const Home2 = () => {
 
     fetchDashboardData();
 
-    // Set up auto-refresh
-    const intervalId = setInterval(fetchDashboardData, 30000); // Refresh every 30 seconds
+    const intervalId = setInterval(fetchDashboardData, 30000);
 
-    // Cleanup function: Clear interval
     return () => {
       clearInterval(intervalId);
     };
 
-    // Removed location.pathname from dependencies, as key prop will force remount
-  }, []); // Empty dependency array means this runs once on component mount (or re-mount due to key change)
+  }, []);
 
   if (loading)
     return (
@@ -141,7 +137,6 @@ const Home2 = () => {
         </Col>
       </Row>
 
-      {/* Recent Issues section */}
       <Row className="mt-4">
         <Col>
           <h3 className="mb-3">Recent Issues</h3>
@@ -183,13 +178,7 @@ const Home2 = () => {
           </Card>
         </Col>
       </Row>
-      <style>{`
-        .hover-effect:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-          cursor: pointer;
-        }
-      `}</style>
+      {/* The hover-effect style is now global in App.js, so remove the <style> tag here */}
     </Container>
   );
 };

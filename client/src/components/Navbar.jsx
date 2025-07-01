@@ -1,55 +1,73 @@
 // Navbar.jsx
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { assets } from '../assets/assets';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AppContent } from '../context/AppContext';
 import { toast } from 'react-toastify';
 import axios from 'axios';
+// No App.css import here, as styles are managed by App.js
 
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { userData } = useContext(AppContent);
-
-  // Hide Login button on auth routes
-  const hideLoginBtn = ['/login', '/reset-password', '/email-verify'].includes(location.pathname);
+  const { userData, setIsLoggedin, setUserData, backendUrl } = useContext(AppContent); // Ensure these are available
+  const [showDropdown, setShowDropdown] = useState(false);
 
   const sendVerificationOtp = async () => {
     try {
-        axios.defaults.withCredentials = true;
-        const {data} = await axios.post(backendUrl + '/api/auth/send-verify-otp')
+      axios.defaults.withCredentials = true;
+      const { data } = await axios.post(backendUrl + '/api/auth/send-verify-otp');
 
-        if(data.success){
-            navigate('/email-verify')
-            toast.success(data.message)
-        }else{
-            toast.error(data.message)
-        }
-
-    }catch(error) {
-        toast.error(error.message)
-
+      if (data.success) {
+        navigate('/email-verify');
+        toast.success(data.message);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setShowDropdown(false); // Close dropdown after action
     }
-  }
+  };
 
-  const logout = async () =>{
-    try{
-        axios.defaults.withCredentials = true
-        const {data} = await axios.post(backendUrl + '/api/auth/logout')
-        data.success && setIsLoggedin(false)
-        data.success && setUserData(false)
-        navigate('/')
+  const handleLoginClick = () => {
+    navigate('/login');
+    setShowDropdown(false); // Close dropdown after navigation
+  };
 
-    }catch(error){
-        toast.error(error.message)
-
+  const logout = async () => {
+    try {
+      axios.defaults.withCredentials = true;
+      const { data } = await axios.post(backendUrl + '/api/auth/logout');
+      if (data.success) {
+        setIsLoggedin(false);
+        setUserData(null);
+        navigate('/');
+        toast.success("Logged out successfully!");
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setShowDropdown(false); // Close dropdown after action
     }
-  }
+  };
+
+  const toggleDropdown = () => {
+    setShowDropdown(!showDropdown);
+  };
+
+  // Logic to hide the separate Login button on auth pages is no longer strictly needed
+  // because the "Login" option is now inside the dropdown.
+  // const hideLoginBtn = ['/login', '/reset-password', '/email-verify'].includes(location.pathname);
 
   return (
+    // The main Navbar container. 'justify-between' places items at opposite ends.
     <div className="w-full flex justify-between items-center p-4 sm:p-6 sm:px-24 absolute top-0 z-50">
-      {/* Logo */}
+      {/* Left Section: Logo */}
       <img
         src={assets.logo}
         alt="logo"
@@ -57,37 +75,61 @@ const Navbar = () => {
         onClick={() => navigate('/')}
       />
 
-      {userData ?
+      {/* Right Section: User Initial / Login Button and Dropdown */}
+      <div className="relative"> {/* Essential for dropdown positioning */}
+        {/* The clickable element (User Initial or Login Button) */}
+        {userData ? (
+          <div
+            className="user-initial-circle" // Styled in App.js
+            onClick={toggleDropdown}
+          >
+            {userData.name?.[0]?.toUpperCase() || 'U'}
+          </div>
+        ) : (
+          // If not logged in, show a default icon/initial or a login button that triggers dropdown
+          // For simplicity, let's keep a generic "U" or a "Login" button that triggers the dropdown
+          // as per the request to have "Login" *in* the dropdown.
+          // If you prefer a "Login" button visible directly, use the old button code outside this relative div.
+          // For now, making the "U" visible always, and its click opens the dropdown with Login.
+          // Let's use a simplified clickable div if not logged in to consistent trigger dropdown.
+          <div
+            className="user-initial-circle" // Reusing style, could be another class if design differs
+            onClick={toggleDropdown}
+            // Add a tooltip or text if not logged in so user knows what it is
+            title="Account"
+          >
+            {/* If you want a specific "Login" text instead of 'U' when not logged in, change this */}
+            {'U'}
+          </div>
+        )}
 
-      <div className='w-8 h-8 flex justify-center items-center rounded-full bg-black-text-white relative group'>
-        {userData.name[0].toUpperCase()}
-        <div className='absolute hidden group-hover:block top-0 right-0 z-10 text-black rounded pt-10'>
-
-            <ul className='list-none m-0 p-2 big-gray-100 text-sm'>
-                {!userData.isAccountVerified && 
-                <li onClick={sendVerificationOtp} className='py-1 px-2 hover:bg-gray-200 cursor-pointer'>Verify email</li> }
-                <li onClick={logout} className='py-1 px-2 hover:bg-gray-200 cursor-pointer pr-10'>Logout</li>
+        {/* The Dropdown Menu (Conditionally rendered) */}
+        {showDropdown && (
+          // Use 'user-dropdown-menu' class which aligns to the right
+          <div className="user-dropdown-menu">
+            <ul className="list-none m-0 p-0">
+              {userData ? (
+                // If logged in: Show Verify Email and Logout
+                <>
+                  {!userData.isAccountVerified && (
+                    <li onClick={sendVerificationOtp} className="dropdown-item">
+                      Verify email
+                    </li>
+                  )}
+                  <li onClick={logout} className="dropdown-item">
+                    Logout
+                  </li>
+                </>
+              ) : (
+                // If NOT logged in: Show Login
+                <li onClick={handleLoginClick} className="dropdown-item">
+                  Login
+                </li>
+              )}
             </ul>
-
-        </div>
-
-
+          </div>
+        )}
       </div>
-
-       : <button
-          onClick={() => navigate('/login')}
-          className="flex items-center gap-2 border border-gray-500 rounded-full px-6 py-2 text-gray-800 hover:bg-gray-100 transition-all"
-        >
-          Login <img src={assets.arrow_icon} alt="arrow" />
-        </button>
-     }
-
-      {/* If user is logged in, show first letter of name */}
-      {userData && (
-        <div className="bg-gray-300 text-gray-800 font-bold rounded-full w-10 h-10 flex items-center justify-center">
-          {userData.name?.[0]?.toUpperCase() || 'U'}
-        </div>
-      )}
     </div>
   );
 };
