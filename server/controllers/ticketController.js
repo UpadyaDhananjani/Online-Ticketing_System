@@ -5,27 +5,44 @@ import path from 'path';
 
 // Multer setup
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/'); // make sure this folder exists
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + path.extname(file.originalname));
-  }
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/'); // make sure this folder exists
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
 });
 export const upload = multer({
-  storage,
-  fileFilter: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    if (ext === '.jpg' || ext === '.jpeg' || ext === '.png') {
-      cb(null, true);
-    } else {
-      cb(new Error('Only jpg, jpeg, png files are allowed'));
-    }
-  }
+  storage,
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (ext === '.jpg' || ext === '.jpeg' || ext === '.png') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only jpg, jpeg, png files are allowed'));
+    }
+  }
 });
 
 // Create a new ticket
 export const createTicket = async (req, res) => {
+
+  try {
+    const { subject, description, type } = req.body;
+   
+    const ticket = new Ticket({
+      user: "000000000000000000000000", // Dummy ObjectId
+      subject,
+      description,
+      type,
+      image: req.file ? req.file.filename : undefined
+    });
+    await ticket.save();
+    res.status(201).json(ticket);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+
   try {
     const { subject, description, type, assignedUnit } = req.body;
 
@@ -46,10 +63,22 @@ export const createTicket = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+
 };
 
 // Get all tickets for logged-in user
 export const getUserTickets = async (req, res) => {
+
+  try {
+    // For testing: return all tickets, not just the user's
+  
+    // For testing: return all tickets, not just the user's
+    const tickets = await Ticket.find();
+    res.json(tickets);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+
   try {
     // For testing: return all tickets, not just the user's
     const tickets = await Ticket.find();
@@ -57,10 +86,27 @@ export const getUserTickets = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+
 };
 
 // Update/Edit a ticket
 export const updateTicket = async (req, res) => {
+
+  try {
+    const { id } = req.params;
+    const { subject, description } = req.body;
+    const ticket = await Ticket.findOneAndUpdate(
+      { _id: id, status: 'open' }, // Remove user: req.user._id
+      { _id: id, status: 'open' }, // Remove user: req.user._id
+      { subject, description, updatedAt: Date.now() },
+      { new: true }
+    );
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found or already closed' });
+    res.json(ticket);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+
   try {
     const { id } = req.params;
     const { subject, description, assignedUnit } = req.body;
@@ -77,10 +123,26 @@ export const updateTicket = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+
 };
 
 // Close a ticket
 export const closeTicket = async (req, res) => {
+
+  try {
+    const { id } = req.params;
+    const ticket = await Ticket.findOneAndUpdate(
+      { _id: id, status: 'open' }, // Remove user: req.user._id
+      { _id: id, status: 'open' }, // Remove user: req.user._id
+      { status: 'closed', updatedAt: Date.now() },
+      { new: true }
+    );
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found or already closed' });
+    res.json(ticket);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+
   try {
     const { id } = req.params;
     const ticket = await Ticket.findOneAndUpdate(
@@ -93,32 +155,54 @@ export const closeTicket = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+
 };
 
 // Reopen a closed ticket
 export const reopenTicket = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const ticket = await Ticket.findOneAndUpdate(
-      { _id: id, status: 'closed' },
-      { status: 'reopened', updatedAt: Date.now() },
-      { new: true }
-    );
-    if (!ticket) return res.status(404).json({ error: 'Ticket not found or not closed' });
-    res.json(ticket);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  try {
+    const { id } = req.params;
+    const ticket = await Ticket.findOneAndUpdate(
+      { _id: id, status: 'closed' },
+      { status: 'reopened', updatedAt: Date.now() },
+      { new: true }
+    );
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found or not closed' });
+    res.json(ticket);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
 export const getTicketById = async (req, res) => {
+  try {
+    const ticket = await Ticket.findById(req.params.id);
+    if (!ticket) {
+      return res.status(404).json({ error: 'Ticket not found' });
+    }
+    res.json(ticket);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// --- NEW FUNCTION FOR TICKET SUMMARY COUNTS ---
+export const getTicketSummary = async (req, res) => {
   try {
-    const ticket = await Ticket.findById(req.params.id);
-    if (!ticket) {
-      return res.status(404).json({ error: 'Ticket not found' });
-    }
-    res.json(ticket);
+    const openCount = await Ticket.countDocuments({ status: { $in: ['open', 'reopened', 'in progress'] } });
+    const completedCount = await Ticket.countDocuments({ status: { $in: ['closed', 'resolved'] } });
+    // Assuming "unassigned" means tickets that are 'open' or 'reopened' and not yet 'in progress'
+    // If you have an `assignedTo` field in your Ticket model, a better query would be:
+    // const unassignedCount = await Ticket.countDocuments({ assignedTo: null, status: { $nin: ['closed', 'resolved'] } });
+    const unassignedCount = await Ticket.countDocuments({ status: { $in: ['open', 'reopened'] } });
+
+    res.json({
+      open: openCount,
+      completed: completedCount,
+      unassigned: unassignedCount,
+    });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error fetching ticket summary:', err);
+    res.status(500).json({ error: 'Failed to fetch ticket summary from server.' });
   }
 };

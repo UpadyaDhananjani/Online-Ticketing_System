@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Nav, Navbar } from 'react-bootstrap';
+import { Nav, Navbar, Badge } from 'react-bootstrap'; // Added Badge for potential future use
 
 function Sidebar() {
   const location = useLocation();
@@ -18,14 +18,14 @@ function Sidebar() {
       }}
     >
       <Navbar.Brand className="mb-4" style={{ fontWeight: 700, fontSize: 28 }}>
-        Navigation
+        Peppermint
       </Navbar.Brand>
       <Nav className="flex-column w-100">
 
-        {/* Home Link */}
+        {/* Home Link - Ensure this points to "/" */}
         <Nav.Link
           as={Link}
-          to="/"
+          to="/" // This is crucial for navigating to Home2.jsx
           active={location.pathname === '/'}
           style={{
             fontWeight: location.pathname === '/' ? 700 : 500,

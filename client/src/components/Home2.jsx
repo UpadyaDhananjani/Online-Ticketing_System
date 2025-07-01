@@ -1,75 +1,198 @@
-import React from "react";
-//import tickets from "./data/sampleTickets";
+// client/src/components/Home2.jsx
+import React, { useEffect, useState } from "react";
+import { Container, Row, Col, Spinner, Alert, Card, Badge } from "react-bootstrap";
+import { Link } from 'react-router-dom'; // Assuming you might want to link to recent issues
 
-function Home() {
-  const openIssues = tickets.filter(ticket => ticket.status === "Open").length;
-  const completedIssues = tickets.filter(ticket => ticket.status === "Completed").length;
-  const unassignedIssues = tickets.filter(ticket => !ticket.assignedTo).length;
+const Home2 = () => {
+  const [ticketCounts, setTicketCounts] = useState({
+    open: 0,
+    completed: 0,
+    unassigned: 0,
+  });
+  const [recentIssues, setRecentIssues] = useState([]); // To display recent issues
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  return (
-    <div className="min-h-screen bg-gray-100 p-8 font-sans">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <span className="bg-green-100 text-green-700 px-4 py-1 rounded-full text-sm font-medium">
-          Version 0.5.5
-        </span>
-        <div className="flex gap-4 items-center">
-          <button className="bg-white border border-gray-300 px-3 py-1 rounded hover:bg-gray-50">Send Feedback</button>
-          <div className="bg-gray-200 px-3 py-1 rounded">admin</div>
-        </div>
-      </div>
+  const statusColors = {
+    open: "success",
+    closed: "danger",
+    resolved: "primary",
+    reopened: "warning",
+    "in progress": "info",
+  };
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-        <div className="bg-gray-900 text-white rounded-lg p-6">
-          <p className="text-xl font-semibold">Open Issues</p>
-          <p className="text-3xl mt-2">{openIssues}</p>
-        </div>
-        <div className="bg-gray-900 text-white rounded-lg p-6">
-          <p className="text-xl font-semibold">Completed Issues</p>
-          <p className="text-3xl mt-2">{completedIssues}</p>
-        </div>
-        <div className="bg-gray-900 text-white rounded-lg p-6">
-          <p className="text-xl font-semibold">Unassigned Issues</p>
-          <p className="text-3xl mt-2">{unassignedIssues}</p>
-        </div>
-      </div>
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      setLoading(true);
+      setError(""); // Clear previous errors
+      try {
+        // Fetch ticket summary counts
+        const summaryRes = await fetch("/api/tickets/summary");
+        if (!summaryRes.ok) {
+          const errorText = await summaryRes.text();
+          throw new Error(`Failed to fetch ticket summary: ${summaryRes.status} - ${errorText}`);
+        }
+        const summaryData = await summaryRes.json();
+        setTicketCounts({
+          open: summaryData.open || 0,
+          completed: summaryData.completed || 0,
+          unassigned: summaryData.unassigned || 0,
+        });
 
-      {/* Recent Issues */}
-      <h2 className="text-2xl font-semibold mb-4">Recent Issues</h2>
-      <div className="bg-white rounded-lg shadow p-4 overflow-x-auto">
-        <table className="min-w-full text-sm table-auto">
-          <thead>
-            <tr className="text-left text-gray-600 border-b">
-              <th className="py-2 px-4">Title</th>
-              <th className="py-2 px-4">Priority</th>
-              <th className="py-2 px-4">Status</th>
-              <th className="py-2 px-4">Created</th>
-              <th className="py-2 px-4">Assigned To</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tickets.map(ticket => (
-              <tr key={ticket.id} className="border-t">
-                <td className="py-2 px-4">{ticket.title}</td>
-                <td className="py-2 px-4">{ticket.priority}</td>
-                <td className="py-2 px-4">
-                  <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                    ticket.status === "Open" ? "bg-green-100 text-green-700" :
-                    "bg-blue-100 text-blue-700"
-                  }`}>
-                    ● {ticket.status}
-                  </span>
-                </td>
-                <td className="py-2 px-4">{ticket.created}</td>
-                <td className="py-2 px-4">{ticket.assignedTo || "Unassigned"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
+        // Fetch recent issues (e.g., last 5 tickets, or open ones, adjust as needed)
+        // You might have a separate endpoint for this, or modify your existing /api/tickets to support queries
+        const recentIssuesRes = await fetch("/api/tickets?limit=5&sortBy=createdAt&sortOrder=desc"); // Example: fetch last 5 tickets
+        if (!recentIssuesRes.ok) {
+          const errorText = await recentIssuesRes.text();
+          throw new Error(`Failed to fetch recent issues: ${recentIssuesRes.status} - ${errorText}`);
+        }
+        const recentIssuesData = await recentIssuesRes.json();
+        setRecentIssues(recentIssuesData);
 
-export default Home;
+      } catch (err) {
+        console.error("Dashboard data fetch error:", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+
+    // Optional: Auto-refresh the dashboard data periodically (e.g., every 30 seconds)
+    const intervalId = setInterval(fetchDashboardData, 30000); // Refresh every 30 seconds
+
+    // Cleanup function to clear the interval when the component unmounts
+    return () => clearInterval(intervalId);
+
+  }, []); // Empty dependency array means this runs once on component mount
+
+  if (loading)
+    return (
+      <Container
+        className="d-flex justify-content-center align-items-center"
+        style={{ minHeight: "60vh" }}
+      >
+        <Spinner animation="border" variant="primary" />
+      </Container>
+    );
+
+  if (error)
+    return (
+      <Container className="py-5">
+        <Alert variant="danger" className="text-center">
+          {error}
+        </Alert>
+      </Container>
+    );
+
+  const boxStyle = {
+    backgroundColor: "#343a40", // Dark background for the boxes
+    color: "white",
+    padding: "20px",
+    borderRadius: "8px",
+    textAlign: "center",
+    marginBottom: "20px",
+    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+    height: "150px", // Fixed height for consistency
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+    cursor: "pointer", // Indicate clickable
+    transition: "transform 0.2s ease-in-out",
+  };
+
+  const countStyle = {
+    fontSize: "3rem",
+    fontWeight: "bold",
+    lineHeight: 1,
+  };
+
+  const titleStyle = {
+    fontSize: "1.2rem",
+    marginTop: "10px",
+    color: "#adb5bd",
+  };
+
+  return (
+    <Container className="py-4">
+      <h2 className="mb-4 text-center">Dashboard</h2>
+      <Row className="justify-content-center">
+        <Col md={4}>
+          <Card style={boxStyle} className="hover-effect">
+            <div style={countStyle}>{ticketCounts.open}</div>
+            <div style={titleStyle}>Open Issues</div>
+          </Card>
+        </Col>
+        <Col md={4}>
+          <Card style={boxStyle} className="hover-effect">
+            <div style={countStyle}>{ticketCounts.completed}</div>
+            <div style={titleStyle}>Completed Issues</div>
+          </Card>
+        </Col>
+        <Col md={4}>
+          <Card style={boxStyle} className="hover-effect">
+            <div style={countStyle}>{ticketCounts.unassigned}</div>
+            <div style={titleStyle}>Unassigned Issues</div>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Recent Issues section - as per your screenshot */}
+      <Row className="mt-4">
+        <Col>
+          <h3 className="mb-3">Recent Issues</h3>
+          <Card className="shadow-sm border-0">
+            <Card.Body>
+              {recentIssues.length > 0 ? (
+                <table className="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Type</th> {/* Changed from Priority based on schema */}
+                      <th>Status</th>
+                      <th>Created</th>
+                      {/* <th>Assigned To</th> Assuming no assignedTo field for now */}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentIssues.map((ticket) => (
+                      <tr key={ticket._id}>
+                        <td>
+                          <Link to={`/tickets/${ticket._id}`}>
+                            {ticket.subject}
+                          </Link>
+                        </td>
+                        <td><Badge bg="info" className="text-capitalize">{ticket.type}</Badge></td>
+                        <td>
+                          <Badge bg={statusColors[ticket.status] || "secondary"} className="text-capitalize">
+                            {ticket.status}
+                          </Badge>
+                        </td>
+                        <td>{new Date(ticket.createdAt).toLocaleDateString()}</td>
+                        {/* <td>{ticket.assignedTo ? ticket.assignedTo : 'N/A'}</td> */}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <p className="text-center text-muted">No recent issues found.</p>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+      {/* Add a CSS class for hover effect */}
+      <style>{`
+        .hover-effect:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+          cursor: pointer;
+        }
+      `}</style>
+    </Container>
+  );
+};
+
+export default Home2;
