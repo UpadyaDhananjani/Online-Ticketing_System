@@ -41,6 +41,7 @@ function TicketList({ token, onSelect }) {
             <tr>
               <th><i className="bi bi-card-text me-1"></i>Subject</th>
               <th><i className="bi bi-tag me-1"></i>Type</th>
+              <th><i className="bi bi-diagram-3 me-1"></i>Assigned Unit</th>
               <th><i className="bi bi-person me-1"></i>Requester</th>
               <th><i className="bi bi-info-circle me-1"></i>Status</th>
               <th><i className="bi bi-clock-history me-1"></i>Last Update</th>
@@ -67,6 +68,12 @@ function TicketList({ token, onSelect }) {
                   <Badge bg="info" text="dark" className="text-capitalize">
                     <i className="bi bi-tag me-1"></i>
                     {ticket.type ? ticket.type.charAt(0).toUpperCase() + ticket.type.slice(1) : '—'}
+                  </Badge>
+                </td>
+                <td>
+                  <Badge bg="secondary" className="text-capitalize">
+                    <i className="bi bi-diagram-3 me-1"></i>
+                    {ticket.assignedUnit || '—'}
                   </Badge>
                 </td>
                 <td>

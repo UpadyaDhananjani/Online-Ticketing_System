@@ -40,6 +40,7 @@ function TicketList({ token, filter }) {
           <tr>
             <th style={thStyle}><i className="bi bi-card-text me-1"></i>Subject</th>
             <th style={thStyle}><i className="bi bi-tag me-1"></i>Type</th>
+            <th style={thStyle}><i className="bi bi-diagram-3 me-1"></i>Assigned Unit</th>
             <th style={thStyle}><i className="bi bi-info-circle me-1"></i>Status</th>
             <th style={thStyle}><i className="bi bi-calendar me-1"></i>Created</th>
           </tr>
@@ -47,7 +48,7 @@ function TicketList({ token, filter }) {
         <tbody>
           {filteredTickets.length === 0 ? (
             <tr>
-              <td colSpan={4} style={{ textAlign: 'center', padding: 20, color: '#888' }}>
+              <td colSpan={5} style={{ textAlign: 'center', padding: 20, color: '#888' }}>
                 No tickets found.
               </td>
             </tr>
@@ -73,6 +74,12 @@ function TicketList({ token, filter }) {
                   <Badge bg="info" text="dark" className="text-capitalize">
                     <i className="bi bi-tag me-1"></i>
                     {ticket.type ? ticket.type.charAt(0).toUpperCase() + ticket.type.slice(1) : '—'}
+                  </Badge>
+                </td>
+                <td style={tdStyle}>
+                  <Badge bg="secondary" className="text-capitalize">
+                    <i className="bi bi-diagram-3 me-1"></i>
+                    {ticket.assignedUnit || '—'}
                   </Badge>
                 </td>
                 <td style={tdStyle}>

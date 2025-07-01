@@ -6,19 +6,28 @@ import {
   updateTicket,
   closeTicket,
   reopenTicket,
-  upload, // <-- import upload
+  upload,
   getTicketById
 } from '../controllers/ticketController.js';
 
 const router = express.Router();
 
+// Create a ticket (with image and assignedUnit)
 router.post('/', upload.single('image'), createTicket);
+
+// Get all tickets for user (or all for admin)
 router.get('/', /*authMiddleware,*/ getUserTickets);
+
+// Update a ticket (including assignedUnit)
 router.put('/:id', /*authMiddleware,*/ updateTicket);
+
+// Close a ticket
 router.patch('/:id/close', /*authMiddleware,*/ closeTicket);
+
+// Reopen a ticket
 router.patch('/:id/reopen', reopenTicket);
-// router.get('/uploads/:filename', (req, res) => {
-//   const filename = req.params.filename
-// })
+
+// Get a ticket by ID
 router.get('/:id', getTicketById);
+
 export default router;

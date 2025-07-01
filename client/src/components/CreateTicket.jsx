@@ -1,10 +1,20 @@
 import React, { useState } from 'react';
 import { Container, Row, Col, Form, Button, Card } from 'react-bootstrap';
 
+const UNIT_OPTIONS = [
+  "System and Network Administration",
+  "Asyhub Unit",
+  "Statistics Unit",
+  "Audit Unit",
+  "Helpdesk Unit",
+  "Functional Unit"
+];
+
 function CreateTicket({ token, onCreated }) {
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
   const [type, setType] = useState('incident');
+  const [assignedUnit, setAssignedUnit] = useState(UNIT_OPTIONS[0]);
   const [image, setImage] = useState(null);
 
   const handleSubmit = async e => {
@@ -13,6 +23,7 @@ function CreateTicket({ token, onCreated }) {
     formData.append('subject', subject);
     formData.append('description', description);
     formData.append('type', type);
+    formData.append('assignedUnit', assignedUnit);
     if (image) formData.append('image', image);
 
     const res = await fetch('/api/tickets', {
@@ -23,6 +34,7 @@ function CreateTicket({ token, onCreated }) {
     setSubject('');
     setDescription('');
     setType('incident');
+    setAssignedUnit(UNIT_OPTIONS[0]);
     setImage(null);
   };
 
@@ -70,15 +82,14 @@ function CreateTicket({ token, onCreated }) {
                     <option value="service">Service</option>
                   </Form.Select>
                 </Form.Group>
-                  <Form.Group className="mb-3" controlId="formType">
-                  <Form.Label>Assign to</Form.Label>
-                  <Form.Select value={type} onChange={e => setType(e.target.value)}>
-                    <option value="incident">Supervisor</option>
-                    <option value="bug">Engineer</option>
-            
+                <Form.Group className="mb-3" controlId="formAssignedUnit">
+                  <Form.Label>Assign to Unit</Form.Label>
+                  <Form.Select value={assignedUnit} onChange={e => setAssignedUnit(e.target.value)}>
+                    {UNIT_OPTIONS.map(unit => (
+                      <option key={unit} value={unit}>{unit}</option>
+                    ))}
                   </Form.Select>
                 </Form.Group>
-
                 <Form.Group className="mb-4" controlId="formImage">
                   <Form.Label>Image (jpg, jpeg, png)</Form.Label>
                   <Form.Control

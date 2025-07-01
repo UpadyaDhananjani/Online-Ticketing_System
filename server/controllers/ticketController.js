@@ -27,13 +27,18 @@ export const upload = multer({
 // Create a new ticket
 export const createTicket = async (req, res) => {
   try {
-    const { subject, description, type } = req.body;
-   
+    const { subject, description, type, assignedUnit } = req.body;
+
+    if (!assignedUnit) {
+      return res.status(400).json({ error: "assignedUnit is required" });
+    }
+
     const ticket = new Ticket({
       user: "000000000000000000000000", // Dummy ObjectId
       subject,
       description,
       type,
+      assignedUnit,
       image: req.file ? req.file.filename : undefined
     });
     await ticket.save();
@@ -47,8 +52,6 @@ export const createTicket = async (req, res) => {
 export const getUserTickets = async (req, res) => {
   try {
     // For testing: return all tickets, not just the user's
-  
-    // For testing: return all tickets, not just the user's
     const tickets = await Ticket.find();
     res.json(tickets);
   } catch (err) {
@@ -60,11 +63,13 @@ export const getUserTickets = async (req, res) => {
 export const updateTicket = async (req, res) => {
   try {
     const { id } = req.params;
-    const { subject, description } = req.body;
+    const { subject, description, assignedUnit } = req.body;
+    const updateFields = { subject, description, updatedAt: Date.now() };
+    if (assignedUnit) updateFields.assignedUnit = assignedUnit;
+
     const ticket = await Ticket.findOneAndUpdate(
       { _id: id, status: 'open' }, // Remove user: req.user._id
-      { _id: id, status: 'open' }, // Remove user: req.user._id
-      { subject, description, updatedAt: Date.now() },
+      updateFields,
       { new: true }
     );
     if (!ticket) return res.status(404).json({ error: 'Ticket not found or already closed' });
@@ -79,7 +84,6 @@ export const closeTicket = async (req, res) => {
   try {
     const { id } = req.params;
     const ticket = await Ticket.findOneAndUpdate(
-      { _id: id, status: 'open' }, // Remove user: req.user._id
       { _id: id, status: 'open' }, // Remove user: req.user._id
       { status: 'closed', updatedAt: Date.now() },
       { new: true }
