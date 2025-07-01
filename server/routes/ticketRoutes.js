@@ -1,13 +1,13 @@
 // server/routes/ticketRoutes.js
 import express from 'express';
 import {
-  createTicket,
-  getUserTickets,
-  updateTicket,
-  closeTicket,
-  reopenTicket,
-  upload,
-  getTicketById,
+  createTicket,
+  getUserTickets,
+  updateTicket,
+  closeTicket,
+  reopenTicket,
+  upload, // <-- import upload
+  getTicketById,
   getTicketSummary // <-- IMPORT THE NEW FUNCTION
 } from '../controllers/ticketController.js';
 
@@ -18,10 +18,13 @@ router.get('/', /*authMiddleware,*/ getUserTickets);
 router.put('/:id', /*authMiddleware,*/ updateTicket);
 router.patch('/:id/close', /*authMiddleware,*/ closeTicket);
 router.patch('/:id/reopen', reopenTicket);
+// router.get('/uploads/:filename', (req, res) => {
+//   const filename = req.params.filename
+// })
 
-// --- FIX: Place the more specific '/summary' route BEFORE the general '/:id' route ---
-router.get('/summary', getTicketSummary); // This route MUST come before router.get('/:id')
+// --- Correct order: Specific '/summary' route BEFORE general '/:id' route ---
+router.get('/summary', getTicketSummary);
 
-router.get('/:id', getTicketById); // Now this will only be hit if it's not '/summary'
+router.get('/:id', getTicketById);
 
 export default router;

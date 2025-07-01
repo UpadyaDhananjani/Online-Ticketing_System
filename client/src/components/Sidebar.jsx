@@ -1,6 +1,7 @@
+// client/src/components/Sidebar.jsx
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Nav, Navbar, Badge } from 'react-bootstrap'; // Added Badge for potential future use
+import { NavLink, useLocation } from 'react-router-dom';
+import { Nav, Navbar } from 'react-bootstrap';
 
 function Sidebar() {
   const location = useLocation();
@@ -18,90 +19,98 @@ function Sidebar() {
       }}
     >
       <Navbar.Brand className="mb-4" style={{ fontWeight: 700, fontSize: 28 }}>
-        Peppermint
+        
       </Navbar.Brand>
       <Nav className="flex-column w-100">
 
-        {/* Home Link - Ensure this points to "/" */}
+        {/* Home Link - Navigates to "/" which is mapped to Home2.jsx */}
         <Nav.Link
-          as={Link}
-          to="/" // This is crucial for navigating to Home2.jsx
-          active={location.pathname === '/'}
-          style={{
-            fontWeight: location.pathname === '/' ? 700 : 500,
-            color: '#222',
-            fontSize: 18,
-            marginBottom: 8,
-          }}
+          as={NavLink}
+          to="/"
+          className="sidebar-nav-link" // This class will be styled by the <style> tag below
         >
           Home
         </Nav.Link>
 
+        {/* Other sidebar links */}
         <Nav.Link
-          as={Link}
+          as={NavLink}
           to="/tickets"
-          active={location.pathname === '/tickets'}
-          style={{
-            fontWeight: location.pathname === '/tickets' ? 700 : 500,
-            color: '#222',
-            fontSize: 18,
-            marginBottom: 8,
-          }}
+          className="sidebar-nav-link"
         >
           Ticket List
         </Nav.Link>
         <Nav.Link
-          as={Link}
+          as={NavLink}
           to="/create-ticket"
-          active={location.pathname === '/create-ticket'}
-          style={{
-            fontWeight: location.pathname === '/create-ticket' ? 700 : 500,
-            color: '#222',
-            fontSize: 18,
-            marginBottom: 8,
-          }}
+          className="sidebar-nav-link"
         >
           Create Ticket
         </Nav.Link>
         <Nav.Link
-          as={Link}
+          as={NavLink}
           to="/tickets/open"
-          active={location.pathname === '/tickets/open'}
-          style={{
-            fontWeight: location.pathname === '/tickets/open' ? 700 : 500,
-            color: '#222',
-            fontSize: 18,
-            marginBottom: 8,
-          }}
+          className="sidebar-nav-link"
         >
           Open Tickets
         </Nav.Link>
         <Nav.Link
-          as={Link}
+          as={NavLink}
           to="/tickets/resolved"
-          active={location.pathname === '/tickets/resolved'}
-          style={{
-            fontWeight: location.pathname === '/tickets/resolved' ? 700 : 500,
-            color: '#222',
-            fontSize: 18,
-            marginBottom: 8,
-          }}
+          className="sidebar-nav-link"
         >
           Resolved Tickets
         </Nav.Link>
         <Nav.Link
-          as={Link}
+          as={NavLink}
           to="/admin"
-          active={location.pathname === '/admin'}
-          style={{
-            fontWeight: location.pathname === '/admin' ? 700 : 500,
-            color: '#222',
-            fontSize: 18,
-          }}
+          className="sidebar-nav-link"
         >
           Admin Dashboard
         </Nav.Link>
       </Nav>
+
+      {/* Embedded CSS for Sidebar Links */}
+      <style jsx>{`
+        /* Common styles for all sidebar navigation links */
+        .sidebar-nav-link {
+          font-weight: 500;
+          color: #222 !important; /* Override Bootstrap's default link color */
+          font-size: 18px;
+          margin-bottom: 8px; /* Spacing between links */
+          text-decoration: none; /* Remove underline */
+          transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out; /* Smooth transitions */
+          padding: 8px 12px; /* Padding inside each link */
+          border-radius: 4px; /* Slightly rounded corners */
+          display: block; /* Make the entire padded area clickable */
+        }
+
+        /* Hover state for sidebar links */
+        .sidebar-nav-link:hover {
+          color: #0056b3 !important; /* Darker blue on hover */
+          background-color: #f0f2f5; /* Light background on hover */
+        }
+
+        /* Active state for sidebar links (NavLink automatically adds the 'active' class) */
+        .sidebar-nav-link.active {
+          font-weight: 700; /* Bold when active */
+          color: #007bff !important; /* Bright blue when active */
+          background-color: #e9ecef; /* Slightly darker background for active */
+          border-left: 4px solid #007bff; /* Visual cue for active state */
+          padding-left: 8px; /* Adjust padding if a left border is added */
+        }
+
+        /* Ensure active link also has proper hover state */
+        .sidebar-nav-link.active:hover {
+          color: #0056b3 !important; /* Keep darker blue on hover even when active */
+          background-color: #e9ecef; /* Keep active background on hover */
+        }
+
+        /* General link underline removal - you might have this in App.css already */
+        a {
+            text-decoration: none !important;
+        }
+      `}</style>
     </Navbar>
   );
 }

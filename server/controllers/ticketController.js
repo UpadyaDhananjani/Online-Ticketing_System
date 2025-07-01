@@ -1,9 +1,10 @@
 // server/controllers/ticketController.js
+import mongoose from 'mongoose'; // Ensure mongoose is imported for Schema types if not already
 import Ticket from '../models/ticketModel.js';
 import multer from 'multer';
 import path from 'path';
 
-// Multer setup
+// Multer setup (No changes)
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, 'uploads/'); // make sure this folder exists
@@ -24,7 +25,7 @@ export const upload = multer({
   }
 });
 
-// Create a new ticket
+// Create a new ticket (No changes)
 export const createTicket = async (req, res) => {
   try {
     const { subject, description, type } = req.body;
@@ -43,7 +44,7 @@ export const createTicket = async (req, res) => {
   }
 };
 
-// Get all tickets for logged-in user
+// Get all tickets for logged-in user (No changes)
 export const getUserTickets = async (req, res) => {
   try {
     // For testing: return all tickets, not just the user's
@@ -56,7 +57,7 @@ export const getUserTickets = async (req, res) => {
   }
 };
 
-// Update/Edit a ticket
+// Update/Edit a ticket (No changes)
 export const updateTicket = async (req, res) => {
   try {
     const { id } = req.params;
@@ -74,7 +75,7 @@ export const updateTicket = async (req, res) => {
   }
 };
 
-// Close a ticket
+// Close a ticket (No changes)
 export const closeTicket = async (req, res) => {
   try {
     const { id } = req.params;
@@ -91,7 +92,7 @@ export const closeTicket = async (req, res) => {
   }
 };
 
-// Reopen a closed ticket
+// Reopen a closed ticket (No changes)
 export const reopenTicket = async (req, res) => {
   try {
     const { id } = req.params;
@@ -119,20 +120,17 @@ export const getTicketById = async (req, res) => {
   }
 };
 
-// --- NEW FUNCTION FOR TICKET SUMMARY COUNTS ---
+// --- MODIFIED FUNCTION: Get Ticket Summary Counts ---
 export const getTicketSummary = async (req, res) => {
   try {
-    const openCount = await Ticket.countDocuments({ status: { $in: ['open', 'reopened', 'in progress'] } });
-    const completedCount = await Ticket.countDocuments({ status: { $in: ['closed', 'resolved'] } });
-    // Assuming "unassigned" means tickets that are 'open' or 'reopened' and not yet 'in progress'
-    // If you have an `assignedTo` field in your Ticket model, a better query would be:
-    // const unassignedCount = await Ticket.countDocuments({ assignedTo: null, status: { $nin: ['closed', 'resolved'] } });
-    const unassignedCount = await Ticket.countDocuments({ status: { $in: ['open', 'reopened'] } });
+    const openCount = await Ticket.countDocuments({ status: 'open' }); // Only 'open'
+    const inProgressCount = await Ticket.countDocuments({ status: 'in progress' }); // Only 'in progress'
+    const resolvedCount = await Ticket.countDocuments({ status: 'resolved' }); // Only 'resolved'
 
     res.json({
       open: openCount,
-      completed: completedCount,
-      unassigned: unassignedCount,
+      inProgress: inProgressCount,
+      resolved: resolvedCount,
     });
   } catch (err) {
     console.error('Error fetching ticket summary:', err);
