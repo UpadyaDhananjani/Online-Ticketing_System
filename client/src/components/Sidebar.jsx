@@ -18,7 +18,7 @@ function Sidebar() {
       }}
     >
       <Navbar.Brand className="mb-4" style={{ fontWeight: 700, fontSize: 28 }}>
-        Navigation
+        
       </Navbar.Brand>
       <Nav className="flex-column w-100">
 
