@@ -1,44 +1,28 @@
-
-// import express from 'express'
-// import { register } from '../controllers/authController.js';
-// import e from 'express';
-// import { login } from '../controllers/authController.js';
-// import { logout } from '../controllers/authController.js';
-
-
 import express from 'express';
-
-
 import userAuth from '../middleware/authMiddleware.js';
-import { register, login, logout, sendVerifyOtp, verifyEmail, isAuthenticated, sendResetOtp , resetPassword} from '../controllers/authController.js';
-
-
+import {
+  register,
+  login,
+  logout,
+  sendVerifyOtp,
+  verifyEmail,
+  isAuthenticated,
+  sendResetOtp,
+  resetPassword
+} from '../controllers/authController.js';
 
 const authRouter = express.Router();
 
+// Public routes
 authRouter.post('/register', register);
 authRouter.post('/login', login);
 authRouter.post('/logout', logout);
-
-authRouter.post('/send-verify-otp', userAuth, sendVerifyOtp);
-authRouter.post('/verify-account', userAuth, verifyEmail);
-authRouter.post('/is-auth', isAuthenticated);
 authRouter.post('/send-reset-otp', sendResetOtp);
 authRouter.post('/reset-password', resetPassword);
 
+// Protected routes (require authentication)
+authRouter.post('/send-verify-otp', userAuth, sendVerifyOtp);
+authRouter.post('/verify-account', userAuth, verifyEmail);
+authRouter.get('/is-auth', isAuthenticated);
 
 export default authRouter;
-
-
-import e from 'express';
-
-
-
-// const authRouter = express.Router();
-
-// authRouter.post('/register',register);
-// authRouter.post('/login',login);
-// authRouter.post('/logout',logout);
-
-// export default authRouter;
-
