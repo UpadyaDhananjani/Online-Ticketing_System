@@ -6,8 +6,9 @@ import {
   updateTicket,
   closeTicket,
   reopenTicket,
-  upload, // <-- import upload
-  getTicketById
+  upload,
+  getTicketById,
+  getTicketSummary // <-- IMPORT THE NEW FUNCTION
 } from '../controllers/ticketController.js';
 
 const router = express.Router();
@@ -17,8 +18,10 @@ router.get('/', /*authMiddleware,*/ getUserTickets);
 router.put('/:id', /*authMiddleware,*/ updateTicket);
 router.patch('/:id/close', /*authMiddleware,*/ closeTicket);
 router.patch('/:id/reopen', reopenTicket);
-// router.get('/uploads/:filename', (req, res) => {
-//   const filename = req.params.filename
-// })
-router.get('/:id', getTicketById);
+
+// --- FIX: Place the more specific '/summary' route BEFORE the general '/:id' route ---
+router.get('/summary', getTicketSummary); // This route MUST come before router.get('/:id')
+
+router.get('/:id', getTicketById); // Now this will only be hit if it's not '/summary'
+
 export default router;
