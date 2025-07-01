@@ -1,18 +1,12 @@
 import express from 'express';
-import {
-  getAllTickets,
-  addAdminReply
-} from '../controllers/ticketAdminController.js';
-// import authMiddleware from '../middleware/authMiddleware.js';
-// import adminMiddleware from '../middleware/adminMiddleware.js';
+import { getAllTickets, addAdminReply } from '../controllers/ticketAdminController.js';
 import upload from '../middleware/uploadMiddleware.js';
 
 import Ticket from '../models/ticketModel.js';
 
 const router = express.Router();
 
-// Get all tickets (admin)
-// router.get('/', adminMiddleware, getAllTickets);
+// Disabled auth for development
 router.get('/', getAllTickets);
 
 // Add reply with optional attachments
