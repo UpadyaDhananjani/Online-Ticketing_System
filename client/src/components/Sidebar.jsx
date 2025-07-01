@@ -27,7 +27,7 @@ function Sidebar() {
         <Nav.Link
           as={NavLink}
           to="/"
-          className="sidebar-nav-link" // This class will be styled by the <style> tag below
+          className="sidebar-nav-link mt-5" // This class will be styled by the <style> tag below
         >
           Home
         </Nav.Link>
