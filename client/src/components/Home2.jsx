@@ -1,15 +1,15 @@
 // client/src/components/Home2.jsx
 import React, { useEffect, useState } from "react";
 import { Container, Row, Col, Spinner, Alert, Card, Badge } from "react-bootstrap";
-import { Link } from 'react-router-dom'; // Assuming you might want to link to recent issues
+import { Link } from 'react-router-dom'; // No need for useLocation here anymore
 
 const Home2 = () => {
-  const [ticketCounts, setTicketCounts] = useState({
-    open: 0,
-    completed: 0,
-    unassigned: 0,
+  const [ticketCounts, setTicketCounts] = useState({
+   open: 0,
+    inProgress: 0,
+    resolved: 0,
   });
-  const [recentIssues, setRecentIssues] = useState([]); // To display recent issues
+  const [recentIssues, setRecentIssues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -35,13 +35,12 @@ const Home2 = () => {
         const summaryData = await summaryRes.json();
         setTicketCounts({
           open: summaryData.open || 0,
-          completed: summaryData.completed || 0,
-          unassigned: summaryData.unassigned || 0,
+          inProgress: summaryData.inProgress || 0,
+          resolved: summaryData.resolved || 0,
         });
 
-        // Fetch recent issues (e.g., last 5 tickets, or open ones, adjust as needed)
-        // You might have a separate endpoint for this, or modify your existing /api/tickets to support queries
-        const recentIssuesRes = await fetch("/api/tickets?limit=5&sortBy=createdAt&sortOrder=desc"); // Example: fetch last 5 tickets
+        // Fetch recent issues
+        const recentIssuesRes = await fetch("/api/tickets?limit=5&sortBy=createdAt&sortOrder=desc"); // Fetch last 5 tickets
         if (!recentIssuesRes.ok) {
           const errorText = await recentIssuesRes.text();
           throw new Error(`Failed to fetch recent issues: ${recentIssuesRes.status} - ${errorText}`);
@@ -59,13 +58,16 @@ const Home2 = () => {
 
     fetchDashboardData();
 
-    // Optional: Auto-refresh the dashboard data periodically (e.g., every 30 seconds)
+    // Set up auto-refresh
     const intervalId = setInterval(fetchDashboardData, 30000); // Refresh every 30 seconds
 
-    // Cleanup function to clear the interval when the component unmounts
-    return () => clearInterval(intervalId);
+    // Cleanup function: Clear interval
+    return () => {
+      clearInterval(intervalId);
+    };
 
-  }, []); // Empty dependency array means this runs once on component mount
+    // Removed location.pathname from dependencies, as key prop will force remount
+  }, []); // Empty dependency array means this runs once on component mount (or re-mount due to key change)
 
   if (loading)
     return (
@@ -87,19 +89,19 @@ const Home2 = () => {
     );
 
   const boxStyle = {
-    backgroundColor: "#343a40", // Dark background for the boxes
+    backgroundColor: "#343a40",
     color: "white",
     padding: "20px",
     borderRadius: "8px",
     textAlign: "center",
     marginBottom: "20px",
     boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-    height: "150px", // Fixed height for consistency
+    height: "150px",
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
-    cursor: "pointer", // Indicate clickable
+    cursor: "pointer",
     transition: "transform 0.2s ease-in-out",
   };
 
@@ -127,19 +129,19 @@ const Home2 = () => {
         </Col>
         <Col md={4}>
           <Card style={boxStyle} className="hover-effect">
-            <div style={countStyle}>{ticketCounts.completed}</div>
-            <div style={titleStyle}>Completed Issues</div>
+            <div style={countStyle}>{ticketCounts.inProgress}</div>
+            <div style={titleStyle}>In Progress Issues</div>
           </Card>
         </Col>
         <Col md={4}>
           <Card style={boxStyle} className="hover-effect">
-            <div style={countStyle}>{ticketCounts.unassigned}</div>
-            <div style={titleStyle}>Unassigned Issues</div>
+            <div style={countStyle}>{ticketCounts.resolved}</div>
+            <div style={titleStyle}>Resolved Issues</div>
           </Card>
         </Col>
       </Row>
 
-      {/* Recent Issues section - as per your screenshot */}
+      {/* Recent Issues section */}
       <Row className="mt-4">
         <Col>
           <h3 className="mb-3">Recent Issues</h3>
@@ -150,10 +152,9 @@ const Home2 = () => {
                   <thead>
                     <tr>
                       <th>Title</th>
-                      <th>Type</th> {/* Changed from Priority based on schema */}
+                      <th>Type</th>
                       <th>Status</th>
                       <th>Created</th>
-                      {/* <th>Assigned To</th> Assuming no assignedTo field for now */}
                     </tr>
                   </thead>
                   <tbody>
@@ -171,7 +172,6 @@ const Home2 = () => {
                           </Badge>
                         </td>
                         <td>{new Date(ticket.createdAt).toLocaleDateString()}</td>
-                        {/* <td>{ticket.assignedTo ? ticket.assignedTo : 'N/A'}</td> */}
                       </tr>
                     ))}
                   </tbody>
@@ -183,7 +183,6 @@ const Home2 = () => {
           </Card>
         </Col>
       </Row>
-      {/* Add a CSS class for hover effect */}
       <style>{`
         .hover-effect:hover {
           transform: translateY(-5px);

@@ -3,8 +3,8 @@ import React from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
 import Sidebar from './components/Sidebar.jsx';
-import Home from './components/Home.jsx'; // Make sure this is still valid if you use it elsewhere
-import Home2 from './components/Home2.jsx'; // Import the new Home2 component
+import Home from './components/Home.jsx';
+import Home2 from './components/Home2.jsx'; // Make sure this import is correct
 import Login from './components/Login.jsx';
 import ResetPassword from './components/ResetPassword.jsx';
 import EmailVerify from './components/EmailVerify.jsx';
@@ -28,6 +28,9 @@ function App({ token, setToken }) {
     '/register'
   ].includes(location.pathname);
 
+  // Determine if the current path is the dashboard
+  const isDashboard = location.pathname === '/';
+
   return (
     <div>
       {!isAuthPage && <Navbar />}
@@ -36,26 +39,25 @@ function App({ token, setToken }) {
         <div className="flex-grow-1" style={{ flex: 1, padding: '32px 0' }}>
           <ToastContainer />
           <Routes>
-            {/* Home and Auth */}
-            {/* The root path "/" now renders Home2 - this is your dashboard */}
-            <Route path="/" element={<Home2 />} />
-            {/* Keep the original Home route if it's used elsewhere, otherwise you can remove it */}
+            {/* Dashboard page - Use a key prop to force re-mount on navigation to "/" */}
+            <Route path="/" element={<Home2 key={isDashboard ? location.key : "home2-static"} />} />
+            {/* The key can be location.key or just location.pathname if you prefer */}
+            {/* <Route path="/" element={<Home2 key={location.pathname} />} /> */}
+
             <Route path="/home" element={<Home />} />
 
             <Route path="/login" element={<Login onSuccess={setToken} />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/email-verify" element={<EmailVerify />} />
 
-            {/* Ticketing System */}
             <Route path="/tickets-page" element={<TicketsPage token={token} />} />
-            <Route path="/tickets" element={<TicketList />} /> {/* This is your full ticket list page */}
+            <Route path="/tickets" element={<TicketList />} />
             <Route path="/create-ticket" element={<CreateTicket />} />
             <Route path="/tickets/:id" element={<Ticket />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/tickets/open" element={<TicketsPage token={token} filter="open" />} />
             <Route path="/tickets/resolved" element={<TicketsPage token={token} filter="resolved" />} />
 
-            {/* Add any additional routes here */}
           </Routes>
         </div>
       </div>
