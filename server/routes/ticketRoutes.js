@@ -7,7 +7,9 @@ import {
   closeTicket,
   reopenTicket,
   upload,
-  getTicketById
+  getTicketById,
+  getTicketSummary// <-- IMPORT THE NEW FUNCTION
+
 } from '../controllers/ticketController.js';
 
 const router = express.Router();
@@ -27,7 +29,15 @@ router.patch('/:id/close', /*authMiddleware,*/ closeTicket);
 // Reopen a ticket
 router.patch('/:id/reopen', reopenTicket);
 
+
+// --- FIX: Place the more specific '/summary' route BEFORE the general '/:id' route ---
+router.get('/summary', getTicketSummary); // This route MUST come before router.get('/:id')
+
+router.get('/:id', getTicketById); // Now this will only be hit if it's not '/summary'
+
+
+
 // Get a ticket by ID
-router.get('/:id', getTicketById);
 
 export default router;
+
