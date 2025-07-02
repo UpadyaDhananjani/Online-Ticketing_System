@@ -15,11 +15,6 @@ const Home2 = () => {
     inProgress: 0,
     resolved: 0,
   });
-  const [ticketCounts, setTicketCounts] = useState({
-    open: 0,
-    inProgress: 0,
-    resolved: 0,
-  });
 
   const [recentIssues, setRecentIssues] = useState([]);
   const [loading, setLoading] = useState(true);
