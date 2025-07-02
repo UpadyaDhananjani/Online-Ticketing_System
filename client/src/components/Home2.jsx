@@ -15,6 +15,11 @@ const Home2 = () => {
     inProgress: 0,
     resolved: 0,
   });
+  const [ticketCounts, setTicketCounts] = useState({
+    open: 0,
+    inProgress: 0,
+    resolved: 0,
+  });
 
   const [recentIssues, setRecentIssues] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,7 +37,6 @@ const Home2 = () => {
     const fetchDashboardData = async () => {
       setLoading(true);
       setError("");
-
       try {
         const summaryRes = await fetch("/api/tickets/summary");
         if (!summaryRes.ok) {
@@ -133,7 +137,6 @@ const Home2 = () => {
               {ticketCounts.open}
             </div>
             <div style={titleStyle}>
-              <BsInfoCircle className="me-2" />
               Open Issues
             </div>
           </Card>
@@ -144,7 +147,6 @@ const Home2 = () => {
               {ticketCounts.inProgress}
             </div>
             <div style={titleStyle}>
-              <BsDiagram3 className="me-2" />
               In Progress Issues
             </div>
           </Card>
@@ -155,7 +157,6 @@ const Home2 = () => {
               {ticketCounts.resolved}
             </div>
             <div style={titleStyle}>
-              <BsCalendar className="me-2" />
               Resolved Issues
             </div>
           </Card>
