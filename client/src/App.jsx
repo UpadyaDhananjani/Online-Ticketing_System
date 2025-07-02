@@ -17,6 +17,9 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'; // Keep this for react-toastify's own styles
 import 'react-toastify/dist/ReactToastify.css';
 import 'react-toastify/dist/ReactToastify.css'; // Keep this for react-toastify's own styles
+import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS for styling
+import 'bootstrap-icons/font/bootstrap-icons.css'; // Import Bootstrap Icons for icons
+import './App.css'; // Import your custom CSS styles
 
 function App({ token, setToken }) {
   const location = useLocation();
