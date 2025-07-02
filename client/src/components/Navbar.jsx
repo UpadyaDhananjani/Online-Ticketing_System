@@ -9,11 +9,9 @@ import axios from 'axios';
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+
   const { userData, setIsLoggedin, setUserData, backendUrl } = useContext(AppContent);
   const [showDropdown, setShowDropdown] = useState(false);
-
-  // Hide Login button on auth routes
-  const hideLoginBtn = ['/login', '/reset-password', '/email-verify'].includes(location.pathname);
 
   const sendVerificationOtp = async () => {
     try {
@@ -33,6 +31,11 @@ const Navbar = () => {
     }
   };
 
+  const handleLoginClick = () => {
+    navigate('/login');
+    setShowDropdown(false);
+  };
+
   const logout = async () => {
     try {
       axios.defaults.withCredentials = true;
@@ -40,7 +43,8 @@ const Navbar = () => {
       if (data.success) {
         setIsLoggedin(false);
         setUserData(null);
-        navigate('/');
+        // --- CHANGE HERE: Navigate to login page after logout ---
+        navigate('/login');
         toast.success("Logged out successfully!");
       } else {
         toast.error(data.message);
@@ -66,17 +70,21 @@ const Navbar = () => {
         onClick={() => navigate('/')}
       />
 
-      {/* User Profile / Login Button Section */}
+      {/* Right Section: User Initial / Login Button and Dropdown */}
       <div className="relative">
-        {userData ? (
-          <>
-            <div className="user-initial-circle" onClick={toggleDropdown}>
-              {userData.name?.[0]?.toUpperCase() || 'U'}
-            </div>
+        <div
+          className="user-initial-circle"
+          onClick={toggleDropdown}
+          title={userData ? userData.name : "Account"} // Tooltip for clarity
+        >
+          {userData?.name?.[0]?.toUpperCase() || 'U'}
+        </div>
 
-            {showDropdown && (
-              <div className="user-dropdown-menu">
-                <ul className="list-none m-0 p-0">
+        {showDropdown && (
+          <div className="user-dropdown-menu">
+            <ul className="list-none m-0 p-0">
+              {userData ? (
+                <>
                   {!userData.isAccountVerified && (
                     <li onClick={sendVerificationOtp} className="dropdown-item">
                       Verify email
@@ -85,19 +93,14 @@ const Navbar = () => {
                   <li onClick={logout} className="dropdown-item">
                     Logout
                   </li>
-                </ul>
-              </div>
-            )}
-          </>
-        ) : (
-          !hideLoginBtn && (
-            <button
-              onClick={() => navigate('/login')}
-              className="flex items-center gap-2 border border-gray-500 rounded-full px-6 py-2 text-gray-800 hover:bg-gray-100 transition-all"
-            >
-              Login <img src={assets.arrow_icon} alt="arrow" />
-            </button>
-          )
+                </>
+              ) : (
+                <li onClick={handleLoginClick} className="dropdown-item">
+                  Login
+                </li>
+              )}
+            </ul>
+          </div>
         )}
       </div>
     </div>
