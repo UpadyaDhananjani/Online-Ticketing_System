@@ -12,7 +12,7 @@ function Sidebar() {
       expand="lg"
       className="flex-column align-items-start p-4"
       style={{
-        width: 220,
+        width: 270,
         minHeight: '100vh',
         borderRight: '1px solid #eee',
         boxShadow: '2px 0 8px rgba(0,0,0,0.03)',
@@ -33,44 +33,35 @@ function Sidebar() {
         </Nav.Link>
 
         {/* Other sidebar links */}
-        <Nav.Link
+         <Nav.Link
           as={NavLink}
           to="/create-ticket"
           className="sidebar-nav-link"
         >
           Create Ticket
         </Nav.Link>
-
-        {/* My Tickets with sub-links */}
-        <div>
-          <Nav.Link
-            as={NavLink}
-            to="/tickets"
-            className="sidebar-nav-link"
-            style={{ fontWeight: 600 }}
-          >
-            My Tickets
-          </Nav.Link>
-          <div style={{ paddingLeft: 18 }}>
-            <Nav.Link
-              as={NavLink}
-              to="/tickets/open"
-              className="sidebar-nav-link"
-              style={{ fontSize: 16 }}
-            >
-              My Open Tickets
-            </Nav.Link>
-            <Nav.Link
-              as={NavLink}
-              to="/tickets/resolved"
-              className="sidebar-nav-link"
-              style={{ fontSize: 16 }}
-            >
-              My Resolved Tickets
-            </Nav.Link>
-          </div>
-        </div>
-
+        <Nav.Link
+          as={NavLink}
+          to="/tickets"
+          className="sidebar-nav-link"
+        >
+          My Tickets
+        </Nav.Link>
+       
+        <Nav.Link
+          as={NavLink}
+          to="/tickets/open"
+          className="sidebar-nav-link"
+        >
+          My Open Tickets
+        </Nav.Link>
+        <Nav.Link
+          as={NavLink}
+          to="/tickets/resolved"
+          className="sidebar-nav-link"
+        >
+          My Resolved Tickets
+        </Nav.Link>
         <Nav.Link
           as={NavLink}
           to="/admin"

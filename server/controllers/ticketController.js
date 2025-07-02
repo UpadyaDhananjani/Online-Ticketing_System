@@ -1,5 +1,5 @@
 // server/controllers/ticketController.js
-import mongoose from 'mongoose'; // Ensure mongoose is imported for Schema types if not already
+import mongoose from 'mongoose';
 import Ticket from '../models/ticketModel.js';
 import multer from 'multer';
 import path from 'path';
@@ -25,17 +25,21 @@ export const upload = multer({
   }
 });
 
-// Create a new ticket (No changes)
+// Create a new ticket
 export const createTicket = async (req, res) => {
-
   try {
-    const { subject, description, type } = req.body;
-   
+    const { subject, description, type, assignedUnit } = req.body;
+
+    if (!assignedUnit) {
+      return res.status(400).json({ error: "assignedUnit is required" });
+    }
+
     const ticket = new Ticket({
       user: "000000000000000000000000", // Dummy ObjectId
       subject,
       description,
       type,
+      assignedUnit,
       image: req.file ? req.file.filename : undefined
     });
     await ticket.save();
@@ -43,28 +47,6 @@ export const createTicket = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-
-  try {
-    const { subject, description, type, assignedUnit } = req.body;
-
-    if (!assignedUnit) {
-      return res.status(400).json({ error: "assignedUnit is required" });
-    }
-
-    const ticket = new Ticket({
-      user: "000000000000000000000000", // Dummy ObjectId
-      subject,
-      description,
-      type,
-      assignedUnit,
-      image: req.file ? req.file.filename : undefined
-    });
-    await ticket.save();
-    res.status(201).json(ticket);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-
 };
 
 // Get all tickets for logged-in user (No changes)
@@ -72,34 +54,26 @@ export const getUserTickets = async (req, res) => {
 
   try {
     // For testing: return all tickets, not just the user's
-  
-    // For testing: return all tickets, not just the user's
     const tickets = await Ticket.find();
     res.json(tickets);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 
-  try {
-    // For testing: return all tickets, not just the user's
-    const tickets = await Ticket.find();
-    res.json(tickets);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-
 };
 
-// Update/Edit a ticket (No changes)
+// Update/Edit a ticket
 export const updateTicket = async (req, res) => {
 
   try {
     const { id } = req.params;
-    const { subject, description } = req.body;
+    const { subject, description, assignedUnit } = req.body;
+    const updateFields = { subject, description, updatedAt: Date.now() };
+    if (assignedUnit) updateFields.assignedUnit = assignedUnit;
+
     const ticket = await Ticket.findOneAndUpdate(
-      { _id: id, status: 'open' }, // Remove user: req.user._id
-      { _id: id, status: 'open' }, // Remove user: req.user._id
-      { subject, description, updatedAt: Date.now() },
+      { _id: id, status: 'open' },
+      updateFields,
       { new: true }
     );
     if (!ticket) return res.status(404).json({ error: 'Ticket not found or already closed' });
@@ -108,33 +82,15 @@ export const updateTicket = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 
-  try {
-    const { id } = req.params;
-    const { subject, description, assignedUnit } = req.body;
-    const updateFields = { subject, description, updatedAt: Date.now() };
-    if (assignedUnit) updateFields.assignedUnit = assignedUnit;
-
-    const ticket = await Ticket.findOneAndUpdate(
-      { _id: id, status: 'open' }, // Remove user: req.user._id
-      updateFields,
-      { new: true }
-    );
-    if (!ticket) return res.status(404).json({ error: 'Ticket not found or already closed' });
-    res.json(ticket);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-
 };
 
-// Close a ticket (No changes)
+// Close a ticket
 export const closeTicket = async (req, res) => {
 
   try {
     const { id } = req.params;
     const ticket = await Ticket.findOneAndUpdate(
-      { _id: id, status: 'open' }, // Remove user: req.user._id
-      { _id: id, status: 'open' }, // Remove user: req.user._id
+      { _id: id, status: 'open' },
       { status: 'closed', updatedAt: Date.now() },
       { new: true }
     );
@@ -143,19 +99,6 @@ export const closeTicket = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-
-  try {
-    const { id } = req.params;
-    const ticket = await Ticket.findOneAndUpdate(
-      { _id: id, status: 'open' }, // Remove user: req.user._id
-      { status: 'closed', updatedAt: Date.now() },
-      { new: true }
-    );
-    if (!ticket) return res.status(404).json({ error: 'Ticket not found or already closed' });
-    res.json(ticket);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
 
 };
 
@@ -190,9 +133,9 @@ export const getTicketById = async (req, res) => {
 // --- MODIFIED FUNCTION: Get Ticket Summary Counts ---
 export const getTicketSummary = async (req, res) => {
   try {
-    const openCount = await Ticket.countDocuments({ status: 'open' }); // Only 'open'
-    const inProgressCount = await Ticket.countDocuments({ status: 'in progress' }); // Only 'in progress'
-    const resolvedCount = await Ticket.countDocuments({ status: 'resolved' }); // Only 'resolved'
+    const openCount = await Ticket.countDocuments({ status: 'open' });
+    const inProgressCount = await Ticket.countDocuments({ status: 'in progress' });
+    const resolvedCount = await Ticket.countDocuments({ status: 'resolved' });
 
     res.json({
       open: openCount,
