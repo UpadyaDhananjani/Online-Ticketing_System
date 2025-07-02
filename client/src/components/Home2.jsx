@@ -1,8 +1,13 @@
-// client/src/components/Home2.jsx
 import React, { useEffect, useState } from "react";
 import { Container, Row, Col, Spinner, Alert, Card, Badge } from "react-bootstrap";
 import { Link } from 'react-router-dom';
-import { BsCardText, BsTag, BsDiagram3, BsInfoCircle, BsCalendar, BsCheckCircle } from "react-icons/bs";
+import {
+  BsCardText,
+  BsTag,
+  BsDiagram3,
+  BsInfoCircle,
+  BsCalendar,
+} from "react-icons/bs";
 
 const Home2 = () => {
   const [ticketCounts, setTicketCounts] = useState({
@@ -10,6 +15,7 @@ const Home2 = () => {
     inProgress: 0,
     resolved: 0,
   });
+
   const [recentIssues, setRecentIssues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -123,11 +129,9 @@ const Home2 = () => {
         <Col xs={12} md={4}>
           <Card style={boxStyle} className="hover-effect">
             <div style={countStyle}>
-           
               {ticketCounts.open}
             </div>
             <div style={titleStyle}>
-              <BsInfoCircle className="me-2" />
               Open Issues
             </div>
           </Card>
@@ -135,11 +139,9 @@ const Home2 = () => {
         <Col xs={12} md={4}>
           <Card style={boxStyle} className="hover-effect">
             <div style={countStyle}>
-             
               {ticketCounts.inProgress}
             </div>
             <div style={titleStyle}>
-              <BsDiagram3 className="me-2" />
               In Progress Issues
             </div>
           </Card>
@@ -147,11 +149,9 @@ const Home2 = () => {
         <Col xs={12} md={4}>
           <Card style={boxStyle} className="hover-effect">
             <div style={countStyle}>
-             
               {ticketCounts.resolved}
             </div>
             <div style={titleStyle}>
-              <BsCalendar className="me-2" />
               Resolved Issues
             </div>
           </Card>
@@ -168,27 +168,27 @@ const Home2 = () => {
                 <table className="table table-striped align-middle">
                   <thead>
                     <tr>
-                      <th className="align-middle">
+                      <th>
                         <span className="d-flex align-items-center gap-2">
                           <BsCardText /> Title
                         </span>
                       </th>
-                      <th className="align-middle">
+                      <th>
                         <span className="d-flex align-items-center gap-2">
                           <BsTag /> Type
                         </span>
                       </th>
-                      <th className="align-middle">
+                      <th>
                         <span className="d-flex align-items-center gap-2">
                           <BsDiagram3 /> Assigned Unit
                         </span>
                       </th>
-                      <th className="align-middle">
+                      <th>
                         <span className="d-flex align-items-center gap-2">
                           <BsInfoCircle /> Status
                         </span>
                       </th>
-                      <th className="align-middle">
+                      <th>
                         <span className="d-flex align-items-center gap-2">
                           <BsCalendar /> Created
                         </span>
@@ -201,9 +201,7 @@ const Home2 = () => {
                         <td>
                           <span className="d-flex align-items-center gap-2">
                             <BsCardText className="text-primary" />
-                            <Link to={`/tickets/${ticket._id}`}>
-                              {ticket.subject}
-                            </Link>
+                            <Link to={`/tickets/${ticket._id}`}>{ticket.subject}</Link>
                           </span>
                         </td>
                         <td>
@@ -241,6 +239,7 @@ const Home2 = () => {
           </Card>
         </Col>
       </Row>
+
       <style>{`
         .hover-effect:hover {
           transform: translateY(-5px);
