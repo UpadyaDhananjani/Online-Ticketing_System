@@ -35,32 +35,42 @@ function Sidebar() {
         {/* Other sidebar links */}
         <Nav.Link
           as={NavLink}
-          to="/tickets"
-          className="sidebar-nav-link"
-        >
-          Ticket List
-        </Nav.Link>
-        <Nav.Link
-          as={NavLink}
           to="/create-ticket"
           className="sidebar-nav-link"
         >
           Create Ticket
         </Nav.Link>
-        <Nav.Link
-          as={NavLink}
-          to="/tickets/open"
-          className="sidebar-nav-link"
-        >
-          Open Tickets
-        </Nav.Link>
-        <Nav.Link
-          as={NavLink}
-          to="/tickets/resolved"
-          className="sidebar-nav-link"
-        >
-          Resolved Tickets
-        </Nav.Link>
+
+        {/* My Tickets with sub-links */}
+        <div>
+          <Nav.Link
+            as={NavLink}
+            to="/tickets"
+            className="sidebar-nav-link"
+            style={{ fontWeight: 600 }}
+          >
+            My Tickets
+          </Nav.Link>
+          <div style={{ paddingLeft: 18 }}>
+            <Nav.Link
+              as={NavLink}
+              to="/tickets/open"
+              className="sidebar-nav-link"
+              style={{ fontSize: 16 }}
+            >
+              My Open Tickets
+            </Nav.Link>
+            <Nav.Link
+              as={NavLink}
+              to="/tickets/resolved"
+              className="sidebar-nav-link"
+              style={{ fontSize: 16 }}
+            >
+              My Resolved Tickets
+            </Nav.Link>
+          </div>
+        </div>
+
         <Nav.Link
           as={NavLink}
           to="/admin"
