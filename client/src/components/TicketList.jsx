@@ -3,6 +3,33 @@ import { getTickets } from '../api/ticketApi';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from 'react-bootstrap';
 
+const UNIT_OPTIONS = [
+  "System and Network Administration",
+  "Asyhub Unit",
+  "Statistics Unit",
+  "Audit Unit",
+  "Helpdesk Unit",
+  "Functional Unit"
+];
+
+const STATUS_OPTIONS = [
+  "All",
+  "open",
+  "in progress",
+  "closed",
+  "resolved",
+  "reopened"
+];
+
+const TYPE_OPTIONS = [
+  "All",
+  "incident",
+  "bug",
+  "maintenance",
+  "request",
+  "service"
+];
+
 const statusColors = {
   open: "success",
   closed: "danger",
@@ -12,6 +39,9 @@ const statusColors = {
 
 function TicketList({ token, filter }) {
   const [tickets, setTickets] = useState([]);
+  const [unitFilter, setUnitFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [typeFilter, setTypeFilter] = useState("All");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -20,14 +50,63 @@ function TicketList({ token, filter }) {
       .catch(err => alert(err.response?.data?.error || err.message));
   }, [token]);
 
-  // Filter tickets by status if filter prop is provided
-  const filteredTickets = filter
-    ? tickets.filter(ticket => ticket.status === filter)
-    : tickets;
+  const filteredTickets = tickets.filter(ticket => {
+    const unitMatch = unitFilter === "All" || ticket.assignedUnit === unitFilter;
+    const statusMatch = statusFilter === "All" || ticket.status === statusFilter;
+    const typeMatch = typeFilter === "All" || ticket.type === typeFilter;
+    return unitMatch && statusMatch && typeMatch;
+  });
 
   return (
     <div style={{ maxWidth: 900, margin: '30px auto' }}>
       <h2 style={{ textAlign: 'center', marginBottom: 20 }}>My Tickets</h2>
+      {/* Filter dropdowns */}
+      <div className="mb-3">
+        <div className="row">
+          <div className="col-md-4 mb-2">
+            <select
+              value={unitFilter}
+              onChange={e => setUnitFilter(e.target.value)}
+              className="form-select"
+            >
+              <option value="All">All Units</option>
+              {UNIT_OPTIONS.map(unit => (
+                <option key={unit} value={unit}>{unit}</option>
+              ))}
+            </select>
+          </div>
+          <div className="col-md-4 mb-2">
+            <select
+              value={statusFilter}
+              onChange={e => setStatusFilter(e.target.value)}
+              className="form-select"
+            >
+              {STATUS_OPTIONS.map(status => (
+                <option key={status} value={status}>
+                  {status === "All"
+                    ? "All Statuses"
+                    : status.charAt(0).toUpperCase() + status.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="col-md-4 mb-2">
+            <select
+              value={typeFilter}
+              onChange={e => setTypeFilter(e.target.value)}
+              className="form-select"
+            >
+              {TYPE_OPTIONS.map(type => (
+                <option key={type} value={type}>
+                  {type === "All"
+                    ? "All Types"
+                    : type.charAt(0).toUpperCase() + type.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
       <table style={{
         width: '100%',
         borderCollapse: 'collapse',
