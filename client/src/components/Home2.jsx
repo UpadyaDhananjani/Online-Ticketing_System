@@ -1,9 +1,13 @@
-// client/src/components/Home2.jsx
 import React, { useEffect, useState } from "react";
 import { Container, Row, Col, Spinner, Alert, Card, Badge } from "react-bootstrap";
 import { Link } from 'react-router-dom';
-
-import { BsCardText, BsTag, BsDiagram3, BsInfoCircle, BsCalendar, BsCheckCircle } from "react-icons/bs";
+import {
+  BsCardText,
+  BsTag,
+  BsDiagram3,
+  BsInfoCircle,
+  BsCalendar,
+} from "react-icons/bs";
 
 const Home2 = () => {
   const [ticketCounts, setTicketCounts] = useState({
@@ -11,15 +15,6 @@ const Home2 = () => {
     inProgress: 0,
     resolved: 0,
   });
-
-// REMOVED: import '../App.css'; // Styles are now in App.js
-
-const Home2 = () => {
-  const [ticketCounts, setTicketCounts] = useState({
-    open: 0,
-    inProgress: 0,
-    resolved: 0,
-  });
 
   const [recentIssues, setRecentIssues] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -50,20 +45,6 @@ const Home2 = () => {
           inProgress: summaryData.inProgress || 0,
           resolved: summaryData.resolved || 0,
         });
-
-      try {
-        const summaryRes = await fetch("/api/tickets/summary");
-        if (!summaryRes.ok) {
-          const errorText = await summaryRes.text();
-          throw new Error(`Failed to fetch ticket summary: ${summaryRes.status} - ${errorText}`);
-        }
-        const summaryData = await summaryRes.json();
-        setTicketCounts({
-          open: summaryData.open || 0,
-          inProgress: summaryData.inProgress || 0,
-          resolved: summaryData.resolved || 0,
-        });
-
 
         const recentIssuesRes = await fetch("/api/tickets?limit=5&sortBy=createdAt&sortOrder=desc");
         if (!recentIssuesRes.ok) {
@@ -118,58 +99,6 @@ const Home2 = () => {
     flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
-
-      } catch (err) {
-        console.error("Dashboard data fetch error:", err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDashboardData();
-
-    const intervalId = setInterval(fetchDashboardData, 30000);
-
-    return () => {
-      clearInterval(intervalId);
-    };
-
-  }, []);
-
-  if (loading)
-    return (
-      <Container
-        className="d-flex justify-content-center align-items-center"
-        style={{ minHeight: "60vh" }}
-      >
-        <Spinner animation="border" variant="primary" />
-      </Container>
-    );
-
-  if (error)
-    return (
-      <Container className="py-5">
-        <Alert variant="danger" className="text-center">
-          {error}
-        </Alert>
-      </Container>
-    );
-
-  const boxStyle = {
-    backgroundColor: "#343a40",
-    color: "white",
-    padding: "20px",
-    borderRadius: "8px",
-    textAlign: "center",
-    marginBottom: "20px",
-    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-    height: "150px",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-
     cursor: "pointer",
     transition: "transform 0.2s ease-in-out",
   };
@@ -194,7 +123,6 @@ const Home2 = () => {
     gap: "0.5rem"
   };
 
-
   return (
     <Container className="py-4">
       <h2 className="mb-4 text-center">Dashboard</h2>
@@ -202,7 +130,6 @@ const Home2 = () => {
         <Col xs={12} md={4}>
           <Card style={boxStyle} className="hover-effect">
             <div style={countStyle}>
-           
               {ticketCounts.open}
             </div>
             <div style={titleStyle}>
@@ -214,7 +141,6 @@ const Home2 = () => {
         <Col xs={12} md={4}>
           <Card style={boxStyle} className="hover-effect">
             <div style={countStyle}>
-             
               {ticketCounts.inProgress}
             </div>
             <div style={titleStyle}>
@@ -226,7 +152,6 @@ const Home2 = () => {
         <Col xs={12} md={4}>
           <Card style={boxStyle} className="hover-effect">
             <div style={countStyle}>
-             
               {ticketCounts.resolved}
             </div>
             <div style={titleStyle}>
@@ -243,38 +168,31 @@ const Home2 = () => {
           <h3 className="mb-3">Recent Issues</h3>
           <Card className="shadow-sm border-0">
             <Card.Body>
-
-      <Row className="mt-4">
-        <Col>
-          <h3 className="mb-3">Recent Issues</h3>
-          <Card className="shadow-sm border-0">
-            <Card.Body>
-
               {recentIssues.length > 0 ? (
                 <table className="table table-striped align-middle">
                   <thead>
                     <tr>
-                      <th className="align-middle">
+                      <th>
                         <span className="d-flex align-items-center gap-2">
                           <BsCardText /> Title
                         </span>
                       </th>
-                      <th className="align-middle">
+                      <th>
                         <span className="d-flex align-items-center gap-2">
                           <BsTag /> Type
                         </span>
                       </th>
-                      <th className="align-middle">
+                      <th>
                         <span className="d-flex align-items-center gap-2">
                           <BsDiagram3 /> Assigned Unit
                         </span>
                       </th>
-                      <th className="align-middle">
+                      <th>
                         <span className="d-flex align-items-center gap-2">
                           <BsInfoCircle /> Status
                         </span>
                       </th>
-                      <th className="align-middle">
+                      <th>
                         <span className="d-flex align-items-center gap-2">
                           <BsCalendar /> Created
                         </span>
@@ -287,9 +205,7 @@ const Home2 = () => {
                         <td>
                           <span className="d-flex align-items-center gap-2">
                             <BsCardText className="text-primary" />
-                            <Link to={`/tickets/${ticket._id}`}>
-                              {ticket.subject}
-                            </Link>
+                            <Link to={`/tickets/${ticket._id}`}>{ticket.subject}</Link>
                           </span>
                         </td>
                         <td>
@@ -323,11 +239,11 @@ const Home2 = () => {
               ) : (
                 <p className="text-center text-muted">No recent issues found.</p>
               )}
-
             </Card.Body>
           </Card>
         </Col>
       </Row>
+
       <style>{`
         .hover-effect:hover {
           transform: translateY(-5px);
@@ -337,14 +253,6 @@ const Home2 = () => {
       `}</style>
     </Container>
   );
-
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-      {/* The hover-effect style is now global in App.js, so remove the <style> tag here */}
-    </Container>
-  );
 };
 
 export default Home2;
