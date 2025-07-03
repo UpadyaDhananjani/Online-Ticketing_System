@@ -4,13 +4,11 @@ import mongoose from 'mongoose';
 
 const messageSchema = new mongoose.Schema({
   author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false }, // Optional for admin replies
-  author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false }, // Optional for admin replies
   authorRole: { type: String, enum: ['user', 'admin'], required: true },
   content: { type: String, required: true }, // HTML or text
   attachments: [{ type: String }], // File URLs or paths
   date: { type: Date, default: Date.now }
 });
-
 
 const ticketSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },

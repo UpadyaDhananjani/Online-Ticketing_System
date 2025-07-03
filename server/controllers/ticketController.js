@@ -147,3 +147,29 @@ export const getTicketSummary = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch ticket summary from server.' });
   }
 };
+
+export const addUserReply = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { content } = req.body;
+    const image = req.file ? req.file.filename : null;
+
+    const ticket = await Ticket.findById(id);
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+
+    ticket.messages = ticket.messages || [];
+    ticket.messages.push({
+      authorRole: 'user',
+      content,
+      image,
+      date: new Date()
+    });
+
+    ticket.updatedAt = Date.now();
+    await ticket.save();
+
+    res.json(ticket);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

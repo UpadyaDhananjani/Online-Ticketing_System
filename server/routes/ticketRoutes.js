@@ -8,9 +8,11 @@ import {
   reopenTicket,
   upload,
   getTicketById,
-  getTicketSummary// <-- IMPORT THE NEW FUNCTION
+  getTicketSummary,
+  addUserReply // <-- IMPORT THE NEW FUNCTION
 
 } from '../controllers/ticketController.js';
+import uploadMiddleware from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
 
@@ -35,7 +37,8 @@ router.get('/summary', getTicketSummary);
 
 router.get('/:id', getTicketById); // Now this will only be hit if it's not '/summary'
 
-
+// Add a user reply to a ticket
+router.post('/:id/reply', uploadMiddleware.single('image'), addUserReply);
 
 // Get a ticket by ID
 

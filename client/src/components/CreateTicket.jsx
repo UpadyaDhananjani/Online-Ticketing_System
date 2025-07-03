@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Container, Row, Col, Form, Button, Card } from 'react-bootstrap';
+import { toast } from "react-toastify";
 
 const UNIT_OPTIONS = [
   "System and Network Administration",
@@ -30,12 +31,17 @@ function CreateTicket({ token, onCreated }) {
       method: 'POST',
       body: formData
     });
-    if (res.ok && onCreated) onCreated();
-    setSubject('');
-    setDescription('');
-    setType('incident');
-    setAssignedUnit(UNIT_OPTIONS[0]);
-    setImage(null);
+    if (res.ok) {
+      toast.success("Ticket created successfully!");
+      if (onCreated) onCreated();
+      setSubject('');
+      setDescription('');
+      setType('incident');
+      setAssignedUnit(UNIT_OPTIONS[0]);
+      setImage(null);
+    } else {
+      toast.error("Failed to create ticket.");
+    }
   };
 
   return (
