@@ -34,7 +34,8 @@ const statusColors = {
   open: "success",
   closed: "danger",
   resolved: "primary",
-  reopened: "warning"
+  reopened: "warning",
+  "in progress": "warning" // <-- Add this line
 };
 
 function TicketList({ token, filter }) {
@@ -58,7 +59,7 @@ function TicketList({ token, filter }) {
   });
 
   return (
-    <div style={{ maxWidth: 900, margin: '30px auto' }}>
+    <div style={{ maxWidth: 1100, margin: 'auto' }}>
       <h2 style={{ textAlign: 'center', marginBottom: 20 }}>My Tickets</h2>
       {/* Filter dropdowns */}
       <div className="mb-3">

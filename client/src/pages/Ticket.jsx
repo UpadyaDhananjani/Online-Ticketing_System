@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
-import { Container, Row, Col, Spinner, Alert, Card, Badge, Button } from "react-bootstrap";
+import React, { useEffect, useState, useRef } from "react";
+import { Container, Row, Col, Spinner, Alert, Card, Badge, Button, Form } from "react-bootstrap";
 import { useParams, useNavigate } from "react-router-dom";
 import MessageHistory from "../components/MessageHistory/MessageHistory";
+import { Editor } from 'primereact/editor';
 
 const statusColors = {
   open: "success",
@@ -17,6 +18,9 @@ const Ticket = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [closing, setClosing] = useState(false);
+  const [reply, setReply] = useState("");
+  const [imageFile, setImageFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -48,6 +52,34 @@ const Ticket = () => {
     setClosing(false);
   };
 
+  const handleImageChange = (e) => {
+    setImageFile(e.target.files[0]);
+  };
+
+  const handleUserReply = async (e) => {
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append("content", reply);
+    if (imageFile) {
+      formData.append("image", imageFile);
+    }
+    setUploading(true);
+    try {
+      const res = await fetch(`/api/tickets/${id}/reply`, {
+        method: "POST",
+        body: formData
+      });
+      if (!res.ok) throw new Error("Failed to send reply");
+      const updated = await res.json();
+      setTicket(updated);
+      setReply("");
+      setImageFile(null);
+    } catch (err) {
+      setError(err.message);
+    }
+    setUploading(false);
+  };
+
   if (loading) return (
     <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: "60vh" }}>
       <Spinner animation="border" variant="primary" />
@@ -62,7 +94,7 @@ const Ticket = () => {
 
   // Prepare messages for MessageHistory
   const messages = (ticket.messages || []).map((msg) => ({
-    sender: msg.authorRole === "admin" ? "Admin" : "You",
+    sender: msg.authorRole === "admin" ? "Admin" : "User",
     message: msg.content,
     date: msg.date,
   }));
@@ -130,6 +162,47 @@ const Ticket = () => {
             description={ticket.description}
             image={ticket.image}
           />
+        </Col>
+      </Row>
+      {/* User Reply Form */}
+      <Row>
+        <Col>
+          <Card className="shadow-sm mt-4">
+            <Card.Body>
+              <Form onSubmit={handleUserReply}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Reply</Form.Label>
+                  <Editor
+                    value={reply}
+                    onTextChange={(e) => setReply(e.htmlValue)}
+                    style={{ height: '180px', width: '100%' }}
+                  />
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>Attach Image</Form.Label>
+                  <Form.Control
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    disabled={uploading}
+                  />
+                  {imageFile && (
+                    <div className="mt-2 text-success">
+                      <i className="bi bi-image me-1"></i>
+                      {imageFile.name}
+                    </div>
+                  )}
+                </Form.Group>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  disabled={!reply || !reply.trim() || uploading}
+                >
+                  {uploading ? "Sending..." : "Send Reply"}
+                </Button>
+              </Form>
+            </Card.Body>
+          </Card>
         </Col>
       </Row>
     </Container>
