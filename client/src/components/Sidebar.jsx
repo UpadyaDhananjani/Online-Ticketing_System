@@ -12,7 +12,7 @@ function Sidebar() {
       expand="lg"
       className="flex-column align-items-start p-4"
       style={{
-        width: 220,
+        width: 270,
         minHeight: '100vh',
         borderRight: '1px solid #eee',
         boxShadow: '2px 0 8px rgba(0,0,0,0.03)',
@@ -33,14 +33,7 @@ function Sidebar() {
         </Nav.Link>
 
         {/* Other sidebar links */}
-        <Nav.Link
-          as={NavLink}
-          to="/tickets"
-          className="sidebar-nav-link"
-        >
-          Ticket List
-        </Nav.Link>
-        <Nav.Link
+         <Nav.Link
           as={NavLink}
           to="/create-ticket"
           className="sidebar-nav-link"
@@ -49,17 +42,25 @@ function Sidebar() {
         </Nav.Link>
         <Nav.Link
           as={NavLink}
+          to="/tickets"
+          className="sidebar-nav-link"
+        >
+          My Tickets
+        </Nav.Link>
+       
+        <Nav.Link
+          as={NavLink}
           to="/tickets/open"
           className="sidebar-nav-link"
         >
-          Open Tickets
+          My Open Tickets
         </Nav.Link>
         <Nav.Link
           as={NavLink}
           to="/tickets/resolved"
           className="sidebar-nav-link"
         >
-          Resolved Tickets
+          My Resolved Tickets
         </Nav.Link>
         <Nav.Link
           as={NavLink}
