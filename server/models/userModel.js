@@ -7,10 +7,11 @@ const userSchema = new mongoose.Schema({
   verifyOtp: { type: String, default: '' },
   verifyOtpExpireAt: { type: Number, default: 0 },
   isAccountVerified: { type: Boolean, default: false },
-  resetOtp: { type: String, default: '' },  // Corrected to String type
+  resetOtp: { type: String, default: '' },
   resetOtpExpireAt: { type: Number, default: 0 }
 });
 
-const userModel = mongoose.models.user || mongoose.model('user', userSchema);
+// --- CRUCIAL FIX: Changed 'user' to 'User' to match ref: 'User' in ticketModel.js ---
+const userModel = mongoose.models.User || mongoose.model('User', userSchema);
 
 export default userModel;
