@@ -9,7 +9,7 @@ import {
   upload,
   getTicketById,
 
-  getTicketSummary
+  getTicketSummary,
 
   addUserReply // <-- IMPORT THE NEW FUNCTION
 

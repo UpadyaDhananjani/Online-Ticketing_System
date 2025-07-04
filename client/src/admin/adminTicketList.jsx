@@ -1,7 +1,8 @@
 // src/admin/TicketList.jsx
 import React, { useEffect, useState } from "react";
 import { Table, Container, Spinner, Alert, Badge, Form, Row, Col } from "react-bootstrap";
-import { getAllTickets } from "../api/ticketApi";
+import { getAllTickets } from "../api/ticketApi"; // This is the function we just modified
+import { toast } from 'react-toastify';
 
 const statusColors = {
   open: "success",
@@ -48,13 +49,23 @@ function TicketList({ token, onSelect }) {
 
   useEffect(() => {
     setLoading(true);
-    getAllTickets(token)
+    setError("");
+    getAllTickets(token) // Now calls /api/tickets which populates 'user'
       .then(res => {
         setTickets(res.data);
         setLoading(false);
+        // --- ADMIN DASHBOARD DEBUG LOGS START ---
+        console.log("Admin Dashboard: Fetched tickets:", res.data);
+        if (res.data.length > 0) {
+            console.log("Admin Dashboard: First ticket's user data:", res.data[0].user);
+            console.log("Admin Dashboard: First ticket's user name:", res.data[0].user?.name);
+        }
+        // --- ADMIN DASHBOARD DEBUG LOGS END ---
       })
       .catch(err => {
+        console.error("Admin Dashboard: Error fetching tickets:", err);
         setError("Failed to fetch tickets.");
+        toast.error(err.response?.data?.error || err.message || "Failed to fetch tickets for admin dashboard.");
         setLoading(false);
       });
   }, [token]);
@@ -127,7 +138,7 @@ function TicketList({ token, onSelect }) {
               <th><i className="bi bi-card-text me-1"></i>Subject</th>
               <th><i className="bi bi-tag me-1"></i>Type</th>
               <th><i className="bi bi-diagram-3 me-1"></i>Assigned Unit</th>
-              <th><i className="bi bi-person me-1"></i>Requester</th>
+              <th><i className="bi bi-person me-1"></i>Requester</th> {/* Requester Header is here */}
               <th><i className="bi bi-info-circle me-1"></i>Status</th>
               <th><i className="bi bi-clock-history me-1"></i>Last Update</th>
             </tr>
@@ -163,7 +174,8 @@ function TicketList({ token, onSelect }) {
                 </td>
                 <td>
                   <i className="bi bi-person-circle me-2 text-secondary"></i>
-                  {ticket.userEmail || ticket.user?.email || "N/A"}
+                  {/* CRUCIAL FIX: Access ticket.user.name here */}
+                  {ticket.user ? ticket.user.name : "N/A"} 
                 </td>
                 <td>
                   <Badge
@@ -190,4 +202,3 @@ function TicketList({ token, onSelect }) {
 }
 
 export default TicketList;
-
