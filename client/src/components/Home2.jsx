@@ -152,7 +152,7 @@ const Home2 = () => {
 
   return (
     <Container className="py-4">
-      <h2 className="mb-4 text-center">Dashboard</h2>
+      <h2 className="mb-4 text-center">ICT Online Ticketing System</h2>
       <Row className="justify-content-center g-4">
         <Col xs={12} md={4}>
           <Card style={boxStyle} className="hover-effect">
