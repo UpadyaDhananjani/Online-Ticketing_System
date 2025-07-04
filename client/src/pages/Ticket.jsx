@@ -94,6 +94,7 @@ const Ticket = () => {
 
   // Prepare messages for MessageHistory
   const messages = (ticket.messages || []).map((msg) => ({
+    _id: msg._id, // <-- include this!
     sender: msg.authorRole === "admin" ? "Admin" : "User",
     message: msg.content,
     date: msg.date,

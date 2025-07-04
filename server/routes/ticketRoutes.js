@@ -40,6 +40,31 @@ router.get('/:id', getTicketById); // Now this will only be hit if it's not '/su
 // Add a user reply to a ticket
 router.post('/:id/reply', uploadMiddleware.single('image'), addUserReply);
 
+// Delete a message from a ticket
+router.delete('/:ticketId/messages/:messageId', async (req, res) => {
+  try {
+    const { ticketId, messageId } = req.params;
+    const ticket = await Ticket.findById(ticketId);
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+
+    // Find the message index
+    const msgIndex = ticket.messages.findIndex(m => m._id.toString() === messageId);
+    if (msgIndex === -1) return res.status(404).json({ error: 'Message not found' });
+
+    // Optionally: Check if the requester is allowed to delete (authorRole or user check)
+    // Example: Only allow if admin or the message author is the current user
+    // if (ticket.messages[msgIndex].authorRole === 'admin' && !req.user.isAdmin) return res.status(403).json({ error: 'Forbidden' });
+
+    ticket.messages.splice(msgIndex, 1);
+    ticket.updatedAt = Date.now();
+    await ticket.save();
+
+    res.json({ success: true, ticket });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Get a ticket by ID
 
 export default router;

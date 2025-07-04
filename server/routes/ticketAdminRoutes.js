@@ -63,6 +63,39 @@ router.patch('/:id/in progress', async (req, res) => {
   }
 });
 
+// Delete a message from a ticket
+router.delete('/:ticketId/messages/:messageId', async (req, res) => {
+  try {
+    const { ticketId, messageId } = req.params;
+    const ticket = await Ticket.findById(ticketId);
+    if (!ticket) {
+      console.error('Ticket not found:', ticketId);
+      return res.status(404).json({ error: 'Ticket not found' });
+    }
+
+    // Defensive: ensure messages is an array
+    if (!Array.isArray(ticket.messages)) {
+      console.error('Ticket messages is not an array:', ticket.messages);
+      return res.status(500).json({ error: 'Ticket messages is not an array' });
+    }
+
+    const msgIndex = ticket.messages.findIndex(m => m._id.toString() === messageId);
+    if (msgIndex === -1) {
+      console.error('Message not found:', messageId);
+      return res.status(404).json({ error: 'Message not found' });
+    }
+
+    ticket.messages.splice(msgIndex, 1);
+    ticket.updatedAt = Date.now();
+    await ticket.save();
+
+    res.json({ success: true, ticket });
+  } catch (err) {
+    console.error('Delete message error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 export default router;
 

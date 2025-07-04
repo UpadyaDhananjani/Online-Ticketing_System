@@ -9,11 +9,11 @@ import { Container, Card, Button, Form, Row, Col, Badge } from "react-bootstrap"
 import MessageHistory from "../components/MessageHistory/MessageHistory";
 
 
-function TicketReply({ token, ticket, onBack, onStatusChange }) {
+function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) {
   const [reply, setReply] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [localStatus, setLocalStatus] = useState(ticket.status); // local status for UI
+  const [localStatus, setLocalStatus] = useState(ticket.status);
   const quillRef = useRef();
 
   // Quill modules WITHOUT image upload icon
@@ -38,32 +38,20 @@ function TicketReply({ token, ticket, onBack, onStatusChange }) {
     const formData = new FormData();
     formData.append("content", reply);
     if (imageFile) {
-      setUploading(true);
-      // Upload image first
-      try {
-        const uploadRes = await axios.post("/api/upload/image", 
-          (() => {
-            const fd = new FormData();
-            fd.append("image", imageFile);
-            return fd;
-          })(),
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        // Append image filename to formData for the reply
-        formData.append("image", uploadRes.data.filename);
-      } catch (err) {
-        alert("Image upload failed.");
-        setUploading(false);
-        return;
-      }
-      setUploading(false);
+      formData.append("image", imageFile);
     }
-    await sendTicketReply(ticket._id, formData, token);
-    setReply("");
-    setImageFile(null);
-    setLocalStatus("in progress"); // <-- Update status locally
-    if (onStatusChange) onStatusChange("in progress");
-    // Optionally, refetch ticket details here if you want to sync with backend
+    setUploading(true);
+    try {
+      await sendTicketReply(ticket._id, formData, token);
+      setReply("");
+      setImageFile(null);
+      setLocalStatus("in progress");
+      if (onStatusChange) onStatusChange("in progress");
+      await fetchTicket(); // <-- Refetch ticket after reply
+    } catch (err) {
+      alert("Failed to send reply.");
+    }
+    setUploading(false);
   };
 
   const handleResolve = async () => {
@@ -73,8 +61,37 @@ function TicketReply({ token, ticket, onBack, onStatusChange }) {
     onBack();
   };
 
+  const handleDeleteMessage = async (messageId) => {
+    try {
+      // Use the admin route!
+      await axios.delete(`/api/admin/tickets/${ticket._id}/messages/${messageId}`);
+      fetchTicket();
+    } catch (err) {
+      alert("Failed to delete message.");
+    }
+  };
+
+  // Fetch updated ticket details
+  const fetchTicket = async () => {
+    try {
+      const res = await axios.get(`/api/admin/tickets/${ticket._id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data) {
+        // Update the ticket state with the latest data
+        setLocalStatus(res.data.status);
+        // If you have a setTicket prop from parent, call it here
+        if (typeof onTicketUpdate === "function") onTicketUpdate(res.data);
+        // Or, if you manage ticket state locally, setTicket(res.data);
+      }
+    } catch (err) {
+      // Optionally handle error
+    }
+  };
+
   // Prepare messages for MessageHistory
   const messages = (ticket.messages || []).map(msg => ({
+    _id: msg._id, // <-- include this!
     sender: msg.authorRole === "admin" ? "Admin" : "User",
     message: msg.content,
     date: msg.date
@@ -105,6 +122,7 @@ function TicketReply({ token, ticket, onBack, onStatusChange }) {
                 msg={messages}
                 description={ticket.description}
                 image={ticket.image}
+                onDeleteMessage={handleDeleteMessage} // Pass the handler to MessageHistory
               />
 
               {/* Admin Reply Section */}
