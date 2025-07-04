@@ -23,6 +23,12 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 
 
+import { AppContextProvider } from './context/AppContext';
+import ProtectedRoute from './components/ProtectedRoute';
+
+
+
+
 function App({ token, setToken }) { 
   const location = useLocation();
 
