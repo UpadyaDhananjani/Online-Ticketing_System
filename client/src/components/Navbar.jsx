@@ -9,9 +9,16 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Make sure to destructure isLoggedin here
   const { userData, setIsLoggedin, setUserData, backendUrl, isLoggedin } = useContext(AppContent);
   const [showDropdown, setShowDropdown] = useState(false);
+
+  // --- DEBUG LOG START ---
+  console.log("Navbar: userData:", userData);
+  console.log("Navbar: isLoggedin:", isLoggedin);
+  if (userData) {
+    console.log("Navbar: userData.isAccountVerified:", userData.isAccountVerified);
+  }
+  // --- DEBUG LOG END ---
 
   const sendVerificationOtp = async () => {
     if (!userData || !userData.id) { // Use userData.id as per AppContext structure
