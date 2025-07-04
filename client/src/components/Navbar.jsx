@@ -1,4 +1,3 @@
-// Navbar.jsx
 import React, { useContext, useState } from 'react';
 import { assets } from '../assets/assets';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -10,13 +9,22 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { userData, setIsLoggedin, setUserData, backendUrl } = useContext(AppContent);
+  // Make sure to destructure isLoggedin here
+  const { userData, setIsLoggedin, setUserData, backendUrl, isLoggedin } = useContext(AppContent);
   const [showDropdown, setShowDropdown] = useState(false);
 
   const sendVerificationOtp = async () => {
+    if (!userData || !userData.id) { // Use userData.id as per AppContext structure
+      toast.error("User not logged in or user ID is missing. Cannot send OTP.");
+      setShowDropdown(false);
+      return;
+    }
+
     try {
       axios.defaults.withCredentials = true;
-      const { data } = await axios.post(backendUrl + '/api/auth/send-verify-otp');
+      const { data } = await axios.post(backendUrl + '/api/auth/send-verify-otp', {
+        userId: userData.id // Send the userId in the request body
+      });
 
       if (data.success) {
         navigate('/email-verify');
@@ -25,7 +33,8 @@ const Navbar = () => {
         toast.error(data.message);
       }
     } catch (error) {
-      toast.error(error.message);
+      const errorMsg = error.response?.data?.message || error.message || "An error occurred while sending OTP.";
+      toast.error(errorMsg);
     } finally {
       setShowDropdown(false);
     }
@@ -41,10 +50,9 @@ const Navbar = () => {
       axios.defaults.withCredentials = true;
       const { data } = await axios.post(backendUrl + '/api/auth/logout');
       if (data.success) {
-        setIsLoggedin(false);
-        setUserData(null);
-        // --- CHANGE HERE: Navigate to login page after logout ---
-        navigate('/login');
+        setIsLoggedin(false); // Set login status to false
+        setUserData(null);    // Clear user data
+        navigate('/login');   // Navigate to login page
         toast.success("Logged out successfully!");
       } else {
         toast.error(data.message);
@@ -72,31 +80,34 @@ const Navbar = () => {
 
       {/* Right Section: User Initial / Login Button and Dropdown */}
       <div className="relative">
-        <div
-          className="user-initial-circle"
-          onClick={toggleDropdown}
-          title={userData ? userData.name : "Account"} // Tooltip for clarity
-        >
-          {userData?.name?.[0]?.toUpperCase() || 'U'}
-        </div>
+        {isLoggedin && userData ? ( // Render user initial if logged in and user data exists
+          <div
+            className="user-initial-circle"
+            onClick={toggleDropdown}
+            title={userData ? userData.name : "Account"}
+          >
+            {userData?.name?.[0]?.toUpperCase() || 'U'}
+          </div>
+        ) : ( // Render login button if not logged in
+          <button
+            onClick={handleLoginClick}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full transition duration-300 ease-in-out"
+          >
+            Login <span className="ml-1">&rarr;</span>
+          </button>
+        )}
 
-        {showDropdown && (
+        {showDropdown && isLoggedin && userData && ( // Only show dropdown if logged in and data exists
           <div className="user-dropdown-menu">
             <ul className="list-none m-0 p-0">
-              {userData ? (
-                <>
-                  {!userData.isAccountVerified && (
-                    <li onClick={sendVerificationOtp} className="dropdown-item">
-                      Verify email
-                    </li>
-                  )}
-                  <li onClick={logout} className="dropdown-item">
-                    Logout
-                  </li>
-                </>
-              ) : (
-                <li onClick={handleLoginClick} className="dropdown-item">
-                  Login
+              {userData && !userData.isAccountVerified && ( // Show verify email only if user data exists and not verified
+                <li onClick={sendVerificationOtp} className="dropdown-item">
+                  Verify email
+                </li>
+              )}
+              {userData && ( // Show logout only if user data exists
+                <li onClick={logout} className="dropdown-item">
+                  Logout
                 </li>
               )}
             </ul>

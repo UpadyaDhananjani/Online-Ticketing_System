@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { Container, Row, Col, Form, Button, Card } from 'react-bootstrap';
+import axios from 'axios';
+import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 const UNIT_OPTIONS = [
   "System and Network Administration",
@@ -10,12 +13,13 @@ const UNIT_OPTIONS = [
   "Functional Unit"
 ];
 
-function CreateTicket({ token, onCreated }) {
+function CreateTicket() {
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
   const [type, setType] = useState('incident');
   const [assignedUnit, setAssignedUnit] = useState(UNIT_OPTIONS[0]);
   const [image, setImage] = useState(null);
+  const navigate = useNavigate(); // Initialize useNavigate
 
   const handleSubmit = async e => {
     e.preventDefault();
@@ -26,11 +30,27 @@ function CreateTicket({ token, onCreated }) {
     formData.append('assignedUnit', assignedUnit);
     if (image) formData.append('image', image);
 
-    const res = await fetch('/api/tickets', {
-      method: 'POST',
-      body: formData
-    });
-    if (res.ok && onCreated) onCreated();
+    try {
+      const res = await axios.post('/api/tickets', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        },
+        withCredentials: true
+      });
+
+      if (res.status === 201) {
+        toast.success("Ticket created successfully!");
+        // --- CRUCIAL FIX: Navigate to TicketList after successful creation ---
+        navigate('/tickets'); // Navigate to the ticket list page
+      } else {
+        toast.error(res.data.error || "Failed to create ticket.");
+      }
+    } catch (error) {
+      console.error("Error creating ticket:", error);
+      toast.error(error.response?.data?.error || "An error occurred while creating ticket.");
+    }
+
+    // Clear form fields regardless of success/failure
     setSubject('');
     setDescription('');
     setType('incident');
@@ -40,7 +60,7 @@ function CreateTicket({ token, onCreated }) {
 
   return (
     <Container
-      className="d-flex  justify-content-center align-items-center"
+      className="d-flex justify-content-center align-items-center"
       style={{ minHeight: '100vh', background: '#F0F8FF' }}
     >
       <Row className="w-100 justify-content-center">
