@@ -19,6 +19,12 @@ import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS for styli
 import 'bootstrap-icons/font/bootstrap-icons.css'; // Import Bootstrap Icons for icons
 import './App.css'; // Import your custom CSS styles
 
+import { AppContextProvider } from './context/AppContext';
+import ProtectedRoute from './components/ProtectedRoute';
+
+
+
+
 function App({ token, setToken }) { 
   const location = useLocation();
 
