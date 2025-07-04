@@ -1,8 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Card, Row, Col, Badge } from "react-bootstrap";
+import { Card, Row, Col, Badge, Button } from "react-bootstrap";
 
-const MessageHistory = ({ msg, description, image }) => (
+const MessageHistory = ({ msg, description, image, onDeleteMessage }) => (
   <Card className="shadow-sm mb-4 border-0" style={{ background: "#f8fafd" }}>
     <Card.Body>
       {description && (
@@ -83,6 +83,14 @@ const MessageHistory = ({ msg, description, image }) => (
                     style={{ whiteSpace: "pre-wrap", fontSize: 15 }}
                     dangerouslySetInnerHTML={{ __html: m.message }}
                   />
+                  <Button
+                    variant="outline-danger"
+                    size="sm"
+                    className="ms-2"
+                    onClick={() => onDeleteMessage && onDeleteMessage(m._id)}
+                  >
+                    Delete
+                  </Button>
                 </div>
               </Col>
             </Row>
@@ -99,8 +107,7 @@ MessageHistory.propTypes = {
   msg: PropTypes.array.isRequired,
   description: PropTypes.string,
   image: PropTypes.string,
+  onDeleteMessage: PropTypes.func,
 };
-
-
 
 export default MessageHistory;

@@ -56,6 +56,7 @@ function TicketsPage({ token, filter }) {
           onStatusChange={newStatus => {
             // Optionally update local ticket state if needed
           }}
+          onTicketUpdate={setSelectedTicket} // <-- Pass this!
         />
       )}
       <TicketList
