@@ -1,8 +1,7 @@
-// client/src/components/Home2.jsx
-import React, { useEffect, useState, useContext } from "react"; // Import useContext
+import React, { useEffect, useState, useContext } from "react";
 import { Container, Row, Col, Spinner, Alert, Card, Badge } from "react-bootstrap";
 import { Link } from 'react-router-dom';
-import { AppContent } from '../context/AppContext'; // Import AppContext
+import { AppContent } from '../context/AppContext';
 import {
   BsCardText,
   BsTag,
@@ -12,7 +11,7 @@ import {
 } from "react-icons/bs";
 
 const Home2 = () => {
-  const { userData } = useContext(AppContent); // Consume userData from context
+  const { userData } = useContext(AppContent);
 
   const [ticketCounts, setTicketCounts] = useState({
     open: 0,
@@ -34,12 +33,11 @@ const Home2 = () => {
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-      // Only fetch data if userData exists (user is logged in)
       if (!userData) {
         setLoading(false);
         setTicketCounts({ open: 0, inProgress: 0, resolved: 0 });
         setRecentIssues([]);
-        return; // Exit if not logged in
+        return;
       }
 
       setLoading(true);
@@ -74,16 +72,16 @@ const Home2 = () => {
     };
 
     fetchDashboardData();
-    // Only set up interval if user is logged in
+
     const intervalId = userData ? setInterval(fetchDashboardData, 30000) : null;
     return () => {
-        if (intervalId) {
-            clearInterval(intervalId);
-        }
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
     };
-  }, [userData]); // Re-run effect when userData changes (login/logout)
+  }, [userData]);
 
-  if (loading && userData) // Show spinner only if loading AND logged in
+  if (loading && userData)
     return (
       <Container
         className="d-flex justify-content-center align-items-center"
@@ -93,7 +91,7 @@ const Home2 = () => {
       </Container>
     );
 
-  if (error && userData) // Show error only if error AND logged in
+  if (error && userData)
     return (
       <Container className="py-5">
         <Alert variant="danger" className="text-center">
@@ -102,7 +100,6 @@ const Home2 = () => {
       </Container>
     );
 
-  // If not logged in, or no data to display after loading
   if (!userData) {
     return (
       <Container className="py-5">
@@ -186,97 +183,87 @@ const Home2 = () => {
         </Col>
       </Row>
 
-      {/* Recent Issues section - ONLY RENDERED IF LOGGED IN */}
-      {userData && (
-        <Row className="mt-4">
-          <Col>
-            <h3 className="mb-3">Recent Issues</h3>
-            <Card className="shadow-sm border-0">
-              <Card.Body>
-                {recentIssues.length > 0 ? (
-                  <table className="table table-striped align-middle">
-                    <thead>
-                      <tr>
-                        <th>
+      {/* Recent Issues section */}
+      <Row className="mt-4">
+        <Col>
+          <h3 className="mb-3">Recent Issues</h3>
+          <Card className="shadow-sm border-0">
+            <Card.Body>
+              {recentIssues.length > 0 ? (
+                <table className="table table-striped align-middle">
+                  <thead>
+                    <tr>
+                      <th className="align-middle">
+                        <span className="d-flex align-items-center gap-2">
+                          <BsCardText /> Title
+                        </span>
+                      </th>
+                      <th className="align-middle">
+                        <span className="d-flex align-items-center gap-2">
+                          <BsTag /> Type
+                        </span>
+                      </th>
+                      <th className="align-middle">
+                        <span className="d-flex align-items-center gap-2">
+                          <BsDiagram3 /> Assigned Unit
+                        </span>
+                      </th>
+                      <th className="align-middle">
+                        <span className="d-flex align-items-center gap-2">
+                          <BsInfoCircle /> Status
+                        </span>
+                      </th>
+                      <th className="align-middle">
+                        <span className="d-flex align-items-center gap-2">
+                          <BsCalendar /> Created
+                        </span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentIssues.map((ticket) => (
+                      <tr key={ticket._id}>
+                        <td>
                           <span className="d-flex align-items-center gap-2">
-                            <BsCardText /> Title
+                            <BsCardText className="text-primary" />
+                            <Link to={`/tickets/${ticket._id}`}>{ticket.subject}</Link>
                           </span>
-                        </th>
-                        <th>
+                        </td>
+                        <td>
+                          <Badge bg="info" text="dark" className="text-capitalize d-inline-flex align-items-center gap-2">
+                            <BsTag />
+                            {ticket.type ? ticket.type.charAt(0).toUpperCase() + ticket.type.slice(1) : '—'}
+                          </Badge>
+                        </td>
+                        <td>
+                          <Badge bg="secondary" className="text-capitalize d-inline-flex align-items-center gap-2">
+                            <BsDiagram3 />
+                            {ticket.assignedUnit || '—'}
+                          </Badge>
+                        </td>
+                        <td>
+                          <Badge bg={statusColors[ticket.status] || "secondary"} className="text-capitalize d-inline-flex align-items-center gap-2">
+                            <BsInfoCircle />
+                            {ticket.status}
+                          </Badge>
+                        </td>
+                        <td>
                           <span className="d-flex align-items-center gap-2">
-                            <BsTag /> Type
+                            <BsCalendar className="text-secondary" />
+                            {ticket.createdAt ? new Date(ticket.createdAt).toLocaleDateString() : '-'}
                           </span>
-                        </th>
-                        <th>
-                          <span className="d-flex align-items-center gap-2">
-                            <BsDiagram3 /> Assigned Unit
-                          </span>
-                        </th>
-                        <th>
-                          <span className="d-flex align-items-center gap-2">
-                            <BsInfoCircle /> Status
-                          </span>
-                        </th>
-                        <th>
-                          <span className="d-flex align-items-center gap-2">
-                            <BsCalendar /> Created
-                          </span>
-                        </th>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {recentIssues.map((ticket) => (
-                        <tr key={ticket._id}>
-                          <td>
-                            <span className="d-flex align-items-center gap-2">
-                              <BsCardText className="text-primary" />
-                              <Link to={`/tickets/${ticket._id}`}>{ticket.subject}</Link>
-                            </span>
-                          </td>
-                          <td>
-                            <Badge bg="info" text="dark" className="text-capitalize d-inline-flex align-items-center gap-2">
-                              <BsTag />
-                              {ticket.type ? ticket.type.charAt(0).toUpperCase() + ticket.type.slice(1) : '—'}
-                            </Badge>
-                          </td>
-                          <td>
-                            <Badge bg="secondary" className="text-capitalize d-inline-flex align-items-center gap-2">
-                              <BsDiagram3 />
-                              {ticket.assignedUnit || '—'}
-                            </Badge>
-                          </td>
-                          <td>
-                            <Badge bg={statusColors[ticket.status] || "secondary"} className="text-capitalize d-inline-flex align-items-center gap-2">
-                              <BsInfoCircle />
-                              {ticket.status}
-                            </Badge>
-                          </td>
-                          <td>
-                            <span className="d-flex align-items-center gap-2">
-                              <BsCalendar className="text-secondary" />
-                              {ticket.createdAt ? new Date(ticket.createdAt).toLocaleDateString() : '-'}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <p className="text-center text-muted">No recent issues found.</p>
-                )}
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
-      )}
-
-      <style>{`
-        .hover-effect:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-          cursor: pointer;
-        }
-      `}</style>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <p className="text-center text-muted">No recent issues found.</p>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
     </Container>
   );
 };

@@ -4,9 +4,11 @@ import { Editor } from 'primereact/editor';
 import "primereact/resources/themes/lara-light-indigo/theme.css";
 import "primereact/resources/primereact.min.css";
 import axios from "axios";
-import { sendTicketReply, resolveTicket } from "../api/ticketApi";
+// --- CRITICAL: Ensure deleteAdminMessage and getAdminTicketById are in this import list ---
+import { sendTicketReply, resolveTicket, deleteAdminMessage, getAdminTicketById } from "../api/ticketApi"; 
 import { Container, Card, Button, Form, Row, Col, Badge } from "react-bootstrap";
 import MessageHistory from "../components/MessageHistory/MessageHistory";
+import { toast } from 'react-toastify';
 
 
 function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) {
@@ -47,51 +49,63 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
       setImageFile(null);
       setLocalStatus("in progress");
       if (onStatusChange) onStatusChange("in progress");
-      await fetchTicket(); // <-- Refetch ticket after reply
+      await fetchTicket();
+      toast.success("Reply sent successfully!");
     } catch (err) {
-      alert("Failed to send reply.");
+      console.error("Failed to send reply:", err);
+      toast.error(err.response?.data?.message || "Failed to send reply.");
     }
     setUploading(false);
   };
 
   const handleResolve = async () => {
-    await resolveTicket(ticket._id, token);
-    setLocalStatus("resolved");
-    if (onStatusChange) onStatusChange("resolved");
-    onBack();
+    try {
+      await resolveTicket(ticket._id, token);
+      setLocalStatus("resolved");
+      if (onStatusChange) onStatusChange("resolved");
+      onBack();
+      toast.success("Ticket resolved successfully!");
+    } catch (err) {
+      console.error("Failed to resolve ticket:", err);
+      toast.error(err.response?.data?.message || "Failed to resolve ticket.");
+    }
   };
 
   const handleDeleteMessage = async (messageId) => {
     try {
-      // Use the admin route!
-      await axios.delete(`/api/admin/tickets/${ticket._id}/messages/${messageId}`);
-      fetchTicket();
+      console.log(`Attempting to delete message: ${messageId} from ticket: ${ticket._id}`);
+      // Use deleteAdminMessage from API and pass token
+      const res = await deleteAdminMessage(ticket._id, messageId, token); 
+      
+      if (res.data.success) {
+        toast.success(res.data.message || "Message deleted successfully.");
+        await fetchTicket(); // Refetch ticket to update message history
+      } else {
+        toast.error(res.data.message || "Failed to delete message.");
+      }
     } catch (err) {
-      alert("Failed to delete message.");
+      console.error("Error deleting message:", err);
+      toast.error(err.response?.data?.message || "Failed to delete message due to network or server error.");
     }
   };
 
   // Fetch updated ticket details
   const fetchTicket = async () => {
     try {
-      const res = await axios.get(`/api/admin/tickets/${ticket._id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // Use getAdminTicketById from API and pass token
+      const res = await getAdminTicketById(ticket._id, token); 
       if (res.data) {
-        // Update the ticket state with the latest data
         setLocalStatus(res.data.status);
-        // If you have a setTicket prop from parent, call it here
         if (typeof onTicketUpdate === "function") onTicketUpdate(res.data);
-        // Or, if you manage ticket state locally, setTicket(res.data);
       }
     } catch (err) {
-      // Optionally handle error
+      console.error("Failed to refetch ticket after action:", err);
     }
   };
 
   // Prepare messages for MessageHistory
   const messages = (ticket.messages || []).map(msg => ({
-    _id: msg._id, // <-- include this!
+    _id: msg._id,
     sender: msg.authorRole === "admin" ? "Admin" : "User",
     message: msg.content,
     date: msg.date
@@ -122,7 +136,7 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
                 msg={messages}
                 description={ticket.description}
                 image={ticket.image}
-                onDeleteMessage={handleDeleteMessage} // Pass the handler to MessageHistory
+                onDeleteMessage={handleDeleteMessage}
               />
 
               {/* Admin Reply Section */}
@@ -179,4 +193,3 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
 }
 
 export default TicketReply;
-

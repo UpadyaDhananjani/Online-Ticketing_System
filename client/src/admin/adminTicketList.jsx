@@ -9,7 +9,7 @@ const statusColors = {
   closed: "danger",
   resolved: "primary",
   reopened: "warning",
-  "in progress": "warning"
+  "in progress": "info" // Changed to info for consistency with Bootstrap
 };
 
 const UNIT_OPTIONS = [
@@ -39,7 +39,8 @@ const TYPE_OPTIONS = [
   "service"
 ];
 
-function TicketList({ token, onSelect }) {
+// Removed 'token' prop from function signature
+function TicketList({ onSelect }) { 
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -50,17 +51,15 @@ function TicketList({ token, onSelect }) {
   useEffect(() => {
     setLoading(true);
     setError("");
-    getAllTickets(token) // Now calls /api/tickets which populates 'user'
+    getAllTickets() // Now calls getAllTickets from ticketApi.js which no longer requires 'token' param
       .then(res => {
         setTickets(res.data);
         setLoading(false);
-        // --- ADMIN DASHBOARD DEBUG LOGS START ---
         console.log("Admin Dashboard: Fetched tickets:", res.data);
         if (res.data.length > 0) {
             console.log("Admin Dashboard: First ticket's user data:", res.data[0].user);
             console.log("Admin Dashboard: First ticket's user name:", res.data[0].user?.name);
         }
-        // --- ADMIN DASHBOARD DEBUG LOGS END ---
       })
       .catch(err => {
         console.error("Admin Dashboard: Error fetching tickets:", err);
@@ -68,7 +67,7 @@ function TicketList({ token, onSelect }) {
         toast.error(err.response?.data?.error || err.message || "Failed to fetch tickets for admin dashboard.");
         setLoading(false);
       });
-  }, [token]);
+  }, []); // Empty dependency array, fetches once on mount
 
   const filteredTickets = tickets.filter(ticket => {
     const unitMatch = unitFilter === "All" || ticket.assignedUnit === unitFilter;
@@ -145,7 +144,7 @@ function TicketList({ token, onSelect }) {
           </thead>
           <tbody>
             {filteredTickets.map(ticket => (
-              <tr
+              <tr // Removed extra whitespace here
                 key={ticket._id}
                 style={{
                   background: ticket.status === "open" ? "#e6ffe6" : undefined,
