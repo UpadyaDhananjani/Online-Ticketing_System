@@ -8,6 +8,7 @@ import Home from './components/Home.jsx';
 import Home2 from './components/Home2.jsx';
 import ResetPassword from './components/ResetPassword.jsx';
 import EmailVerify from './components/EmailVerify.jsx';
+import Login from './components/Login.jsx';
 import TicketsPage from './pages/TicketsPage';
 import TicketList from './components/TicketList'; // User-facing TicketList
 import CreateTicket from './components/CreateTicket';
