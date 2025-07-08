@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { getTickets } from '../api/ticketApi';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from 'react-bootstrap';
 import axios from 'axios';
@@ -9,19 +8,11 @@ const statusColors = {
   open: "success",
   closed: "danger",
   resolved: "primary",
-
-  reopened: "warning"
-};
-
-function TicketList({ token, filter }) {
-
   reopened: "warning",
   "in progress": "info"
 };
 
-// Removed 'token' prop from function signature
 function TicketList({ filter }) { 
-
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -33,7 +24,6 @@ function TicketList({ filter }) {
       setError(null);
       try {
         console.log("Frontend (User TicketList): Fetching tickets...");
-        // Now calls getTickets from ticketApi.js which no longer requires 'token' param
         const res = await axios.get('/api/tickets', { 
           withCredentials: true 
         });
@@ -41,21 +31,30 @@ function TicketList({ filter }) {
         setTickets(res.data);
       } catch (err) {
         console.error("Frontend (User TicketList): Error fetching tickets:", err);
-        setError(err.response?.data?.error || err.message || "Failed to fetch tickets.");
-        toast.error(err.response?.data?.error || err.message || "Failed to fetch tickets.");
+        const msg = err.response?.data?.error || err.message || "Failed to fetch tickets.";
+        setError(msg);
+        toast.error(msg);
       } finally {
         setLoading(false);
       }
     };
 
     if (location.pathname === '/tickets' || location.pathname === '/tickets-page' || filter) {
-        fetchTickets();
+      fetchTickets();
     }
   }, [location.pathname, filter]);
 
   const filteredTickets = filter
     ? tickets.filter(ticket => ticket.status === filter)
     : tickets;
+
+  if (loading) {
+    return <div style={{ textAlign: 'center', marginTop: 50 }}>Loading tickets...</div>;
+  }
+
+  if (error) {
+    return <div style={{ textAlign: 'center', marginTop: 50, color: 'red' }}>{error}</div>;
+  }
 
   return (
     <div style={{ maxWidth: 900, margin: '30px auto' }}>
@@ -87,8 +86,6 @@ function TicketList({ filter }) {
           ) : (
             filteredTickets.map(ticket => (
               <tr
-
-
                 key={ticket._id}
                 style={{
                   borderBottom: '1px solid #eee',
@@ -116,8 +113,6 @@ function TicketList({ filter }) {
                     {ticket.assignedUnit || '—'}
                   </Badge>
                 </td>
-       {/* REMOVED: Requester Data Cell from user-facing TicketList */}
-
                 <td style={tdStyle}>
                   <Badge
                     bg={statusColors[ticket.status] || "secondary"}
