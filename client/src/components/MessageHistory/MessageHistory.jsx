@@ -87,7 +87,10 @@ const MessageHistory = ({ msg, description, image, onDeleteMessage }) => (
                     variant="outline-danger"
                     size="sm"
                     className="ms-2"
-                    onClick={() => onDeleteMessage && onDeleteMessage(m._id)}
+                    onClick={() => {
+                      console.log("Deleting message with _id:", m._id, typeof m._id);
+                      if (onDeleteMessage) onDeleteMessage(m._id);
+                    }}
                   >
                     Delete
                   </Button>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Badge } from 'react-bootstrap';
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -12,13 +12,11 @@ const statusColors = {
   "in progress": "info"
 };
 
-// Removed 'token' prop from function signature
 function TicketList({ filter }) { 
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     const fetchTickets = async () => {
@@ -26,7 +24,6 @@ function TicketList({ filter }) {
       setError(null);
       try {
         console.log("Frontend (User TicketList): Fetching tickets...");
-        // Now calls getTickets from ticketApi.js which no longer requires 'token' param
         const res = await axios.get('/api/tickets', { 
           withCredentials: true 
         });
@@ -34,15 +31,16 @@ function TicketList({ filter }) {
         setTickets(res.data);
       } catch (err) {
         console.error("Frontend (User TicketList): Error fetching tickets:", err);
-        setError(err.response?.data?.error || err.message || "Failed to fetch tickets.");
-        toast.error(err.response?.data?.error || err.message || "Failed to fetch tickets.");
+        const msg = err.response?.data?.error || err.message || "Failed to fetch tickets.";
+        setError(msg);
+        toast.error(msg);
       } finally {
         setLoading(false);
       }
     };
 
     if (location.pathname === '/tickets' || location.pathname === '/tickets-page' || filter) {
-        fetchTickets();
+      fetchTickets();
     }
   }, [location.pathname, filter]);
 
@@ -50,29 +48,12 @@ function TicketList({ filter }) {
     ? tickets.filter(ticket => ticket.status === filter)
     : tickets;
 
-  console.log("Frontend (User TicketList): Tickets in state (after filter):", filteredTickets);
-
-  const thStyle = {
-    padding: '12px 10px',
-    background: '#f5f6fa',
-    fontWeight: 600,
-    fontSize: 16,
-    borderBottom: '2px solid #e1e1e1',
-    textAlign: 'left'
-  };
-
-  const tdStyle = {
-    padding: '10px 8px',
-    fontSize: 15,
-    verticalAlign: 'middle'
-  };
-
   if (loading) {
-    return <div style={{ textAlign: 'center', padding: '50px' }}>Loading tickets...</div>;
+    return <div style={{ textAlign: 'center', marginTop: 50 }}>Loading tickets...</div>;
   }
 
   if (error) {
-    return <div style={{ textAlign: 'center', padding: '50px', color: 'red' }}>Error: {error}</div>;
+    return <div style={{ textAlign: 'center', marginTop: 50, color: 'red' }}>{error}</div>;
   }
 
   return (
@@ -91,7 +72,6 @@ function TicketList({ filter }) {
             <th style={thStyle}><i className="bi bi-card-text me-1"></i>Subject</th>
             <th style={thStyle}><i className="bi bi-tag me-1"></i>Type</th>
             <th style={thStyle}><i className="bi bi-diagram-3 me-1"></i>Assigned Unit</th>
-            {/* REMOVED: Requester Header from user-facing TicketList */}
             <th style={thStyle}><i className="bi bi-info-circle me-1"></i>Status</th>
             <th style={thStyle}><i className="bi bi-calendar me-1"></i>Created</th>
           </tr>
@@ -99,13 +79,13 @@ function TicketList({ filter }) {
         <tbody>
           {filteredTickets.length === 0 ? (
             <tr>
-              <td colSpan={5} style={{ textAlign: 'center', padding: 20, color: '#888' }}> {/* Adjusted colSpan */}
+              <td colSpan={5} style={{ textAlign: 'center', padding: 20, color: '#888' }}>
                 No tickets found.
               </td>
             </tr>
           ) : (
             filteredTickets.map(ticket => (
-              <tr // Removed extra whitespace here
+              <tr
                 key={ticket._id}
                 style={{
                   borderBottom: '1px solid #eee',
@@ -133,7 +113,6 @@ function TicketList({ filter }) {
                     {ticket.assignedUnit || '—'}
                   </Badge>
                 </td>
-                {/* REMOVED: Requester Data Cell from user-facing TicketList */}
                 <td style={tdStyle}>
                   <Badge
                     bg={statusColors[ticket.status] || "secondary"}
@@ -155,5 +134,20 @@ function TicketList({ filter }) {
     </div>
   );
 }
+
+const thStyle = {
+  padding: '12px 10px',
+  background: '#f5f6fa',
+  fontWeight: 600,
+  fontSize: 16,
+  borderBottom: '2px solid #e1e1e1',
+  textAlign: 'left'
+};
+
+const tdStyle = {
+  padding: '10px 8px',
+  fontSize: 15,
+  verticalAlign: 'middle'
+};
 
 export default TicketList;
