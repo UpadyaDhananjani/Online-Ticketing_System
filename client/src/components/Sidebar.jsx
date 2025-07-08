@@ -19,7 +19,7 @@ function Sidebar() {
       }}
     >
       <Navbar.Brand className="mb-4" style={{ fontWeight: 700, fontSize: 28 }}>
-        
+        {/* You can add your brand/logo here if needed */}
       </Navbar.Brand>
       <Nav className="flex-column w-100">
 
@@ -27,13 +27,13 @@ function Sidebar() {
         <Nav.Link
           as={NavLink}
           to="/"
-          className="sidebar-nav-link mt-5" // This class will be styled by the <style> tag below
+          className="sidebar-nav-link mt-5"
         >
           Home
         </Nav.Link>
 
         {/* Other sidebar links */}
-         <Nav.Link
+        <Nav.Link
           as={NavLink}
           to="/create-ticket"
           className="sidebar-nav-link"
@@ -47,7 +47,7 @@ function Sidebar() {
         >
           My Tickets
         </Nav.Link>
-       
+        
         <Nav.Link
           as={NavLink}
           to="/tickets/open"
@@ -72,7 +72,8 @@ function Sidebar() {
       </Nav>
 
       {/* Embedded CSS for Sidebar Links */}
-      <style jsx>{`
+      {/* --- FIXED: Removed 'jsx' prop from the style tag --- */}
+      <style>{`
         /* Common styles for all sidebar navigation links */
         .sidebar-nav-link {
           font-weight: 500;

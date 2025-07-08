@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { Container, Row, Col, Form, Button, Card } from 'react-bootstrap';
+
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+
+import axios from 'axios';
+
 
 const UNIT_OPTIONS = [
   "System and Network Administration",
@@ -29,21 +33,30 @@ function CreateTicket() {
     formData.append('assignedUnit', assignedUnit);
     if (image) formData.append('image', image);
 
-    const res = await fetch('/api/tickets', {
-      method: 'POST',
-      body: formData
-    });
-    if (res.ok) {
-      toast.success("Ticket created successfully!");
-      if (onCreated) onCreated();
-      setSubject('');
-      setDescription('');
-      setType('incident');
-      setAssignedUnit(UNIT_OPTIONS[0]);
-      setImage(null);
-    } else {
-      toast.error("Failed to create ticket.");
+    try {
+      const res = await axios.post('/api/tickets', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        },
+        withCredentials: true
+      });
+
+      if (res.status === 201) {
+        toast.success("Ticket created successfully!");
+        navigate('/tickets'); // Navigate to the ticket list page
+      } else {
+        toast.error(res.data.error || "Failed to create ticket.");
+      }
+    } catch (error) {
+      console.error("Error creating ticket:", error);
+      toast.error(error.response?.data?.error || "An error occurred while creating ticket.");
     }
+
+    setSubject('');
+    setDescription('');
+    setType('incident');
+    setAssignedUnit(UNIT_OPTIONS[0]);
+    setImage(null);
   };
 
   return (
