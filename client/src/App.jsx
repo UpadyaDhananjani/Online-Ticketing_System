@@ -6,7 +6,6 @@ import Navbar from './components/Navbar.jsx';
 import Sidebar from './components/Sidebar.jsx';
 import Home from './components/Home.jsx';
 import Home2 from './components/Home2.jsx';
-import Login from './components/Login.jsx';
 import ResetPassword from './components/ResetPassword.jsx';
 import EmailVerify from './components/EmailVerify.jsx';
 import TicketsPage from './pages/TicketsPage';
