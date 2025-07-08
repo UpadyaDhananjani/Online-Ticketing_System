@@ -1,36 +1,48 @@
 import axios from 'axios';
 
 const API_URL = '/api/tickets'; // Base URL for user tickets
+const ADMIN_API_URL = '/api/admin/tickets'; // Base URL for admin tickets
 
-// Create ticket (with assignedUnit support) - Keep token here if backend still expects it in header for this specific route
+// Create ticket (user)
 export const createTicket = (data, token) =>
   axios.post(API_URL, data, { headers: { Authorization: `Bearer ${token}` } });
 
-// Get tickets (user) - NO TOKEN PARAMETER, relies on cookies via withCredentials
-export const getTickets = () => // Removed 'token' parameter
-  axios.get(API_URL, { withCredentials: true }); // Explicitly use withCredentials
+// Get tickets (user) - Relies on cookies via withCredentials
+export const getTickets = () => 
+  axios.get(API_URL, { withCredentials: true });
 
-// Update ticket (with assignedUnit support) - Keep token here if backend still expects it in header for this specific route
+// Update ticket (user)
 export const updateTicket = (id, data, token) =>
   axios.put(`${API_URL}/${id}`, data, { headers: { Authorization: `Bearer ${token}` } });
 
-// Close ticket - Keep token here if backend still expects it in header for this specific route
+// Close ticket (user)
 export const closeTicket = (id, token) =>
   axios.patch(`${API_URL}/${id}/close`, {}, { headers: { Authorization: `Bearer ${token}` } });
 
-// Get all tickets (admin) - NO TOKEN PARAMETER, relies on cookies via withCredentials
-// This now calls the same /api/tickets endpoint that populates user data.
-export const getAllTickets = () => // Removed 'token' parameter
-  axios.get(API_URL, { withCredentials: true }); // Explicitly use withCredentials
+// Get all tickets (admin) - Uses token for Authorization header
+export const getAllTickets = (token) => 
+  axios.get(ADMIN_API_URL, { headers: { Authorization: `Bearer ${token}` } });
 
-// Send ticket reply (admin) - Keep token here if backend still expects it in header for this specific route
+// Send ticket reply (admin) - Uses token
 export const sendTicketReply = (ticketId, data, token) =>
-  axios.post(`/api/admin/tickets/${ticketId}/reply`, data, {
+  axios.post(`${ADMIN_API_URL}/${ticketId}/reply`, data, {
     headers: { Authorization: `Bearer ${token}` }
   });
 
-// Resolve ticket (admin) - Keep token here if backend still expects it in header for this specific route
+// Resolve ticket (admin) - Uses token
 export const resolveTicket = (ticketId, token) =>
-  axios.patch(`/api/admin/tickets/${ticketId}/resolve`, null, {
+  axios.patch(`${ADMIN_API_URL}/${ticketId}/resolve`, null, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+// Get a single ticket for admin (e.g., for TicketReply) - Uses token
+export const getAdminTicketById = (ticketId, token) =>
+  axios.get(`${ADMIN_API_URL}/${ticketId}`, { 
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+// --- CRITICAL: Ensure this export is present and spelled correctly ---
+export const deleteAdminMessage = (ticketId, messageId, token) =>
+  axios.delete(`${ADMIN_API_URL}/${ticketId}/messages/${messageId}`, {
     headers: { Authorization: `Bearer ${token}` }
   });
