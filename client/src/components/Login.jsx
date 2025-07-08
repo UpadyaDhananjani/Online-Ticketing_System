@@ -1,10 +1,10 @@
 // client/src/components/Login.jsx
-import React, { useContext, useState } from "react";
+import React, { useContext, useState } from "react"; // Correct import
 import { assets } from "../assets/assets";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom"; // Correct import
 import { AppContent } from "../context/AppContext";
-import axios from "axios";
-import { toast } from "react-toastify";
+import axios from "axios"; // Correct import
+import { toast } from "react-toastify"; // Correct import
 
 const Login = () => {
   const navigate = useNavigate();
@@ -149,7 +149,7 @@ const Login = () => {
           </p>
         )}
       </div>
-      {/* --- Removed 'jsx' prop from the style tag --- */}
+      {/* Removed 'jsx' prop from the style tag */}
       <style>
         {`
           .login-container {
