@@ -59,20 +59,7 @@ function TicketsPage({ token, filter }) {
           onTicketUpdate={setSelectedTicket} // <-- Pass this!
         />
       )}
-      <TicketList
-        className="mt-4"
-        style={{ maxWidth: 900, margin: '30px auto', background: 'black' }}
-        key={refresh}
-        token={token}
-        filter={filter} // Pass filter to TicketList
-        onEdit={handleEdit}
-        onClose={handleClose}
-        onReopen={handleReopen}
-        onReply={(ticket) => {
-          setSelectedTicket(ticket);
-          setShowReply(true);
-        }}
-      />
+      <TicketList token={token} />
     </div>
   );
 }

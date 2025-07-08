@@ -18,8 +18,7 @@ import 'react-toastify/dist/ReactToastify.css'; // Keep this for react-toastify'
 import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS for styling
 import 'bootstrap-icons/font/bootstrap-icons.css'; // Import Bootstrap Icons for icons
 import './App.css'; // Import your custom CSS styles
-import { AppContextProvider } from './context/AppContext';
-import ProtectedRoute from './components/ProtectedRoute';
+
 
 
 
