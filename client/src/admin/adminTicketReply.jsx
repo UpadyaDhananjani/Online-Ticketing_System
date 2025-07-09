@@ -50,11 +50,10 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
     try {
       await sendTicketReply(ticket._id, formData, token);
       setReply("");
-      setImageFile(null);
+      setImageFile([]);
       setLocalStatus("in progress");
       if (onStatusChange) onStatusChange("in progress");
-      await fetchTicket();
-      toast.success("Reply sent successfully!");
+      await fetchTicket(); // Always refresh after sending reply
     } catch (err) {
       console.error("Failed to send reply:", err);
       toast.error(err.response?.data?.message || "Failed to send reply.");
@@ -68,6 +67,7 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
       await resolveTicket(ticket._id, token);
       setLocalStatus("resolved");
       if (onStatusChange) onStatusChange("resolved");
+      await fetchTicket(); // Always refresh after resolving
       onBack();
       toast.success("Ticket resolved successfully!");
     } catch (err) {
@@ -85,7 +85,7 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
       
       if (res.data.success) {
         toast.success(res.data.message || "Message deleted successfully.");
-        await fetchTicket(); // Refetch ticket to update message history
+        await fetchTicket(); // Always refresh after deleting message
       } else {
         toast.error(res.data.message || "Failed to delete message.");
       }

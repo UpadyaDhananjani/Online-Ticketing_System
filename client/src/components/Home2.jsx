@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
-import { Container, Row, Col, Spinner, Alert, Card, Badge } from "react-bootstrap";
+import { Container, Row, Col, Spinner, Alert, Card, Badge, Button } from "react-bootstrap";
 import { Link } from 'react-router-dom';
 import { AppContent } from '../context/AppContext';
 import {
@@ -8,6 +8,7 @@ import {
   BsDiagram3,
   BsInfoCircle,
   BsCalendar,
+  BsPlusCircle
 } from "react-icons/bs";
 
 const Home2 = () => {
@@ -183,8 +184,20 @@ const Home2 = () => {
         </Col>
       </Row>
 
+      {/* Create New Ticket Button */}
+      <Row className="mt-4 mb-2">
+        <Col className="d-flex justify-content-end">
+          <Link to="/create-ticket">
+            <Button variant="success" size="md" className="d-flex align-items-center">
+              <BsPlusCircle className="me-2" size={20} />
+              Create New Ticket
+            </Button>
+          </Link>
+        </Col>
+      </Row>
+
       {/* Recent Issues section */}
-      <Row className="mt-4">
+      <Row className="mt-2">
         <Col>
           <h3 className="mb-3">Recent Issues</h3>
           <Card className="shadow-sm border-0">

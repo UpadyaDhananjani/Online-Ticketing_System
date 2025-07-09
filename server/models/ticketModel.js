@@ -37,6 +37,7 @@ const ticketSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
   image: { type: String, required: false }, // Optional image field
+  attachments: [{ type: String }], // <-- Add this line
   messages: [messageSchema]
 });
 
