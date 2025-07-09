@@ -12,7 +12,7 @@ import { toast } from 'react-toastify';
 
 
 function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) {
-  const [reply, setReply] = useState("");
+  const [reply, setReply] = useState(""); 
   const [imageFile, setImageFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [localStatus, setLocalStatus] = useState(ticket.status);
@@ -30,6 +30,7 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
       ]
     }
   };
+
 
   const handleImageChange = (e) => {
     setImageFile(e.target.files[0]);
@@ -58,6 +59,7 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
     setUploading(false);
   };
 
+
   const handleResolve = async () => {
     try {
       await resolveTicket(ticket._id, token);
@@ -70,6 +72,7 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
       toast.error(err.response?.data?.message || "Failed to resolve ticket.");
     }
   };
+
 
   const handleDeleteMessage = async (messageId) => {
     try {
@@ -89,6 +92,7 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
     }
   };
 
+  
   // Fetch updated ticket details
   const fetchTicket = async () => {
     try {

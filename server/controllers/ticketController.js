@@ -67,7 +67,8 @@ export const createTicket = async (req, res) => {
 // Get all tickets
 export const getUserTickets = async (req, res) => {
   try {
-    const tickets = await Ticket.find({}).populate('user', 'name').sort({ createdAt: -1 });
+    // Only fetch tickets for the logged-in user
+    const tickets = await Ticket.find({ user: req.user._id }).populate('user', 'name').sort({ createdAt: -1 });
     return res.json(tickets);
   } catch (err) {
     return res.status(500).json({ error: err.message });
