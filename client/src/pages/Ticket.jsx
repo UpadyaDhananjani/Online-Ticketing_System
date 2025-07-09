@@ -98,6 +98,7 @@ const Ticket = () => {
     sender: msg.authorRole === "admin" ? "Admin" : "User",
     message: msg.content,
     date: msg.date,
+    attachments: msg.attachments // <-- add this line
   }));
 
   return (

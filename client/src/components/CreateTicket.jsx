@@ -21,8 +21,12 @@ function CreateTicket() {
   const [description, setDescription] = useState('');
   const [type, setType] = useState('incident');
   const [assignedUnit, setAssignedUnit] = useState(UNIT_OPTIONS[0]);
-  const [image, setImage] = useState(null);
+  const [images, setImages] = useState([]);
   const navigate = useNavigate(); // Initialize useNavigate
+
+  const handleImageChange = (e) => {
+    setImages(e.target.files);
+  };
 
   const handleSubmit = async e => {
     e.preventDefault();
@@ -31,7 +35,11 @@ function CreateTicket() {
     formData.append('description', description);
     formData.append('type', type);
     formData.append('assignedUnit', assignedUnit);
-    if (image) formData.append('image', image);
+    if (images && images.length > 0) {
+      for (let i = 0; i < images.length; i++) {
+        formData.append('attachments', images[i]);
+      }
+    }
 
     try {
       const res = await axios.post('/api/tickets', formData, {
@@ -56,7 +64,7 @@ function CreateTicket() {
     setDescription('');
     setType('incident');
     setAssignedUnit(UNIT_OPTIONS[0]);
-    setImage(null);
+    setImages([]);
   };
 
   return (
@@ -116,9 +124,16 @@ function CreateTicket() {
                   <Form.Control
                     type="file"
                     accept=".jpg,.jpeg,.png"
-                    onChange={e => setImage(e.target.files[0])}
+                    multiple
+                    onChange={handleImageChange}
                   />
                 </Form.Group>
+                {images && images.length > 0 && (
+                  <div className="mt-2 text-success">
+                    <i className="bi bi-image me-1"></i>
+                    {images.length} files selected
+                  </div>
+                )}
                 <div className="d-grid">
                   <Button variant="primary" type="submit" size="lg">
                     Create Ticket

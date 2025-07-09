@@ -106,6 +106,21 @@ export const deleteMessage = async (req, res) => {
   }
 };
 
+// --- NEW FUNCTION: Delete a ticket (Admin only) ---
+export const deleteTicket = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const ticket = await Ticket.findByIdAndDelete(id);
+    if (!ticket) {
+      return res.status(404).json({ success: false, message: 'Ticket not found.' });
+    }
+    return res.status(200).json({ success: true, message: 'Ticket deleted successfully.' });
+  } catch (error) {
+    console.error('Admin: Error deleting ticket:', error);
+    return res.status(500).json({ success: false, message: 'Failed to delete ticket due to server error.' });
+  }
+};
+
 // --- Existing functions (copy-pasted for completeness, ensure they are here) ---
 
 // Mark ticket as resolved

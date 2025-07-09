@@ -46,3 +46,9 @@ export const deleteAdminMessage = (ticketId, messageId, token) =>
   axios.delete(`${ADMIN_API_URL}/${ticketId}/messages/${messageId}`, {
     headers: { Authorization: `Bearer ${token}` }
   });
+
+// --- NEW: Delete a ticket as admin ---
+export const deleteAdminTicket = (ticketId, token) =>
+  axios.delete(`${ADMIN_API_URL}/${ticketId}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });

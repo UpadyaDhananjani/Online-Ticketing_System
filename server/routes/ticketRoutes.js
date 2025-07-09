@@ -23,7 +23,7 @@ const router = express.Router();
 
 // Create a ticket (with image and assignedUnit)
 // --- CONFIRMATION: authMiddleware is BEFORE upload.single('image') ---
-router.post('/', authMiddleware, upload.single('image'), createTicket);
+router.post('/', authMiddleware, uploadMiddleware.array('attachments', 5), createTicket);
 
 // Get all tickets for user (or all for admin)
 router.get('/', authMiddleware, getUserTickets); // Confirmed authMiddleware is here
@@ -46,7 +46,7 @@ router.get('/:id', authMiddleware, getTicketById);
 
 
 // Add a user reply to a ticket
-router.post('/:id/reply', uploadMiddleware.single('image'), addUserReply);
+router.post('/:id/reply', uploadMiddleware.array('attachments', 5), addUserReply);
 
 
 // Delete a message from a ticket
