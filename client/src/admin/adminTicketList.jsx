@@ -40,7 +40,7 @@ const TYPE_OPTIONS = [
 ];
 
 // Removed 'token' prop from function signature
-function TicketList({ onSelect, token }) { 
+function TicketList({ onSelect, token, refresh }) { 
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -68,7 +68,7 @@ function TicketList({ onSelect, token }) {
         toast.error(err.response?.data?.error || err.message || "Failed to fetch tickets for admin dashboard.");
         setLoading(false);
       });
-  }, []); // Empty dependency array, fetches once on mount
+  }, [refresh]); // Add refresh as a dependency
 
   const handleDelete = async (ticketId) => {
     if (!window.confirm("Are you sure you want to delete this ticket? This action cannot be undone.")) return;

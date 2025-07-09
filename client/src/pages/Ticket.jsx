@@ -19,7 +19,7 @@ const Ticket = () => {
   const [error, setError] = useState("");
   const [closing, setClosing] = useState(false);
   const [reply, setReply] = useState("");
-  const [imageFile, setImageFile] = useState(null);
+  const [imageFiles, setImageFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
@@ -53,15 +53,17 @@ const Ticket = () => {
   };
 
   const handleImageChange = (e) => {
-    setImageFile(e.target.files[0]);
+    setImageFiles(e.target.files); // FileList
   };
 
   const handleUserReply = async (e) => {
     e.preventDefault();
     const formData = new FormData();
     formData.append("content", reply);
-    if (imageFile) {
-      formData.append("image", imageFile);
+    if (imageFiles && imageFiles.length > 0) {
+      for (let i = 0; i < imageFiles.length; i++) {
+        formData.append("attachments", imageFiles[i]);
+      }
     }
     setUploading(true);
     try {
@@ -73,7 +75,7 @@ const Ticket = () => {
       const updated = await res.json();
       setTicket(updated);
       setReply("");
-      setImageFile(null);
+      setImageFiles([]);
     } catch (err) {
       setError(err.message);
     }
@@ -185,13 +187,14 @@ const Ticket = () => {
                   <Form.Control
                     type="file"
                     accept="image/*"
+                    multiple
                     onChange={handleImageChange}
                     disabled={uploading}
                   />
-                  {imageFile && (
+                  {imageFiles && imageFiles.length > 0 && (
                     <div className="mt-2 text-success">
                       <i className="bi bi-image me-1"></i>
-                      {imageFile.name}
+                      {imageFiles.length} files selected
                     </div>
                   )}
                 </Form.Group>
