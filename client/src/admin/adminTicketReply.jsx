@@ -13,7 +13,8 @@ import { toast } from 'react-toastify';
 
 function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) {
   const [reply, setReply] = useState(""); 
-  const [imageFile, setImageFile] = useState(null);
+  // Change state to allow multiple files
+  const [imageFile, setImageFile] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [localStatus, setLocalStatus] = useState(ticket.status);
   const quillRef = useRef();
@@ -33,15 +34,17 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
 
 
   const handleImageChange = (e) => {
-    setImageFile(e.target.files[0]);
+    setImageFile(e.target.files); // FileList
   };
 
   const handleSubmit = async e => {
     e.preventDefault();
     const formData = new FormData();
     formData.append("content", reply);
-    if (imageFile) {
-      formData.append("image", imageFile);
+    if (imageFile && imageFile.length > 0) {
+      for (let i = 0; i < imageFile.length; i++) {
+        formData.append("attachments", imageFile[i]);
+      }
     }
     setUploading(true);
     try {
@@ -112,7 +115,8 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
     _id: msg._id,
     sender: msg.authorRole === "admin" ? "Admin" : "User",
     message: msg.content,
-    date: msg.date
+    date: msg.date,
+    attachments: msg.attachments // <-- ensure this is present
   }));
 
   return (
@@ -160,13 +164,14 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
                   <Form.Control
                     type="file"
                     accept="image/*"
+                    multiple
                     onChange={handleImageChange}
                     disabled={uploading}
                   />
                   {imageFile && (
                     <div className="mt-2 text-success">
                       <i className="bi bi-image me-1"></i>
-                      {imageFile.name}
+                      {imageFile.length} files selected
                     </div>
                   )}
                 </Form.Group>

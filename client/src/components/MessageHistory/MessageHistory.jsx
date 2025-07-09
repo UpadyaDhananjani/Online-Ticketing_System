@@ -83,6 +83,32 @@ const MessageHistory = ({ msg, description, image, onDeleteMessage }) => (
                     style={{ whiteSpace: "pre-wrap", fontSize: 15 }}
                     dangerouslySetInnerHTML={{ __html: m.message }}
                   />
+                  {m.attachments && m.attachments.length > 0 && (
+                    <div className="mt-2">
+                      {m.attachments.map((url, idx) => (
+                        <a
+                          key={idx}
+                          href={url.startsWith('http') ? url : `http://localhost:4000${url}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="d-inline-block me-2"
+                        >
+                          <img
+                            src={url.startsWith('http') ? url : `http://localhost:4000${url}`}
+                            alt={`attachment-${idx}`}
+                            style={{
+                              maxWidth: 120,
+                              maxHeight: 120,
+                              borderRadius: 6,
+                              border: "1px solid #e3e3e3",
+                              boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                              marginRight: 8
+                            }}
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  )}
                   <Button
                     variant="outline-danger"
                     size="sm"

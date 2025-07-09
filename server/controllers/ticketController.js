@@ -44,13 +44,19 @@ export const createTicket = async (req, res) => {
       return res.status(400).json({ error: "assignedUnit is required" });
     }
 
+    // Handle multiple attachments
+    let attachments = [];
+    if (req.files && req.files.length > 0) {
+      attachments = req.files.map(f => `/uploads/${f.filename}`);
+    }
+
     const ticket = new Ticket({
       user: req.user._id,
       subject,
       description,
       type,
       assignedUnit,
-      image: req.file ? req.file.filename : undefined
+      attachments // Store as array
     });
 
     await ticket.save();
@@ -171,7 +177,10 @@ export const addUserReply = async (req, res) => {
   try {
     const { id } = req.params;
     const { content } = req.body;
-    const image = req.file ? req.file.filename : null;
+    let attachments = [];
+    if (req.files && req.files.length > 0) {
+      attachments = req.files.map(f => `/uploads/${f.filename}`);
+    }
 
     const ticket = await Ticket.findById(id);
     if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
@@ -180,7 +189,7 @@ export const addUserReply = async (req, res) => {
     ticket.messages.push({
       authorRole: 'user',
       content,
-      image,
+      attachments,
       date: new Date()
     });
 
