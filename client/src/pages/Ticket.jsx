@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Container, Row, Col, Spinner, Alert, Card, Badge, Button, Form } from "react-bootstrap";
+import { Container, Row, Col, Spinner, Alert, Card, Badge, Button, Form, Modal } from "react-bootstrap";
 import { useParams, useNavigate } from "react-router-dom";
 import MessageHistory from "../components/MessageHistory/MessageHistory";
 import { Editor } from 'primereact/editor';
@@ -21,6 +21,8 @@ const Ticket = () => {
   const [reply, setReply] = useState("");
   const [imageFiles, setImageFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalImage, setModalImage] = useState(null);
 
   useEffect(() => {
     setLoading(true);
@@ -80,6 +82,12 @@ const Ticket = () => {
       setError(err.message);
     }
     setUploading(false);
+  };
+
+  // Handler for image click
+  const handleAttachmentClick = (url) => {
+    setModalImage(url);
+    setShowModal(true);
   };
 
   if (loading) return (
@@ -165,6 +173,8 @@ const Ticket = () => {
             msg={messages}
             description={ticket.description}
             image={ticket.image}
+            currentUserRole="user"
+            onAttachmentClick={handleAttachmentClick}
           />
         </Col>
       </Row>
@@ -210,6 +220,18 @@ const Ticket = () => {
           </Card>
         </Col>
       </Row>
+      {/* Image Zoom Modal */}
+      <Modal show={showModal} onHide={() => setShowModal(false)} centered size="lg">
+        <Modal.Body className="d-flex flex-column align-items-center justify-content-center p-0" style={{ background: '#222' }}>
+          {modalImage && (
+            <img
+              src={modalImage}
+              alt="attachment zoom"
+              style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain', background: '#222' }}
+            />
+          )}
+        </Modal.Body>
+      </Modal>
     </Container>
   );
 };
