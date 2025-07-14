@@ -55,8 +55,7 @@ function App() {
 
                 {/* User Ticket related routes */}
                 <Route path="/tickets-page" element={<TicketsPage />} /> 
-                {/* Removed token prop from TicketList */}
-                <Route path="/tickets" element={<TicketList />} />
+                <Route path="/tickets" element={<TicketsPage />} />
                 <Route path="/create-ticket" element={<CreateTicket />} />
                 <Route path="/tickets/:id" element={<Ticket />} />
                 <Route path="/admin" element={<AdminDashboard token={token} />} />

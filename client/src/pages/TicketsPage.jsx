@@ -3,8 +3,6 @@ import TicketList from '../components/TicketList';
 import { Tabs, Tab } from 'react-bootstrap';
 import { BsSend, BsInbox } from 'react-icons/bs';
 import { AppContent } from '../context/AppContext';
-// FIXED: Updated import path and component name to match the actual filename on your system
-import AdminTicketReply from '../admin/adminTicketReply'; // Renamed to AdminTicketReply to match filename
 
 function TicketsPage({ token, filter }) {
   const [tabKey, setTabKey] = useState('created');

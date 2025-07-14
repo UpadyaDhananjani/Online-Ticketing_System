@@ -22,7 +22,6 @@ function Sidebar() {
         {/* You can add your brand/logo here if needed */}
       </Navbar.Brand>
       <Nav className="flex-column w-100">
-
         {/* Home Link - Navigates to "/" which is mapped to Home2.jsx */}
         <Nav.Link
           as={NavLink}
@@ -31,7 +30,6 @@ function Sidebar() {
         >
           Home
         </Nav.Link>
-
         {/* Other sidebar links */}
         <Nav.Link
           as={NavLink}
@@ -58,45 +56,34 @@ function Sidebar() {
           Admin Dashboard
         </Nav.Link>
       </Nav>
-
       {/* Embedded CSS for Sidebar Links */}
-      {/* --- FIXED: Removed 'jsx' prop from the style tag --- */}
       <style>{`
-        /* Common styles for all sidebar navigation links */
         .sidebar-nav-link {
           font-weight: 500;
-          color: #222 !important; /* Override Bootstrap's default link color */
+          color: #222 !important;
           font-size: 18px;
-          margin-bottom: 8px; /* Spacing between links */
-          text-decoration: none; /* Remove underline */
-          transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out; /* Smooth transitions */
-          padding: 8px 12px; /* Padding inside each link */
-          border-radius: 4px; /* Slightly rounded corners */
-          display: block; /* Make the entire padded area clickable */
+          margin-bottom: 8px;
+          text-decoration: none;
+          transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
+          padding: 8px 12px;
+          border-radius: 4px;
+          display: block;
         }
-
-        /* Hover state for sidebar links */
         .sidebar-nav-link:hover {
-          color: #0056b3 !important; /* Darker blue on hover */
-          background-color: #f0f2f5; /* Light background on hover */
+          color: #0056b3 !important;
+          background-color: #f0f2f5;
         }
-
-        /* Active state for sidebar links (NavLink automatically adds the 'active' class) */
         .sidebar-nav-link.active {
-          font-weight: 700; /* Bold when active */
-          color: #007bff !important; /* Bright blue when active */
-          background-color: #e9ecef; /* Slightly darker background for active */
-          border-left: 4px solid #007bff; /* Visual cue for active state */
-          padding-left: 8px; /* Adjust padding if a left border is added */
+          font-weight: 700;
+          color: #007bff !important;
+          background-color: #e9ecef;
+          border-left: 4px solid #007bff;
+          padding-left: 8px;
         }
-
-        /* Ensure active link also has proper hover state */
         .sidebar-nav-link.active:hover {
-          color: #0056b3 !important; /* Keep darker blue on hover even when active */
-          background-color: #e9ecef; /* Keep active background on hover */
+          color: #0056b3 !important;
+          background-color: #e9ecef;
         }
-
-        /* General link underline removal - you might have this in App.css already */
         a {
             text-decoration: none !important;
         }
