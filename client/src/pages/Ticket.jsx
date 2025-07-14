@@ -1,11 +1,14 @@
-import React, { useEffect, useState, useRef, useContext } from "react";
-import { Container, Row, Col, Spinner, Alert, Card, Badge, Button, Form } from "react-bootstrap";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useEffect, useState, useContext } from "react";
+import {
+  Container, Row, Col, Spinner, Alert,
+  Card, Badge, Button, Form, Modal
+} from "react-bootstrap";
+import { useParams } from "react-router-dom";
 import MessageHistory from "../components/MessageHistory/MessageHistory";
 import { Editor } from 'primereact/editor';
 import { toast } from 'react-toastify';
-import { AppContent } from '../context/AppContext'; // Import AppContent to get user data and token
-import { deleteUserMessage } from '../api/ticketApi'; // Import the new API function
+import { AppContent } from '../context/AppContext';
+import { deleteUserMessage } from '../api/ticketApi';
 
 const statusColors = {
   open: "success",
@@ -16,35 +19,35 @@ const statusColors = {
 
 const Ticket = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const { userData } = useContext(AppContent);
+  const token = userData?.token;
+  const currentUserId = userData?.user?._id;
+
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [closing, setClosing] = useState(false);
   const [reply, setReply] = useState("");
-  const [imageFile, setImageFile] = useState(null);
+  const [imageFiles, setImageFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
-
-  const { userData } = useContext(AppContent); // Get userData from context
-  const token = userData?.token;
-  const currentUserId = userData?.user?._id; // Get the ID of the currently logged-in user
+  const [showModal, setShowModal] = useState(false);
+  const [modalImage, setModalImage] = useState(null);
 
   useEffect(() => {
     setLoading(true);
-    // Use axios with withCredentials for user routes if you're relying on cookies
-    fetch(`/api/tickets/${id}`, { withCredentials: true }) 
-      .then((res) => {
+    fetch(`/api/tickets/${id}`, { withCredentials: true })
+      .then(res => {
         if (!res.ok) throw new Error("Failed to fetch ticket");
         return res.json();
       })
-      .then((data) => {
+      .then(data => {
         setTicket(data);
         setLoading(false);
       })
-      .catch((err) => {
+      .catch(err => {
         console.error("Error fetching ticket:", err);
         setError(err.message || "Failed to fetch ticket.");
-        toast.error(err.message || "Failed to fetch ticket details.");
+        toast.error(err.message || "Failed to fetch ticket.");
         setLoading(false);
       });
   }, [id]);
@@ -52,17 +55,15 @@ const Ticket = () => {
   const handleCloseTicket = async () => {
     setClosing(true);
     try {
-      // Assuming closeTicket API function handles auth via token
-      const res = await fetch(`/api/tickets/${id}/close`, { 
+      const res = await fetch(`/api/tickets/${id}/close`, {
         method: "PATCH",
-        headers: { Authorization: `Bearer ${token}` } // Pass token for authentication
+        headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to close ticket");
       const updated = await res.json();
       setTicket(updated);
       toast.success("Ticket closed successfully!");
     } catch (err) {
-      console.error("Error closing ticket:", err);
       setError(err.message || "Failed to close ticket.");
       toast.error(err.message || "Failed to close ticket.");
     }
@@ -70,48 +71,49 @@ const Ticket = () => {
   };
 
   const handleImageChange = (e) => {
-    setImageFile(e.target.files[0]);
+    setImageFiles([...e.target.files]);
   };
 
   const handleUserReply = async (e) => {
     e.preventDefault();
     const formData = new FormData();
     formData.append("content", reply);
-    if (imageFile) {
-      formData.append("image", imageFile);
+    if (imageFiles && imageFiles.length > 0) {
+      for (let i = 0; i < imageFiles.length; i++) {
+        formData.append("attachments", imageFiles[i]);
+      }
     }
+
     setUploading(true);
     try {
-      // Assuming user reply API handles auth via token
       const res = await fetch(`/api/tickets/${id}/reply`, {
         method: "POST",
         body: formData,
-        headers: { Authorization: `Bearer ${token}` } // Pass token for authentication
+        headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to send reply");
       const updated = await res.json();
       setTicket(updated);
       setReply("");
-      setImageFile(null);
+      setImageFiles([]);
       toast.success("Reply sent successfully!");
     } catch (err) {
-      console.error("Error sending reply:", err);
       setError(err.message || "Failed to send reply.");
       toast.error(err.message || "Failed to send reply.");
     }
     setUploading(false);
   };
 
-  // --- NEW: Function to handle message deletion by the user ---
+  const handleAttachmentClick = (url) => {
+    setModalImage(url);
+    setShowModal(true);
+  };
+
   const handleDeleteMessage = async (messageId) => {
     try {
-      console.log(`Attempting to delete message: ${messageId} from ticket: ${id} by user.`);
-      // Call the new deleteUserMessage API function
-      const res = await deleteUserMessage(id, messageId, token); 
-      
-      if (res.success) { // Assuming the backend returns { success: true, message: "..." }
+      const res = await deleteUserMessage(id, messageId, token);
+      if (res.success) {
         toast.success(res.message || "Message deleted successfully.");
-        // Optimistically update the UI by filtering out the deleted message
         setTicket(prevTicket => ({
           ...prevTicket,
           messages: prevTicket.messages.filter(msg => msg._id !== messageId)
@@ -120,31 +122,31 @@ const Ticket = () => {
         toast.error(res.message || "Failed to delete message.");
       }
     } catch (err) {
-      console.error("Error deleting message:", err);
-      toast.error(err.response?.data?.message || "Failed to delete message due to network or server error.");
+      toast.error(err.response?.data?.message || "Failed to delete message.");
     }
   };
-
 
   if (loading) return (
     <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: "60vh" }}>
       <Spinner animation="border" variant="primary" />
     </Container>
   );
+
   if (error) return (
     <Container className="py-5">
       <Alert variant="danger" className="text-center">{error}</Alert>
     </Container>
   );
+
   if (!ticket) return null;
 
-  // Prepare messages for MessageHistory
   const messages = (ticket.messages || []).map((msg) => ({
-    _id: msg._id, // <-- include this!
+    _id: msg._id,
     sender: msg.authorRole === "admin" ? "Admin" : "User",
     message: msg.content,
     date: msg.date,
-    authorId: msg.author // Assuming msg.author holds the user ID who sent the message
+    attachments: msg.attachments,
+    authorId: msg.author
   }));
 
   return (
@@ -159,40 +161,15 @@ const Ticket = () => {
                     <i className="bi bi-ticket-detailed me-2"></i>
                     Ticket Details
                   </h3>
-                  <div className="mb-2">
-                    <span className="fw-semibold text-secondary">Subject:</span>{" "}
-                    <span className="fs-5">{ticket.subject}</span>
-                  </div>
-                  <div className="mb-2">
-                    <span className="fw-semibold text-secondary">Opened:</span>{" "}
-                    {ticket.createdAt && new Date(ticket.createdAt).toLocaleString()}
-                  </div>
-                  <div className="mb-2">
-                    <span className="fw-semibold text-secondary">Assigned Unit:</span>{" "}
-                    <Badge bg="secondary" className="text-capitalize">
-                      <i className="bi bi-diagram-3 me-1"></i>
-                      {ticket.assignedUnit || '—'}
-                    </Badge>
-                  </div>
-                  <div className="mb-2">
-                    <span className="fw-semibold text-secondary">Status:</span>{" "}
-                    <Badge bg={statusColors[ticket.status] || "secondary"} className="px-3 py-2 text-capitalize">
-                      {ticket.status}
-                    </Badge>
-                  </div>
-                  <div className="mb-2">
-                    <span className="fw-semibold text-secondary">Type:</span>{" "}
-                    <Badge bg="info" text="dark" className="text-capitalize">{ticket.type}</Badge>
-                  </div>
+                  <div className="mb-2"><span className="fw-semibold text-secondary">Subject:</span> <span className="fs-5">{ticket.subject}</span></div>
+                  <div className="mb-2"><span className="fw-semibold text-secondary">Opened:</span> {ticket.createdAt && new Date(ticket.createdAt).toLocaleString()}</div>
+                  <div className="mb-2"><span className="fw-semibold text-secondary">Assigned Unit:</span> <Badge bg="secondary" className="text-capitalize">{ticket.assignedUnit || '—'}</Badge></div>
+                  <div className="mb-2"><span className="fw-semibold text-secondary">Status:</span> <Badge bg={statusColors[ticket.status] || "secondary"} className="px-3 py-2 text-capitalize">{ticket.status}</Badge></div>
+                  <div className="mb-2"><span className="fw-semibold text-secondary">Type:</span> <Badge bg="info" text="dark" className="text-capitalize">{ticket.type}</Badge></div>
                 </Col>
                 <Col xs={12} md={4} className="d-flex align-items-center justify-content-md-end justify-content-start mt-3 mt-md-0">
                   {ticket.status === "open" && (
-                    <Button
-                      variant="danger"
-                      className="d-flex align-items-center"
-                      onClick={handleCloseTicket}
-                      disabled={closing}
-                    >
+                    <Button variant="danger" onClick={handleCloseTicket} disabled={closing}>
                       <i className="bi bi-x-circle me-2"></i>
                       {closing ? "Closing..." : "Close Ticket"}
                     </Button>
@@ -203,17 +180,18 @@ const Ticket = () => {
           </Card>
         </Col>
       </Row>
+
       <Row>
         <Col>
           <MessageHistory
             msg={messages}
             description={ticket.description}
             image={ticket.image}
-            // Pass the delete handler to MessageHistory for user messages
+            currentUserRole="user"
+            onAttachmentClick={handleAttachmentClick}
             onDeleteMessage={(messageId) => {
-              // Only allow deletion if the message was sent by the current user
-              const messageToDelete = messages.find(m => m._id === messageId);
-              if (messageToDelete && messageToDelete.authorId === currentUserId) {
+              const message = messages.find(m => m._id === messageId);
+              if (message && message.authorId === currentUserId) {
                 handleDeleteMessage(messageId);
               } else {
                 toast.error("You can only delete your own messages.");
@@ -222,7 +200,7 @@ const Ticket = () => {
           />
         </Col>
       </Row>
-      {/* User Reply Form */}
+
       <Row>
         <Col>
           <Card className="shadow-sm mt-4">
@@ -241,13 +219,14 @@ const Ticket = () => {
                   <Form.Control
                     type="file"
                     accept="image/*"
+                    multiple
                     onChange={handleImageChange}
                     disabled={uploading}
                   />
-                  {imageFile && (
+                  {imageFiles.length > 0 && (
                     <div className="mt-2 text-success">
                       <i className="bi bi-image me-1"></i>
-                      {imageFile.name}
+                      {imageFiles.length} files selected
                     </div>
                   )}
                 </Form.Group>
@@ -263,6 +242,19 @@ const Ticket = () => {
           </Card>
         </Col>
       </Row>
+
+      {/* Image Zoom Modal */}
+      <Modal show={showModal} onHide={() => setShowModal(false)} centered size="lg">
+        <Modal.Body className="d-flex flex-column align-items-center justify-content-center p-0" style={{ background: '#222' }}>
+          {modalImage && (
+            <img
+              src={modalImage}
+              alt="attachment zoom"
+              style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain' }}
+            />
+          )}
+        </Modal.Body>
+      </Modal>
     </Container>
   );
 };

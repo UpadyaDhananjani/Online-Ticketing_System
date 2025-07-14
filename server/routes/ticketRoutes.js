@@ -5,61 +5,69 @@ import {
   updateTicket,
   closeTicket,
   reopenTicket,
-  upload, // Multer upload middleware from controller
   getTicketById,
   getTicketSummary,
   addUserReply,
-  deleteUserMessage // <-- IMPORT THE NEW FUNCTION
+  deleteUserMessage
 } from '../controllers/ticketController.js';
 
-import uploadMiddleware from '../middleware/uploadMiddleware.js'; // Assuming this is for reply attachments
-import authMiddleware from '../middleware/authMiddleware.js'; // Your authentication middleware
+import uploadMiddleware from '../middleware/uploadMiddleware.js'; // For attachments (Multer)
+import authMiddleware from '../middleware/authMiddleware.js'; // For authentication
 
 const router = express.Router();
 
-// Create a ticket (with image and assignedUnit)
+// ---------------------------------------------
+// Ticket Creation (with image)
 // @route   POST /api/tickets
 // @access  Private (User)
-router.post('/', authMiddleware, upload.single('image'), createTicket);
+router.post('/', authMiddleware, uploadMiddleware.array('attachments', 5), createTicket);
 
-// Get all tickets for user (or all for admin if this route is shared)
+// ---------------------------------------------
+// Get all tickets (user or admin based on role)
 // @route   GET /api/tickets
-// @access  Private (User/Admin)
+// @access  Private
 router.get('/', authMiddleware, getUserTickets);
 
-// Update a ticket (including assignedUnit)
+// ---------------------------------------------
+// Update a ticket
 // @route   PUT /api/tickets/:id
-// @access  Private (User/Admin)
+// @access  Private
 router.put('/:id', authMiddleware, updateTicket);
 
+// ---------------------------------------------
 // Close a ticket
 // @route   PATCH /api/tickets/:id/close
-// @access  Private (User/Admin)
+// @access  Private
 router.patch('/:id/close', authMiddleware, closeTicket);
 
+// ---------------------------------------------
 // Reopen a ticket
 // @route   PATCH /api/tickets/:id/reopen
-// @access  Private (User/Admin)
+// @access  Private
 router.patch('/:id/reopen', authMiddleware, reopenTicket);
 
-// Get ticket summary (e.g., counts of open, in progress, resolved)
+// ---------------------------------------------
+// Ticket Summary
 // @route   GET /api/tickets/summary
-// @access  Public (or Private if you want to restrict)
-router.get('/summary', getTicketSummary); // No authMiddleware here if it's public
+// @access  Public (or make Private if needed)
+router.get('/summary', getTicketSummary);
 
+// ---------------------------------------------
 // Get ticket by ID
 // @route   GET /api/tickets/:id
-// @access  Private (User/Admin)
+// @access  Private
 router.get('/:id', authMiddleware, getTicketById);
 
-// Add a user reply to a ticket
+// ---------------------------------------------
+// Add a reply to a ticket (with attachments)
 // @route   POST /api/tickets/:id/reply
-// @access  Private (User)
-router.post('/:id/reply', authMiddleware, uploadMiddleware.single('image'), addUserReply); // Added authMiddleware
+// @access  Private
+router.post('/:id/reply', authMiddleware, uploadMiddleware.array('attachments', 5), addUserReply);
 
-// --- NEW ROUTE: Delete a message from a ticket by a user ---
+// ---------------------------------------------
+// Delete a user message from a ticket
 // @route   DELETE /api/tickets/:ticketId/messages/:messageId
-// @access  Private (User) - Authenticated user can delete their own messages
+// @access  Private (User can delete own messages)
 router.delete('/:ticketId/messages/:messageId', authMiddleware, deleteUserMessage);
 
 export default router;

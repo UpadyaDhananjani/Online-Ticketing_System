@@ -107,6 +107,16 @@ const Navbar = () => {
         {showDropdown && isLoggedin && userData && ( // Only show dropdown if logged in and data exists
           <div className="user-dropdown-menu">
             <ul className="list-none m-0 p-0">
+              {userData && userData.name && (
+                <li className="dropdown-item font-bold text-indigo-900 cursor-default" style={{cursor:'default'}}>
+                  {userData.name}
+                </li>
+              )}
+              {userData && userData.unit && (
+                <li className="dropdown-item font-semibold text-indigo-700 cursor-default" style={{cursor:'default'}}>
+                  {userData.unit}
+                </li>
+              )}
               {userData && !userData.isAccountVerified && ( // Show verify email only if user data exists and not verified
                 <li onClick={sendVerificationOtp} className="dropdown-item">
                   Verify email
