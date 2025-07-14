@@ -1,8 +1,14 @@
-import React, { useEffect, useState, useRef } from "react";
-import { Container, Row, Col, Spinner, Alert, Card, Badge, Button, Form, Modal } from "react-bootstrap";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useEffect, useState, useContext } from "react";
+import {
+  Container, Row, Col, Spinner, Alert,
+  Card, Badge, Button, Form, Modal
+} from "react-bootstrap";
+import { useParams } from "react-router-dom";
 import MessageHistory from "../components/MessageHistory/MessageHistory";
 import { Editor } from 'primereact/editor';
+import { toast } from 'react-toastify';
+import { AppContent } from '../context/AppContext';
+import { deleteUserMessage } from '../api/ticketApi';
 
 const statusColors = {
   open: "success",
@@ -13,7 +19,10 @@ const statusColors = {
 
 const Ticket = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const { userData } = useContext(AppContent);
+  const token = userData?.token;
+  const currentUserId = userData?.user?._id;
+
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -26,17 +35,19 @@ const Ticket = () => {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/tickets/${id}`)
-      .then((res) => {
+    fetch(`/api/tickets/${id}`, { withCredentials: true })
+      .then(res => {
         if (!res.ok) throw new Error("Failed to fetch ticket");
         return res.json();
       })
-      .then((data) => {
+      .then(data => {
         setTicket(data);
         setLoading(false);
       })
-      .catch((err) => {
-        setError(err.message);
+      .catch(err => {
+        console.error("Error fetching ticket:", err);
+        setError(err.message || "Failed to fetch ticket.");
+        toast.error(err.message || "Failed to fetch ticket.");
         setLoading(false);
       });
   }, [id]);
@@ -44,18 +55,23 @@ const Ticket = () => {
   const handleCloseTicket = async () => {
     setClosing(true);
     try {
-      const res = await fetch(`/api/tickets/${id}/close`, { method: "PATCH" });
+      const res = await fetch(`/api/tickets/${id}/close`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` }
+      });
       if (!res.ok) throw new Error("Failed to close ticket");
       const updated = await res.json();
       setTicket(updated);
+      toast.success("Ticket closed successfully!");
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Failed to close ticket.");
+      toast.error(err.message || "Failed to close ticket.");
     }
     setClosing(false);
   };
 
   const handleImageChange = (e) => {
-    setImageFiles(e.target.files); // FileList
+    setImageFiles([...e.target.files]);
   };
 
   const handleUserReply = async (e) => {
@@ -67,27 +83,47 @@ const Ticket = () => {
         formData.append("attachments", imageFiles[i]);
       }
     }
+
     setUploading(true);
     try {
       const res = await fetch(`/api/tickets/${id}/reply`, {
         method: "POST",
-        body: formData
+        body: formData,
+        headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to send reply");
       const updated = await res.json();
       setTicket(updated);
       setReply("");
       setImageFiles([]);
+      toast.success("Reply sent successfully!");
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Failed to send reply.");
+      toast.error(err.message || "Failed to send reply.");
     }
     setUploading(false);
   };
 
-  // Handler for image click
   const handleAttachmentClick = (url) => {
     setModalImage(url);
     setShowModal(true);
+  };
+
+  const handleDeleteMessage = async (messageId) => {
+    try {
+      const res = await deleteUserMessage(id, messageId, token);
+      if (res.success) {
+        toast.success(res.message || "Message deleted successfully.");
+        setTicket(prevTicket => ({
+          ...prevTicket,
+          messages: prevTicket.messages.filter(msg => msg._id !== messageId)
+        }));
+      } else {
+        toast.error(res.message || "Failed to delete message.");
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to delete message.");
+    }
   };
 
   if (loading) return (
@@ -95,20 +131,22 @@ const Ticket = () => {
       <Spinner animation="border" variant="primary" />
     </Container>
   );
+
   if (error) return (
     <Container className="py-5">
       <Alert variant="danger" className="text-center">{error}</Alert>
     </Container>
   );
+
   if (!ticket) return null;
 
-  // Prepare messages for MessageHistory
   const messages = (ticket.messages || []).map((msg) => ({
-    _id: msg._id, // <-- include this!
+    _id: msg._id,
     sender: msg.authorRole === "admin" ? "Admin" : "User",
     message: msg.content,
     date: msg.date,
-    attachments: msg.attachments // <-- add this line
+    attachments: msg.attachments,
+    authorId: msg.author
   }));
 
   return (
@@ -123,40 +161,15 @@ const Ticket = () => {
                     <i className="bi bi-ticket-detailed me-2"></i>
                     Ticket Details
                   </h3>
-                  <div className="mb-2">
-                    <span className="fw-semibold text-secondary">Subject:</span>{" "}
-                    <span className="fs-5">{ticket.subject}</span>
-                  </div>
-                  <div className="mb-2">
-                    <span className="fw-semibold text-secondary">Opened:</span>{" "}
-                    {ticket.createdAt && new Date(ticket.createdAt).toLocaleString()}
-                  </div>
-                  <div className="mb-2">
-                    <span className="fw-semibold text-secondary">Assigned Unit:</span>{" "}
-                    <Badge bg="secondary" className="text-capitalize">
-                      <i className="bi bi-diagram-3 me-1"></i>
-                      {ticket.assignedUnit || '—'}
-                    </Badge>
-                  </div>
-                  <div className="mb-2">
-                    <span className="fw-semibold text-secondary">Status:</span>{" "}
-                    <Badge bg={statusColors[ticket.status] || "secondary"} className="px-3 py-2 text-capitalize">
-                      {ticket.status}
-                    </Badge>
-                  </div>
-                  <div className="mb-2">
-                    <span className="fw-semibold text-secondary">Type:</span>{" "}
-                    <Badge bg="info" text="dark" className="text-capitalize">{ticket.type}</Badge>
-                  </div>
+                  <div className="mb-2"><span className="fw-semibold text-secondary">Subject:</span> <span className="fs-5">{ticket.subject}</span></div>
+                  <div className="mb-2"><span className="fw-semibold text-secondary">Opened:</span> {ticket.createdAt && new Date(ticket.createdAt).toLocaleString()}</div>
+                  <div className="mb-2"><span className="fw-semibold text-secondary">Assigned Unit:</span> <Badge bg="secondary" className="text-capitalize">{ticket.assignedUnit || '—'}</Badge></div>
+                  <div className="mb-2"><span className="fw-semibold text-secondary">Status:</span> <Badge bg={statusColors[ticket.status] || "secondary"} className="px-3 py-2 text-capitalize">{ticket.status}</Badge></div>
+                  <div className="mb-2"><span className="fw-semibold text-secondary">Type:</span> <Badge bg="info" text="dark" className="text-capitalize">{ticket.type}</Badge></div>
                 </Col>
                 <Col xs={12} md={4} className="d-flex align-items-center justify-content-md-end justify-content-start mt-3 mt-md-0">
                   {ticket.status === "open" && (
-                    <Button
-                      variant="danger"
-                      className="d-flex align-items-center"
-                      onClick={handleCloseTicket}
-                      disabled={closing}
-                    >
+                    <Button variant="danger" onClick={handleCloseTicket} disabled={closing}>
                       <i className="bi bi-x-circle me-2"></i>
                       {closing ? "Closing..." : "Close Ticket"}
                     </Button>
@@ -167,6 +180,7 @@ const Ticket = () => {
           </Card>
         </Col>
       </Row>
+
       <Row>
         <Col>
           <MessageHistory
@@ -175,10 +189,18 @@ const Ticket = () => {
             image={ticket.image}
             currentUserRole="user"
             onAttachmentClick={handleAttachmentClick}
+            onDeleteMessage={(messageId) => {
+              const message = messages.find(m => m._id === messageId);
+              if (message && message.authorId === currentUserId) {
+                handleDeleteMessage(messageId);
+              } else {
+                toast.error("You can only delete your own messages.");
+              }
+            }}
           />
         </Col>
       </Row>
-      {/* User Reply Form */}
+
       <Row>
         <Col>
           <Card className="shadow-sm mt-4">
@@ -201,7 +223,7 @@ const Ticket = () => {
                     onChange={handleImageChange}
                     disabled={uploading}
                   />
-                  {imageFiles && imageFiles.length > 0 && (
+                  {imageFiles.length > 0 && (
                     <div className="mt-2 text-success">
                       <i className="bi bi-image me-1"></i>
                       {imageFiles.length} files selected
@@ -220,6 +242,7 @@ const Ticket = () => {
           </Card>
         </Col>
       </Row>
+
       {/* Image Zoom Modal */}
       <Modal show={showModal} onHide={() => setShowModal(false)} centered size="lg">
         <Modal.Body className="d-flex flex-column align-items-center justify-content-center p-0" style={{ background: '#222' }}>
@@ -227,7 +250,7 @@ const Ticket = () => {
             <img
               src={modalImage}
               alt="attachment zoom"
-              style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain', background: '#222' }}
+              style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain' }}
             />
           )}
         </Modal.Body>
