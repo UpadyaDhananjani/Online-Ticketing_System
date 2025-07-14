@@ -1,10 +1,12 @@
+// server/models/userModel.js
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
-  name: { type: String, required: true },
+  name: { type: String, required: true }, // Ensure this matches 'name' in authController
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   unit: { type: String, required: true },
+  role: { type: String, enum: ['user', 'admin'], default: 'user' },
   verifyOtp: { type: String, default: '' },
   verifyOtpExpireAt: { type: Number, default: 0 },
   isAccountVerified: { type: Boolean, default: false },
@@ -12,7 +14,6 @@ const userSchema = new mongoose.Schema({
   resetOtpExpireAt: { type: Number, default: 0 }
 });
 
-// --- CRUCIAL FIX: Changed 'user' to 'User' to match ref: 'User' in ticketModel.js ---
 const userModel = mongoose.models.User || mongoose.model('User', userSchema);
 
 export default userModel;

@@ -1,68 +1,61 @@
-// backend/middleware/authMiddleware.js
-import jwt from "jsonwebtoken";
-import userModel from "../models/userModel.js";
+// server/middleware/authMiddleware.js
+import userModel from '../models/userModel.js';
+import jwt from 'jsonwebtoken';
 
 const authMiddleware = async (req, res, next) => {
-    let token;
-
-    // 1. Try to get token from cookies
-    if (req.cookies && req.cookies.token) {
-        token = req.cookies.token;
-    }
-
-    // 2. If not in cookies, check Authorization header (Bearer token)
-    if (!token) {
-        const authHeader = req.headers.authorization;
-        if (authHeader && authHeader.startsWith("Bearer ")) {
-            token = authHeader.split(" ")[1];
-        }
-    }
-
-    if (!token) {
-        return res.status(401).json({
-            success: false,
-            message: "No authentication token provided. Please log in."
-        });
-    }
-
+    console.log("AUTH_MIDDLEWARE: Request received.");
     try {
-        // Verify token
+        const token = req.cookies.token;
+
+        if (!token) {
+            console.log("AUTH_MIDDLEWARE: No token found in cookies. Sending 401.");
+            return res.status(401).json({ success: false, message: "Not Authorized, no token." });
+        }
+
+        console.log("AUTH_MIDDLEWARE: req.cookies:", req.cookies); // Log all cookies
+        console.log("AUTH_MIDDLEWARE: Token found in cookies.");
+
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        console.log("AUTH_MIDDLEWARE: Attempting to verify token...");
+        console.log("AUTH_MIDDLEWARE: Token decoded successfully:", decoded);
 
-        // Find user in database, exclude password for security
-        const user = await userModel.findById(decoded.id).select("-password");
+        // --- IMPORTANT NEW LOGIC FOR ADMIN ROLE ---
+        if (decoded.role === 'admin') {
+            // If the token indicates an admin, don't query the database.
+            // Create a dummy user object for req.user based on the token payload.
+            // This object will be accessible in subsequent controllers (like getUserData).
+            req.user = {
+                _id: decoded.id,
+                name: "Super Admin", // A logical name for your hardcoded admin
+                email: "admin@gmail.com", // The hardcoded admin's email
+                role: 'admin',
+                isAccountVerified: true // Assume admin accounts are verified
+                // Add any other properties your frontend or other parts of your app
+                // expect to find on a user object that an admin would have.
+            };
+            console.log("AUTH_MIDDLEWARE: Admin token detected. Virtual user created for req.user.");
+            next(); // Proceed with the request as an authenticated admin
+        } else {
+            // For regular users, find them in the database
+            req.user = await userModel.findById(decoded.id);
 
-        if (!user) {
-            return res.status(401).json({
-                success: false,
-                message: "User associated with token not found."
-            });
+            if (!req.user) {
+                console.log("AUTH_MIDDLEWARE: Regular user associated with token not found in DB. Sending 401.");
+                return res.status(401).json({ success: false, message: "User associated with token not found." });
+            }
+            console.log("AUTH_MIDDLEWARE: Regular user found in DB:", req.user.email);
+            next(); // Proceed with the request as an authenticated regular user
         }
 
-        // Attach user to request object
-        req.user = user;
-        next();
-
-    } catch (err) {
-        // Handle specific JWT errors
-        if (err.name === 'TokenExpiredError') {
-            return res.status(401).json({
-                success: false,
-                message: "Authentication token has expired. Please log in again."
-            });
-        }
-        if (err.name === 'JsonWebTokenError') {
-            return res.status(401).json({
-                success: false,
-                message: "Invalid authentication token. Please log in again."
-            });
-        }
-        // Generic error for other issues
-        console.error("Auth middleware error:", err);
-        return res.status(500).json({
-            success: false,
-            message: "Authentication failed. Please try again later."
+    } catch (error) {
+        console.error("AUTH_MIDDLEWARE ERROR: Token verification failed:", error);
+        // Clear invalid token cookie to prevent infinite loops or stale tokens
+        res.clearCookie('token', {
+            httpOnly: true,
+            sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // Adjust SameSite based on your environment
+            secure: process.env.NODE_ENV === 'production', // 'Secure' only works over HTTPS
         });
+        return res.status(401).json({ success: false, message: "Not Authorized, token failed or expired." });
     }
 };
 
