@@ -1,17 +1,25 @@
 // client/src/App.jsx
-import React from 'react';
+import React, { useContext } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 
+// --- Ensure all these components are correctly imported and their paths are valid ---
 import Navbar from './components/Navbar.jsx';
 import Sidebar from './components/Sidebar.jsx';
 import Home from './components/Home.jsx';
 import Home2 from './components/Home2.jsx';
+import Login from './components/Login.jsx';
 import ResetPassword from './components/ResetPassword.jsx';
 import EmailVerify from './components/EmailVerify.jsx';
 import Login from './components/Login.jsx';
 import TicketsPage from './pages/TicketsPage';
 import TicketList from './components/TicketList'; // User-facing TicketList
 import CreateTicket from './components/CreateTicket';
+import Ticket from './pages/Ticket'; // Assuming this is the single ticket view for users
+import AdminDashboard from './admin/AdminDashboard';
+import TicketReply from './admin/TicketReply'; // <-- THIS IS THE IMPORT CAUSING THE ERROR. Ensure the file exists at this path: client/src/admin/TicketReply.jsx
+
+import { ToastContainer } from 'react-toastify'; // For toast notifications
+
 import Ticket from './pages/Ticket';
 import AdminDashboard from './admin/AdminDashboard'; // This imports the Admin Dashboard component
 import { ToastContainer } from 'react-toastify';
@@ -22,67 +30,81 @@ import './App.css'; // Import your custom CSS styles
 import 'react-toastify/dist/ReactToastify.css'; 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import './App.css'; // Your custom CSS
+
+import { AppContextProvider, AppContent } from './context/AppContext'; // Context provider and consumer
+import ProtectedRoute from './components/ProtectedRoute'; // Confirming this import is present and correct
 import './App.css'; // Keep this import for your Tailwind CSS setup
 import { AppContextProvider } from './context/AppContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
-// Removed 'token', 'setToken' props from App function signature as they are not directly used here for rendering
 function App() { 
   const location = useLocation();
+  const { userData } = useContext(AppContent); // Get userData from context
+  const token = userData?.token; // Assuming your userData object contains a 'token' property
 
+  // Determine if the current page is an authentication-related page
   const isAuthPage = [
     '/login',
     '/reset-password',
     '/email-verify',
-    '/register'
+    '/register' // Assuming you have a register route
   ].includes(location.pathname);
 
+  // Check if the current path is the root dashboard path
   const isDashboard = location.pathname === '/'; 
 
   return (
     <AppContextProvider>
       <div>
+        {/* Render Navbar only if not on an authentication page */}
         {!isAuthPage && <Navbar />}
+
         <div className="d-flex" style={{ minHeight: '100vh', background: '#F0F8FF' }}>
+          {/* Render Sidebar only if not on an authentication page */}
           {!isAuthPage && <Sidebar />}
+
           <div className="flex-grow-1" style={{ flex: 1, padding: '32px 0' }}>
-            <ToastContainer />
+            <ToastContainer /> {/* Toast notifications container */}
             <Routes>
               {/* Public Routes - accessible without authentication */}
-              {/* Removed onSuccess={setToken} from Login as AppContext handles login state */}
               <Route path="/login" element={<Login />} /> 
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/email-verify" element={<EmailVerify />} />
+              {/* Add a register route if you have one */}
+              {/* <Route path="/register" element={<Register />} /> */}
 
-              {/* Protected Routes - all routes below this will require authentication */}
+              {/* Protected Routes - all routes nested here will require authentication */}
               <Route element={<ProtectedRoute />}>
+                {/* Home/Dashboard routes */}
                 <Route path="/" element={<Home2 key={isDashboard ? location.key : "home2-static"} />} />
                 <Route path="/home" element={<Home />} /> 
-                <Route path="/home" element={<Home />} /> 
-                <Route path="/home" element={<Home />} /> 
 
-                {/* TicketsPage might render TicketList internally, ensure it doesn't pass 'token' */}
+                {/* User Ticket related routes */}
                 <Route path="/tickets-page" element={<TicketsPage />} /> 
-                {/* Removed token prop from TicketList */}
                 <Route path="/tickets" element={<TicketList />} />
                 <Route path="/create-ticket" element={<CreateTicket />} />
                 <Route path="/tickets/:id" element={<Ticket />} />
-                {/* AdminDashboard now renders src/admin/TicketList, ensure it doesn't pass 'token' */}
-                <Route path="/admin" element={<AdminDashboard />} /> 
-                {/* Removed token prop from TicketList */}
+                
+                {/* Admin Ticket related routes - pass token as prop */}
+                <Route path="/admin" element={<AdminDashboard token={token} />} /> 
+                {/* Route for replying to a ticket in admin view */}
+                <Route path="/admin/tickets/:id/reply" element={<TicketReply token={token} />} />
+
+                {/* Filtered user ticket lists */}
                 <Route path="/tickets/open" element={<TicketsPage filter="open" />} /> 
                 <Route path="/tickets/resolved" element={<TicketsPage filter="resolved" />} />
               </Route>
               
+              {/* Fallback route for any unmatched paths */}
               <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
           </div>
         </div>
 
-        {/* --- Removed 'jsx' prop from the style tag --- */}
+        {/* Global styles for the application */}
         <style>
           {`
-            /* General Reset/Base Styles */
             body {
               margin: 0;
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -97,19 +119,16 @@ function App() {
                 monospace;
             }
 
-            /* Remove default underline from all links */
             a {
               text-decoration: none !important;
             }
 
-            /* Adjust the main content area padding if sidebar affects it */
             .flex-grow-1 {
               padding: 32px 20px !important;
               width: 100%;
               box-sizing: border-box;
             }
 
-            /* --- SIDEBAR LINK STYLES --- */
             .sidebar-nav-link {
               font-weight: 500;
               color: #222 !important;
@@ -140,7 +159,6 @@ function App() {
               background-color: #e9ecef;
             }
 
-            /* --- STYLES FOR USER INITIAL AND DROPDOWN IN NAVBAR --- */
             .user-initial-circle {
               width: 40px;
               height: 40px;
@@ -193,7 +211,6 @@ function App() {
               color: #007bff;
             }
 
-            /* --- OPTIONAL: Styles for the hover effect on the dashboard boxes in Home2.jsx --- */
             .hover-effect:hover {
               transform: translateY(-5px);
               box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
