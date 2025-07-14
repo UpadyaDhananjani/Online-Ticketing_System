@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { Card, Row, Col, Badge, Button, Dropdown } from "react-bootstrap";
 import { useState } from "react";
 
-const MessageHistory = ({ msg, description, image, onDeleteMessage }) => {
+const MessageHistory = ({ msg, description, image, onDeleteMessage, onAttachmentClick }) => {
   const [hoveredIdx, setHoveredIdx] = useState(null);
   return (
     <Card className="shadow-sm mb-4 border-0" style={{ background: "#f8fafd" }}>
@@ -111,28 +111,51 @@ const MessageHistory = ({ msg, description, image, onDeleteMessage }) => {
                     />
                     {m.attachments && m.attachments.length > 0 && (
                       <div className="mt-2">
-                        {m.attachments.map((url, idx) => (
-                          <a
-                            key={idx}
-                            href={url.startsWith('http') ? url : `http://localhost:4000${url}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="d-inline-block me-2"
-                          >
-                            <img
-                              src={url.startsWith('http') ? url : `http://localhost:4000${url}`}
-                              alt={`attachment-${idx}`}
-                              style={{
-                                maxWidth: 120,
-                                maxHeight: 120,
-                                borderRadius: 6,
-                                border: "1px solid #e3e3e3",
-                                boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-                                marginRight: 8
-                              }}
-                            />
-                          </a>
-                        ))}
+                        {m.attachments.map((url, idx) => {
+                          const isImage = /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(url);
+                          if (isImage && onAttachmentClick) {
+                            return (
+                              <img
+                                key={idx}
+                                src={url.startsWith('http') ? url : `http://localhost:4000${url}`}
+                                alt={`attachment-${idx}`}
+                                style={{
+                                  maxWidth: 120,
+                                  maxHeight: 120,
+                                  borderRadius: 6,
+                                  border: "1px solid #e3e3e3",
+                                  boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                                  marginRight: 8,
+                                  cursor: 'zoom-in',
+                                }}
+                                onClick={() => onAttachmentClick(url.startsWith('http') ? url : `http://localhost:4000${url}`)}
+                              />
+                            );
+                          } else {
+                            return (
+                              <a
+                                key={idx}
+                                href={url.startsWith('http') ? url : `http://localhost:4000${url}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="d-inline-block me-2"
+                              >
+                                <img
+                                  src={url.startsWith('http') ? url : `http://localhost:4000${url}`}
+                                  alt={`attachment-${idx}`}
+                                  style={{
+                                    maxWidth: 120,
+                                    maxHeight: 120,
+                                    borderRadius: 6,
+                                    border: "1px solid #e3e3e3",
+                                    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                                    marginRight: 8
+                                  }}
+                                />
+                              </a>
+                            );
+                          }
+                        })}
                       </div>
                     )}
                   </div>

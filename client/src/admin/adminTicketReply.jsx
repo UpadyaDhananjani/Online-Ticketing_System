@@ -1,5 +1,5 @@
 // src/admin/TicketReply.jsx
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Editor } from 'primereact/editor';
 import "primereact/resources/themes/lara-light-indigo/theme.css";
 import "primereact/resources/primereact.min.css";
@@ -17,7 +17,13 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
   const [imageFile, setImageFile] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [localStatus, setLocalStatus] = useState(ticket.status);
+  const [messages, setMessages] = useState(ticket.messages || []);
   const quillRef = useRef();
+
+  useEffect(() => {
+    setMessages(ticket.messages || []);
+    setLocalStatus(ticket.status);
+  }, [ticket]);
 
   // Quill modules WITHOUT image upload icon
   const modules = {
@@ -47,14 +53,29 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
       }
     }
     setUploading(true);
+    // Optimistically add the reply
+    const tempId = Date.now().toString();
+    setMessages([
+      ...messages,
+      {
+        _id: tempId,
+        authorRole: "admin",
+        content: reply,
+        date: new Date().toISOString(),
+        attachments: [],
+        pending: true
+      }
+    ]);
     try {
       await sendTicketReply(ticket._id, formData, token);
       setReply("");
       setImageFile([]);
       setLocalStatus("in progress");
       if (onStatusChange) onStatusChange("in progress");
-      await fetchTicket(); // Always refresh after sending reply
+      await fetchTicket();
     } catch (err) {
+      // Remove the pending message if failed
+      setMessages(messages.filter(m => m._id !== tempId));
       console.error("Failed to send reply:", err);
       toast.error(err.response?.data?.message || "Failed to send reply.");
     }
@@ -63,33 +84,37 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
 
 
   const handleResolve = async () => {
+    setLocalStatus("resolved"); // Optimistic
     try {
       await resolveTicket(ticket._id, token);
-      setLocalStatus("resolved");
       if (onStatusChange) onStatusChange("resolved");
-      await fetchTicket(); // Always refresh after resolving
+      await fetchTicket();
       onBack();
       toast.success("Ticket resolved successfully!");
     } catch (err) {
-      console.error("Failed to resolve ticket:", err);
+      // Optionally: revert status or show error
+      setLocalStatus(ticket.status); // revert
       toast.error(err.response?.data?.message || "Failed to resolve ticket.");
     }
   };
 
 
   const handleDeleteMessage = async (messageId) => {
+    // Optimistically remove the message
+    const prevMessages = messages;
+    setMessages(messages.filter(m => m._id !== messageId));
     try {
-      console.log(`Attempting to delete message: ${messageId} from ticket: ${ticket._id}`);
-      // Use deleteAdminMessage from API and pass token
       const res = await deleteAdminMessage(ticket._id, messageId, token); 
       
       if (res.data.success) {
         toast.success(res.data.message || "Message deleted successfully.");
-        await fetchTicket(); // Always refresh after deleting message
+        await fetchTicket();
       } else {
         toast.error(res.data.message || "Failed to delete message.");
+        setMessages(prevMessages); // revert
       }
     } catch (err) {
+      setMessages(prevMessages); // revert
       console.error("Error deleting message:", err);
       toast.error(err.response?.data?.message || "Failed to delete message due to network or server error.");
     }
@@ -99,10 +124,10 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
   // Fetch updated ticket details
   const fetchTicket = async () => {
     try {
-      // Use getAdminTicketById from API and pass token
       const res = await getAdminTicketById(ticket._id, token); 
       if (res.data) {
         setLocalStatus(res.data.status);
+        setMessages(res.data.messages || []);
         if (typeof onTicketUpdate === "function") onTicketUpdate(res.data);
       }
     } catch (err) {
@@ -111,12 +136,13 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
   };
 
   // Prepare messages for MessageHistory
-  const messages = (ticket.messages || []).map(msg => ({
+  const messagesForHistory = messages.map(msg => ({
     _id: msg._id,
     sender: msg.authorRole === "admin" ? "Admin" : "User",
     message: msg.content,
     date: msg.date,
-    attachments: msg.attachments // <-- ensure this is present
+    attachments: msg.attachments,
+    pending: msg.pending
   }));
 
   return (
@@ -141,10 +167,11 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
             <Card.Body>
               {/* Message History Section */}
               <MessageHistory
-                msg={messages}
+                msg={messagesForHistory}
                 description={ticket.description}
                 image={ticket.image}
                 onDeleteMessage={handleDeleteMessage}
+                currentUserRole="admin"
               />
 
               {/* Admin Reply Section */}
@@ -180,7 +207,7 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
                     type="button"
                     variant="warning"
                     onClick={handleResolve}
-                    disabled={ticket.status === "resolved"}
+                    disabled={localStatus === "resolved"}
                   >
                     Mark as Resolved
                   </Button>

@@ -1,7 +1,6 @@
-// src/admin/TicketList.jsx
 import React, { useEffect, useState } from "react";
 import { Table, Container, Spinner, Alert, Badge, Form, Row, Col, Button } from "react-bootstrap";
-import { getAllTickets, deleteAdminTicket } from "../api/ticketApi"; // This is the function we just modified
+import { getAllTickets, deleteAdminTicket } from "../api/ticketApi";
 import { toast } from 'react-toastify';
 
 const statusColors = {
@@ -9,7 +8,7 @@ const statusColors = {
   closed: "danger",
   resolved: "primary",
   reopened: "warning",
-  "in progress": "info" // Changed to info for consistency with Bootstrap
+  "in progress": "info"
 };
 
 const UNIT_OPTIONS = [
@@ -39,8 +38,7 @@ const TYPE_OPTIONS = [
   "service"
 ];
 
-// Removed 'token' prop from function signature
-function TicketList({ onSelect, token, refresh }) { 
+function TicketList({ onSelect, token, refresh }) {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -52,14 +50,15 @@ function TicketList({ onSelect, token, refresh }) {
   useEffect(() => {
     setLoading(true);
     setError("");
-    getAllTickets() // Now calls getAllTickets from ticketApi.js which no longer requires 'token' param
+    // FIX: Pass the token to getAllTickets
+    getAllTickets(token) // <--- CRUCIAL FIX HERE
       .then(res => {
         setTickets(res.data);
         setLoading(false);
         console.log("Admin Dashboard: Fetched tickets:", res.data);
         if (res.data.length > 0) {
-            console.log("Admin Dashboard: First ticket's user data:", res.data[0].user);
-            console.log("Admin Dashboard: First ticket's user name:", res.data[0].user?.name);
+          console.log("Admin Dashboard: First ticket's user data:", res.data[0].user);
+          console.log("Admin Dashboard: First ticket's user name:", res.data[0].user?.name);
         }
       })
       .catch(err => {
@@ -68,7 +67,7 @@ function TicketList({ onSelect, token, refresh }) {
         toast.error(err.response?.data?.error || err.message || "Failed to fetch tickets for admin dashboard.");
         setLoading(false);
       });
-  }, [refresh]); // Add refresh as a dependency
+  }, [refresh, token]); // FIX: Add token to dependency array
 
   const handleDelete = async (ticketId) => {
     if (!window.confirm("Are you sure you want to delete this ticket? This action cannot be undone.")) return;
@@ -80,8 +79,9 @@ function TicketList({ onSelect, token, refresh }) {
         newSet.delete(ticketId);
         return newSet;
       });
+      toast.success("Ticket deleted successfully!"); // Added success toast
     } catch (err) {
-      alert("Failed to delete ticket: " + (err.response?.data?.message || err.message));
+      toast.error("Failed to delete ticket: " + (err.response?.data?.message || err.message)); // Used toast
     }
   };
 
@@ -115,15 +115,15 @@ function TicketList({ onSelect, token, refresh }) {
     if (!window.confirm(confirmMessage)) return;
 
     try {
-      const deletePromises = Array.from(selectedTickets).map(ticketId => 
+      const deletePromises = Array.from(selectedTickets).map(ticketId =>
         deleteAdminTicket(ticketId, token)
       );
-      
+
       await Promise.all(deletePromises);
-      
+
       setTickets(tickets => tickets.filter(t => !selectedTickets.has(t._id)));
       setSelectedTickets(new Set());
-      
+
       toast.success(`Successfully deleted ${selectedTickets.size} ticket(s).`);
     } catch (err) {
       toast.error("Failed to delete some tickets: " + (err.response?.data?.message || err.message));
@@ -145,7 +145,7 @@ function TicketList({ onSelect, token, refresh }) {
       <h2 className="mb-4 text-primary">
         <i className="bi bi-list-ul me-2"></i>All Tickets
       </h2>
-      
+
       {/* Bulk Actions */}
       {selectedTickets.size > 0 && (
         <Row className="mb-3">
@@ -155,8 +155,8 @@ function TicketList({ onSelect, token, refresh }) {
                 <i className="bi bi-check-circle me-2"></i>
                 {selectedTickets.size} ticket(s) selected
               </span>
-              <Button 
-                variant="danger" 
+              <Button
+                variant="danger"
                 size="sm"
                 onClick={handleDeleteSelected}
               >
@@ -279,7 +279,7 @@ function TicketList({ onSelect, token, refresh }) {
                 </td>
                 <td>
                   <i className="bi bi-person-circle me-2 text-secondary"></i>
-                  {ticket.user ? ticket.user.name : "N/A"} 
+                  {ticket.user ? ticket.user.name : "N/A"}
                 </td>
                 <td>
                   <Badge
