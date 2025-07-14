@@ -27,6 +27,7 @@ export const getUserData = async (req, res) => {
                 id: user._id,
                 name: user.name,
                 email: user.email,
+                unit: user.unit, // <-- Add unit here
                 isAccountVerified: user.isAccountVerified
             }
         });
@@ -43,9 +44,9 @@ export const getUserData = async (req, res) => {
 
 // Register user
 export const register = async (req, res) => {
-    const { name, email, password } = req.body;
+    const { name, email, password, unit } = req.body;
 
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !unit) {
         return res.json({ success: false, message: 'Missing Details' });
     }
 
@@ -58,7 +59,7 @@ export const register = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const user = new userModel({ name, email, password: hashedPassword });
+        const user = new userModel({ name, email, password: hashedPassword, unit }); // <-- Save unit
         await user.save();
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
