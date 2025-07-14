@@ -4,7 +4,6 @@ import { Editor } from 'primereact/editor';
 import "primereact/resources/themes/lara-light-indigo/theme.css";
 import "primereact/resources/primereact.min.css";
 import axios from "axios";
-// --- CRITICAL: Ensure deleteAdminMessage and getAdminTicketById are in this import list ---
 import { sendTicketReply, resolveTicket, deleteAdminMessage, getAdminTicketById } from "../api/ticketApi"; 
 import { Container, Card, Button, Form, Row, Col, Badge } from "react-bootstrap";
 import MessageHistory from "../components/MessageHistory/MessageHistory";
@@ -73,13 +72,17 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
 
   const handleDeleteMessage = async (messageId) => {
     try {
-      console.log(`Attempting to delete message: ${messageId} from ticket: ${ticket._id}`);
-      // Use deleteAdminMessage from API and pass token
+      console.log(`Attempting to delete message: ${messageId} from ticket: ${ticket._id} by admin.`);
       const res = await deleteAdminMessage(ticket._id, messageId, token); 
       
       if (res.data.success) {
         toast.success(res.data.message || "Message deleted successfully.");
-        await fetchTicket(); // Refetch ticket to update message history
+        if (typeof onTicketUpdate === "function") {
+          const updatedTicketMessages = ticket.messages.filter(msg => msg._id !== messageId);
+          onTicketUpdate({ ...ticket, messages: updatedTicketMessages });
+        } else {
+          await fetchTicket(); 
+        }
       } else {
         toast.error(res.data.message || "Failed to delete message.");
       }
@@ -92,7 +95,6 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
   // Fetch updated ticket details
   const fetchTicket = async () => {
     try {
-      // Use getAdminTicketById from API and pass token
       const res = await getAdminTicketById(ticket._id, token); 
       if (res.data) {
         setLocalStatus(res.data.status);
@@ -136,7 +138,7 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
                 msg={messages}
                 description={ticket.description}
                 image={ticket.image}
-                onDeleteMessage={handleDeleteMessage}
+                onDeleteMessage={handleDeleteMessage} // Pass the delete handler here for admins
               />
 
               {/* Admin Reply Section */}

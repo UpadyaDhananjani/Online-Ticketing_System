@@ -1,8 +1,11 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useContext } from "react";
 import { Container, Row, Col, Spinner, Alert, Card, Badge, Button, Form } from "react-bootstrap";
 import { useParams, useNavigate } from "react-router-dom";
 import MessageHistory from "../components/MessageHistory/MessageHistory";
 import { Editor } from 'primereact/editor';
+import { toast } from 'react-toastify';
+import { AppContent } from '../context/AppContext'; // Import AppContent to get user data and token
+import { deleteUserMessage } from '../api/ticketApi'; // Import the new API function
 
 const statusColors = {
   open: "success",
@@ -22,9 +25,14 @@ const Ticket = () => {
   const [imageFile, setImageFile] = useState(null);
   const [uploading, setUploading] = useState(false);
 
+  const { userData } = useContext(AppContent); // Get userData from context
+  const token = userData?.token;
+  const currentUserId = userData?.user?._id; // Get the ID of the currently logged-in user
+
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/tickets/${id}`)
+    // Use axios with withCredentials for user routes if you're relying on cookies
+    fetch(`/api/tickets/${id}`, { withCredentials: true }) 
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch ticket");
         return res.json();
@@ -34,7 +42,9 @@ const Ticket = () => {
         setLoading(false);
       })
       .catch((err) => {
-        setError(err.message);
+        console.error("Error fetching ticket:", err);
+        setError(err.message || "Failed to fetch ticket.");
+        toast.error(err.message || "Failed to fetch ticket details.");
         setLoading(false);
       });
   }, [id]);
@@ -42,12 +52,19 @@ const Ticket = () => {
   const handleCloseTicket = async () => {
     setClosing(true);
     try {
-      const res = await fetch(`/api/tickets/${id}/close`, { method: "PATCH" });
+      // Assuming closeTicket API function handles auth via token
+      const res = await fetch(`/api/tickets/${id}/close`, { 
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` } // Pass token for authentication
+      });
       if (!res.ok) throw new Error("Failed to close ticket");
       const updated = await res.json();
       setTicket(updated);
+      toast.success("Ticket closed successfully!");
     } catch (err) {
-      setError(err.message);
+      console.error("Error closing ticket:", err);
+      setError(err.message || "Failed to close ticket.");
+      toast.error(err.message || "Failed to close ticket.");
     }
     setClosing(false);
   };
@@ -65,20 +82,49 @@ const Ticket = () => {
     }
     setUploading(true);
     try {
+      // Assuming user reply API handles auth via token
       const res = await fetch(`/api/tickets/${id}/reply`, {
         method: "POST",
-        body: formData
+        body: formData,
+        headers: { Authorization: `Bearer ${token}` } // Pass token for authentication
       });
       if (!res.ok) throw new Error("Failed to send reply");
       const updated = await res.json();
       setTicket(updated);
       setReply("");
       setImageFile(null);
+      toast.success("Reply sent successfully!");
     } catch (err) {
-      setError(err.message);
+      console.error("Error sending reply:", err);
+      setError(err.message || "Failed to send reply.");
+      toast.error(err.message || "Failed to send reply.");
     }
     setUploading(false);
   };
+
+  // --- NEW: Function to handle message deletion by the user ---
+  const handleDeleteMessage = async (messageId) => {
+    try {
+      console.log(`Attempting to delete message: ${messageId} from ticket: ${id} by user.`);
+      // Call the new deleteUserMessage API function
+      const res = await deleteUserMessage(id, messageId, token); 
+      
+      if (res.success) { // Assuming the backend returns { success: true, message: "..." }
+        toast.success(res.message || "Message deleted successfully.");
+        // Optimistically update the UI by filtering out the deleted message
+        setTicket(prevTicket => ({
+          ...prevTicket,
+          messages: prevTicket.messages.filter(msg => msg._id !== messageId)
+        }));
+      } else {
+        toast.error(res.message || "Failed to delete message.");
+      }
+    } catch (err) {
+      console.error("Error deleting message:", err);
+      toast.error(err.response?.data?.message || "Failed to delete message due to network or server error.");
+    }
+  };
+
 
   if (loading) return (
     <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: "60vh" }}>
@@ -98,6 +144,7 @@ const Ticket = () => {
     sender: msg.authorRole === "admin" ? "Admin" : "User",
     message: msg.content,
     date: msg.date,
+    authorId: msg.author // Assuming msg.author holds the user ID who sent the message
   }));
 
   return (
@@ -162,6 +209,16 @@ const Ticket = () => {
             msg={messages}
             description={ticket.description}
             image={ticket.image}
+            // Pass the delete handler to MessageHistory for user messages
+            onDeleteMessage={(messageId) => {
+              // Only allow deletion if the message was sent by the current user
+              const messageToDelete = messages.find(m => m._id === messageId);
+              if (messageToDelete && messageToDelete.authorId === currentUserId) {
+                handleDeleteMessage(messageId);
+              } else {
+                toast.error("You can only delete your own messages.");
+              }
+            }}
           />
         </Col>
       </Row>

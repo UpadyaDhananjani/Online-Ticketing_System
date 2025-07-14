@@ -41,8 +41,14 @@ export const getAdminTicketById = (ticketId, token) =>
     headers: { Authorization: `Bearer ${token}` }
   });
 
-// --- CRITICAL: Ensure this export is present and spelled correctly ---
+// Delete message by admin (can delete any message if backend allows)
 export const deleteAdminMessage = (ticketId, messageId, token) =>
   axios.delete(`${ADMIN_API_URL}/${ticketId}/messages/${messageId}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+// --- NEW FUNCTION: Delete message by user (can only delete their own messages) ---
+export const deleteUserMessage = (ticketId, messageId, token) =>
+  axios.delete(`${API_URL}/${ticketId}/messages/${messageId}`, { // Use API_URL for user route
     headers: { Authorization: `Bearer ${token}` }
   });
