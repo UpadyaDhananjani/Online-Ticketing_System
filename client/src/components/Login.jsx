@@ -14,6 +14,15 @@ const Login = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [unit, setUnit] = useState("");
+  const unitOptions = [
+    "System and Network Administration",
+    "Asyhub Unit",
+    "Statistics Unit",
+    "Audit Unit",
+    "Helpdesk Unit",
+    "Functional Unit"
+  ];
 
   const onsubmitHandler = async (e) => {
     e.preventDefault();
@@ -25,6 +34,7 @@ const Login = () => {
           name,
           email,
           password,
+          unit,
         });
 
         if (data.success) {
@@ -75,17 +85,32 @@ const Login = () => {
 
         <form onSubmit={onsubmitHandler}>
           {state === "Sign Up" && (
-            <div className="mb-4 flex items-center gap-3 w-full px-5 py-2.5 rounded-full bg-[#333A5C]">
-              <img src={assets.person_icon} alt="" />
-              <input
-                onChange={(e) => setName(e.target.value)}
-                value={name}
-                className="bg-transparent outline-none w-full"
-                type="text"
-                placeholder="Full Name"
-                required
-              />
-            </div>
+            <>
+              <div className="mb-4 flex items-center gap-3 w-full px-5 py-2.5 rounded-full bg-[#333A5C]">
+                <img src={assets.person_icon} alt="" />
+                <input
+                  onChange={(e) => setName(e.target.value)}
+                  value={name}
+                  className="bg-transparent outline-none w-full"
+                  type="text"
+                  placeholder="Full Name"
+                  required
+                />
+              </div>
+              <div className="mb-4 flex items-center gap-3 w-full px-5 py-2.5 rounded-full bg-[#333A5C]">
+                <select
+                  value={unit}
+                  onChange={e => setUnit(e.target.value)}
+                  className="bg-transparent outline-none w-full text-indigo-300"
+                  required
+                >
+                  <option value="" disabled>Select your unit</option>
+                  {unitOptions.map(u => (
+                    <option key={u} value={u}>{u}</option>
+                  ))}
+                </select>
+              </div>
+            </>
           )}
 
           <div className="mb-4 flex items-center gap-3 w-full px-5 py-2.5 rounded-full bg-[#333A5C]">
