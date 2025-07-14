@@ -12,7 +12,7 @@ const statusColors = {
   "in progress": "info"
 };
 
-function TicketList({ filter }) { 
+function TicketList({ filter, mode = 'created', userId }) { 
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -23,14 +23,11 @@ function TicketList({ filter }) {
       setLoading(true);
       setError(null);
       try {
-        console.log("Frontend (User TicketList): Fetching tickets...");
         const res = await axios.get('/api/tickets', { 
           withCredentials: true 
         });
-        console.log("Frontend (User TicketList): Received tickets data:", res.data);
         setTickets(res.data);
       } catch (err) {
-        console.error("Frontend (User TicketList): Error fetching tickets:", err);
         const msg = err.response?.data?.error || err.message || "Failed to fetch tickets.";
         setError(msg);
         toast.error(msg);
@@ -38,15 +35,19 @@ function TicketList({ filter }) {
         setLoading(false);
       }
     };
+    fetchTickets();
+  }, []);
 
-    if (location.pathname === '/tickets' || location.pathname === '/tickets-page' || filter) {
-      fetchTickets();
-    }
-  }, [location.pathname, filter]);
-
-  const filteredTickets = filter
-    ? tickets.filter(ticket => ticket.status === filter)
-    : tickets;
+  // Filtering logic
+  let filteredTickets = tickets;
+  if (mode === 'created' && userId) {
+    filteredTickets = tickets.filter(ticket => ticket.user === userId || ticket.user?._id === userId);
+  } else if (mode === 'received' && userId) {
+    filteredTickets = tickets.filter(ticket => ticket.assignedTo === userId || ticket.assignedTo?._id === userId);
+  }
+  if (filter) {
+    filteredTickets = filteredTickets.filter(ticket => ticket.status === filter);
+  }
 
   if (loading) {
     return <div style={{ textAlign: 'center', marginTop: 50 }}>Loading tickets...</div>;
@@ -58,7 +59,9 @@ function TicketList({ filter }) {
 
   return (
     <div style={{ maxWidth: 900, margin: '30px auto' }}>
-      <h2 style={{ textAlign: 'center', marginBottom: 20 }}>My Tickets</h2>
+      <h2 style={{ textAlign: 'center', marginBottom: 20 }}>
+        {mode === 'created' ? 'My Created Tickets' : 'Tickets Assigned to Me'}
+      </h2>
       <table style={{
         width: '100%',
         borderCollapse: 'collapse',
@@ -72,6 +75,11 @@ function TicketList({ filter }) {
             <th style={thStyle}><i className="bi bi-card-text me-1"></i>Subject</th>
             <th style={thStyle}><i className="bi bi-tag me-1"></i>Type</th>
             <th style={thStyle}><i className="bi bi-diagram-3 me-1"></i>Assigned Unit</th>
+            {mode === 'created' ? (
+              <th style={thStyle}><i className="bi bi-person me-1"></i>Assigned To</th>
+            ) : (
+              <th style={thStyle}><i className="bi bi-person me-1"></i>Requester</th>
+            )}
             <th style={thStyle}><i className="bi bi-info-circle me-1"></i>Status</th>
             <th style={thStyle}><i className="bi bi-calendar me-1"></i>Created</th>
           </tr>
@@ -79,7 +87,7 @@ function TicketList({ filter }) {
         <tbody>
           {filteredTickets.length === 0 ? (
             <tr>
-              <td colSpan={5} style={{ textAlign: 'center', padding: 20, color: '#888' }}>
+              <td colSpan={6} style={{ textAlign: 'center', padding: 20, color: '#888' }}>
                 No tickets found.
               </td>
             </tr>
@@ -112,6 +120,15 @@ function TicketList({ filter }) {
                     <i className="bi bi-diagram-3 me-1"></i>
                     {ticket.assignedUnit || '—'}
                   </Badge>
+                </td>
+                <td style={tdStyle}>
+                  {mode === 'created'
+                    ? (ticket.assignedTo?.name
+                        ? `${ticket.assignedTo.name}${ticket.assignedTo.email ? ' (' + ticket.assignedTo.email + ')' : ''}`
+                        : (ticket.assignedTo || '—'))
+                    : (ticket.user?.name
+                        ? `${ticket.user.name}${ticket.user.email ? ' (' + ticket.user.email + ')' : ''}`
+                        : (ticket.user || '—'))}
                 </td>
                 <td style={tdStyle}>
                   <Badge

@@ -38,6 +38,7 @@ const ticketSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
   image: { type: String, required: false }, // Optional image field
   attachments: [{ type: String }], // <-- Add this line
+  assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false }, // <-- New field for assigned person
   messages: [messageSchema]
 });
 

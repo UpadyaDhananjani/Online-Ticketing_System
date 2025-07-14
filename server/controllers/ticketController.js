@@ -33,7 +33,12 @@ export const upload = multer({
 // ---------------------
 export const createTicket = async (req, res) => {
   try {
-    const { subject, description, type, assignedUnit } = req.body;
+    const { subject, description, type, assignedUnit, assignedTo } = req.body;
+
+    console.log("--- createTicket function started ---");
+    console.log("req.user:", req.user);
+    console.log("Request Body:", req.body);
+    console.log("Uploaded File:", req.file);
 
     if (!req.user || !req.user._id) {
       return res.status(401).json({ error: "User not authenticated to create ticket." });
@@ -54,7 +59,8 @@ export const createTicket = async (req, res) => {
       description,
       type,
       assignedUnit,
-      attachments
+      attachments, // Store as array
+      assignedTo: assignedTo || undefined // Save assignedTo if provided
     });
 
     await ticket.save();
@@ -72,13 +78,19 @@ export const createTicket = async (req, res) => {
 // ---------------------
 export const getUserTickets = async (req, res) => {
   try {
-    const tickets = await Ticket.find({ user: req.user._id })
-      .populate('user', 'name')
+    const userId = req.user._id;
+    const tickets = await Ticket.find({
+      $or: [
+        { user: userId },
+        { assignedTo: userId }
+      ]
+    })
+      .populate('user', 'name email')
+      .populate('assignedTo', 'name email')
       .sort({ createdAt: -1 });
-    return res.json(tickets);
+    res.json(tickets);
   } catch (err) {
-    console.error("Error fetching user tickets:", err);
-    return res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 };
 
@@ -167,7 +179,9 @@ export const reopenTicket = async (req, res) => {
 // ---------------------
 export const getTicketById = async (req, res) => {
   try {
-    const ticket = await Ticket.findById(req.params.id).populate('user', 'name');
+    const ticket = await Ticket.findById(req.params.id)
+      .populate('user', 'name')
+      .populate('assignedTo', 'name email'); // <-- populate assignedTo
     if (!ticket) {
       return res.status(404).json({ error: 'Ticket not found' });
     }

@@ -48,20 +48,8 @@ function Sidebar() {
           My Tickets
         </Nav.Link>
         
-        <Nav.Link
-          as={NavLink}
-          to="/tickets/open"
-          className="sidebar-nav-link"
-        >
-          My Open Tickets
-        </Nav.Link>
-        <Nav.Link
-          as={NavLink}
-          to="/tickets/resolved"
-          className="sidebar-nav-link"
-        >
-          My Resolved Tickets
-        </Nav.Link>
+      
+       
         <Nav.Link
           as={NavLink}
           to="/admin"

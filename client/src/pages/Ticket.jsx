@@ -161,11 +161,31 @@ const Ticket = () => {
                     <i className="bi bi-ticket-detailed me-2"></i>
                     Ticket Details
                   </h3>
-                  <div className="mb-2"><span className="fw-semibold text-secondary">Subject:</span> <span className="fs-5">{ticket.subject}</span></div>
-                  <div className="mb-2"><span className="fw-semibold text-secondary">Opened:</span> {ticket.createdAt && new Date(ticket.createdAt).toLocaleString()}</div>
-                  <div className="mb-2"><span className="fw-semibold text-secondary">Assigned Unit:</span> <Badge bg="secondary" className="text-capitalize">{ticket.assignedUnit || '—'}</Badge></div>
-                  <div className="mb-2"><span className="fw-semibold text-secondary">Status:</span> <Badge bg={statusColors[ticket.status] || "secondary"} className="px-3 py-2 text-capitalize">{ticket.status}</Badge></div>
-                  <div className="mb-2"><span className="fw-semibold text-secondary">Type:</span> <Badge bg="info" text="dark" className="text-capitalize">{ticket.type}</Badge></div>
+                  <div className="mb-2">
+                    <span className="fw-semibold text-secondary">Subject:</span>{" "}
+                    <span className="fs-5">{ticket.subject}</span>
+                  </div>
+                  <div className="mb-2">
+                    <span className="fw-semibold text-secondary">Opened:</span>{" "}
+                    {ticket.createdAt && new Date(ticket.createdAt).toLocaleString()}
+                  </div>
+                  <div className="mb-2">
+                    <span className="fw-semibold text-secondary">Assigned Unit:</span>{" "}
+                    <Badge bg="secondary" className="text-capitalize">
+                      <i className="bi bi-diagram-3 me-1"></i>
+                      {ticket.assignedUnit || '—'}
+                    </Badge>
+                  </div>
+                  <div className="mb-2">
+                    <span className="fw-semibold text-secondary">Status:</span>{" "}
+                    <Badge bg={statusColors[ticket.status] || "secondary"} className="px-3 py-2 text-capitalize">
+                      {ticket.status}
+                    </Badge>
+                  </div>
+                  <div className="mb-2">
+                    <span className="fw-semibold text-secondary">Type:</span>{" "}
+                    <Badge bg="info" text="dark" className="text-capitalize">{ticket.type}</Badge>
+                  </div>
                 </Col>
                 <Col xs={12} md={4} className="d-flex align-items-center justify-content-md-end justify-content-start mt-3 mt-md-0">
                   {ticket.status === "open" && (

@@ -1,89 +1,84 @@
-import React, { useState } from 'react';
-import CreateTicket from '../components/CreateTicket';
+import React, { useState, useContext } from 'react';
 import TicketList from '../components/TicketList';
+import { Tabs, Tab } from 'react-bootstrap';
+import { BsSend, BsInbox } from 'react-icons/bs';
+import { AppContent } from '../context/AppContext';
 // FIXED: Updated import path and component name to match the actual filename on your system
 import AdminTicketReply from '../admin/adminTicketReply'; // Renamed to AdminTicketReply to match filename
 
 function TicketsPage({ token, filter }) {
-  const [editingTicket, setEditingTicket] = useState(null);
-  const [refresh, setRefresh] = useState(false);
-  const [showReply, setShowReply] = useState(false);
-  const [selectedTicket, setSelectedTicket] = useState(null);
-
-  const handleEdit = ticket => setEditingTicket(ticket);
-  // Placeholder for closeTicket function if it's not imported from ticketApi
-  const closeTicket = async (id, token) => {
-    console.log(`Closing ticket ${id} with token ${token}`);
-    try {
-      const res = await fetch(`/api/tickets/${id}/close`, { 
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!res.ok) throw new Error('Failed to close ticket');
-      console.log('Ticket closed successfully');
-    } catch (error) {
-      console.error('Error closing ticket:', error);
-      alert('Failed to close ticket');
-    }
-  };
-
-
-  const handleClose = async id => {
-    await closeTicket(id, token);
-    setRefresh(r => !r);
-  };
-  const handleUpdated = () => {
-    setEditingTicket(null);
-    setRefresh(r => !r);
-  };
-
-  const handleReopen = async (id) => {
-    try {
-      const res = await fetch(`/api/tickets/${id}/reopen`, { method: 'PATCH' });
-      if (res.ok) {
-        setRefresh(r => !r); // This will trigger TicketList to reload
-      }
-    } catch (err) {
-      alert('Failed to reopen ticket');
-    }
-  };
+  const [tabKey, setTabKey] = useState('created');
+  const { userData } = useContext(AppContent);
+  const userId = userData?.id;
 
   return (
     <div>
-      {/* Only show CreateTicket if not filtering */}
-      {!filter && (
-        <CreateTicket token={token} onCreated={() => setRefresh(r => !r)} />
-      )}
-      {editingTicket && (
-        // Assuming EditTicket component exists and is imported
-        // <EditTicket
-        //   token={token}
-        //   ticket={editingTicket}
-        //   onUpdated={handleUpdated}
-        //   onCancel={() => setEditingTicket(null)}
-        //   onClose={handleClose}
-        //   onReopen={handleReopen}
-        // />
-        <p>EditTicket component placeholder</p> // Replace with actual EditTicket
-      )}
-      {showReply && selectedTicket && (
-        // FIXED: Changed component usage to AdminTicketReply
-        <AdminTicketReply
-          token={token}
-          ticket={selectedTicket}
-          onBack={() => {
-            setShowReply(false);
-            setRefresh(r => !r); // This will refresh the ticket list
-          }}
-          onStatusChange={newStatus => {
-            // Optionally update local ticket state if needed
-          }}
-          onTicketUpdate={setSelectedTicket} // <-- Pass this!
-        />
-      )}
-      <TicketList token={token} refresh={refresh} /> {/* Pass refresh prop */}
+      <Tabs
+        id="tickets-tabs"
+        activeKey={tabKey}
+        onSelect={k => setTabKey(k)}
+        className="mb-3 custom-tabs"
+        transition
+        mountOnEnter
+        unmountOnExit
+        variant="pills"
+        style={{ maxWidth: 900, margin: '0 auto' }}
+      >
+        <Tab
+          eventKey="created"
+          title={
+            <span className="d-flex align-items-center gap-2">
+              <BsSend size={18} />
+              <span>Tickets Issued</span>
+            </span>
+          }
+        >
+          <div className="tab-pane-fade-in">
+            <TicketList mode="created" userId={userId} />
+          </div>
+        </Tab>
+        <Tab
+          eventKey="received"
+          title={
+            <span className="d-flex align-items-center gap-2">
+              <BsInbox size={18} />
+              <span>Tickets Received</span>
+            </span>
+          }
+        >
+          <div className="tab-pane-fade-in">
+            <TicketList mode="received" userId={userId} />
+          </div>
+        </Tab>
+      </Tabs>
+      <style>{`
+        .custom-tabs .nav-link {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 1.1rem;
+          font-weight: 500;
+          color: #495057;
+          background: none;
+          border: none;
+          border-radius: 8px 8px 0 0;
+          margin-right: 8px;
+          padding: 10px 20px;
+          transition: background 0.2s, color 0.2s;
+        }
+        .custom-tabs .nav-link.active, .custom-tabs .nav-link:focus, .custom-tabs .nav-link:hover {
+          background: #f5f6fa;
+          color: #007bff !important;
+          font-weight: 700;
+        }
+        .tab-pane-fade-in {
+          animation: fadeIn 0.5s;
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }

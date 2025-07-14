@@ -388,7 +388,7 @@ const Home2 = () => {
           <div className="d-flex flex-column flex-md-row justify-content-between align-items-center">
             <div className="mb-2 mb-md-0" style={{ fontSize: 16 }}>
               <span className="me-2"><i className="bi bi-c-circle"></i></span>
-              2024 ICT Directorate, Sri Lanka Customs. All rights reserved.
+              2025 ICT Directorate, Sri Lanka Customs. All rights reserved.
             </div>
             <div className="d-flex gap-4">
               <a href="#" className="text-white text-decoration-none hover:underline">Privacy Policy</a>
