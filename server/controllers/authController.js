@@ -1,47 +1,14 @@
 // server/controllers/authController.js
 import userModel from '../models/userModel.js';
 import transporter from '../config/nodemailer.js'; // Assuming you have this configured
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 // Get User Data (requires authentication middleware)
-export const getUserData = async (req, res) => {
-    try {
-        // userId is expected from the authentication middleware (req.user._id)
-        const userId = req.user._id;
 
-        const user = await userModel.findById(userId).select('-password -verifyOtp -resetOtp -verifyOtpExpireAt -resetOtpExpireAt'); // Exclude sensitive OTP fields and their expiry
-
-        if (!user) {
-            // This case should ideally not happen if authMiddleware found a user
-            // but it's good for robustness. A 401 from middleware is more likely if no token.
-            return res.status(404).json({
-                success: false,
-                message: "User not found (after authentication, but token valid for a non-existent user)"
-            });
-        }
-
-        return res.json({
-            success: true,
-            userData: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                unit: user.unit, // <-- Add unit here
-                isAccountVerified: user.isAccountVerified
-            }
-        });
-    } catch (error) {
-        // Log the error for debugging purposes
-        console.error("Error in getUserData (controller):", error);
-        // If an error occurs here, it's a server issue, not an authentication failure
-        return res.status(500).json({
-            success: false,
-            message: "Server error fetching user data: " + error.message
-        });
-    }
-};
 
 // Register user
-export const register = async (req, res) => {
+const register = async (req, res) => {
     const { name, email, password, unit } = req.body;
 
     if (!name || !email || !password || !unit) {
