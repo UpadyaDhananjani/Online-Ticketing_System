@@ -8,26 +8,21 @@ import Home from './components/Home.jsx';
 import Home2 from './components/Home2.jsx';
 import ResetPassword from './components/ResetPassword.jsx';
 import EmailVerify from './components/EmailVerify.jsx';
+import Login from './components/Login.jsx';
 import TicketsPage from './pages/TicketsPage';
 import TicketList from './components/TicketList'; // User-facing TicketList
 import CreateTicket from './components/CreateTicket';
 import Ticket from './pages/Ticket';
 import AdminDashboard from './admin/AdminDashboard'; // This imports the Admin Dashboard component
 import { ToastContainer } from 'react-toastify';
-
 import 'react-toastify/dist/ReactToastify.css'; // Keep this for react-toastify's own styles
 import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS for styling
 import 'bootstrap-icons/font/bootstrap-icons.css'; // Import Bootstrap Icons for icons
 import './App.css'; // Import your custom CSS styles
-
-
-
-
 import 'react-toastify/dist/ReactToastify.css'; 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import './App.css'; // Keep this import for your Tailwind CSS setup
-
 import { AppContextProvider } from './context/AppContext';
 import ProtectedRoute from './components/ProtectedRoute';
 

@@ -1,39 +1,51 @@
 // server/controllers/authController.js
 import userModel from '../models/userModel.js';
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
-import validator from 'validator';
-import nodemailer from 'nodemailer'; // Assuming nodemailer is used, keep it
+import transporter from '../config/nodemailer.js'; // Assuming you have this configured
 
-// Helper function to generate JWT token
-const generateToken = (id, role = 'user') => { // Added role parameter for clarity if needed in token
-    console.log("CONTROLLER: Generating token for ID:", id, "with role:", role);
-    // Ensure JWT_SECRET is available
-    if (!process.env.JWT_SECRET) {
-        console.error("CONTROLLER ERROR: JWT_SECRET is not defined in environment variables!");
-        throw new Error("JWT_SECRET is not configured.");
+// Get User Data (requires authentication middleware)
+export const getUserData = async (req, res) => {
+    try {
+        // userId is expected from the authentication middleware (req.user._id)
+        const userId = req.user._id;
+
+        const user = await userModel.findById(userId).select('-password -verifyOtp -resetOtp -verifyOtpExpireAt -resetOtpExpireAt'); // Exclude sensitive OTP fields and their expiry
+
+        if (!user) {
+            // This case should ideally not happen if authMiddleware found a user
+            // but it's good for robustness. A 401 from middleware is more likely if no token.
+            return res.status(404).json({
+                success: false,
+                message: "User not found (after authentication, but token valid for a non-existent user)"
+            });
+        }
+
+        return res.json({
+            success: true,
+            userData: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                unit: user.unit, // <-- Add unit here
+                isAccountVerified: user.isAccountVerified
+            }
+        });
+    } catch (error) {
+        // Log the error for debugging purposes
+        console.error("Error in getUserData (controller):", error);
+        // If an error occurs here, it's a server issue, not an authentication failure
+        return res.status(500).json({
+            success: false,
+            message: "Server error fetching user data: " + error.message
+        });
     }
-    return jwt.sign({ id, role }, process.env.JWT_SECRET, { // Added role to token payload
-        expiresIn: '1d', // Token expires in 1 day
-    });
 };
 
-// --- Register User ---
-const register = async (req, res) => {
-    console.log("CONTROLLER: Register request received. Body:", req.body);
-    const { name, email, password } = req.body;
+// Register user
+export const register = async (req, res) => {
+    const { name, email, password, unit } = req.body;
 
-    if (!name || !email || !!password) { // Fixed typo: removed extra '!'
-        console.log("CONTROLLER: Register validation failed: Missing fields.");
-        return res.status(400).json({ success: false, message: 'Please enter all fields.' });
-    }
-    if (!validator.isEmail(email)) {
-        console.log("CONTROLLER: Register validation failed: Invalid email format.");
-        return res.status(400).json({ success: false, message: 'Please enter a valid email.' });
-    }
-    if (password.length < 6) {
-        console.log("CONTROLLER: Register validation failed: Password too short.");
-        return res.status(400).json({ success: false, message: 'Password must be at least 6 characters.' });
+    if (!name || !email || !password || !unit) {
+        return res.json({ success: false, message: 'Missing Details' });
     }
 
     try {
@@ -44,20 +56,12 @@ const register = async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = new userModel({
-            name,
-            email,
-            password: hashedPassword,
-            role: 'user', // Explicitly set role for regular users
-        });
 
-        await newUser.save();
-        console.log("CONTROLLER: New user registered successfully:", newUser.email);
+        const user = new userModel({ name, email, password: hashedPassword, unit }); // <-- Save unit
+        await user.save();
 
-        const token = generateToken(newUser._id, newUser.role); // Pass role to generateToken
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-        // Determine cookie settings based on environment
-        const isProduction = process.env.NODE_ENV === 'production';
         res.cookie('token', token, {
             httpOnly: true, // Prevents client-side JS from accessing the cookie
             maxAge: 1000 * 60 * 60 * 24, // 1 day

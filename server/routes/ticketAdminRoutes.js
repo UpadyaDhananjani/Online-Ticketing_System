@@ -5,7 +5,8 @@ import {
   deleteMessage, // --- IMPORTED: New deleteMessage function ---
   resolveTicket, // Imported named resolveTicket
   markTicketOpen, // Imported named markTicketOpen
-  markTicketInProgress // Imported named markTicketInProgress
+  markTicketInProgress, // Imported named markTicketInProgress
+  deleteTicket // <-- Add this import
 } from '../controllers/ticketAdminController.js'; // All admin controllers from one file
 
 import authMiddleware from '../middleware/authMiddleware.js'; // Ensure authMiddleware is imported
@@ -37,5 +38,8 @@ router.patch('/:id/in-progress', markTicketInProgress); // Using named export fr
 
 // --- NEW ROUTE: Delete a message from a ticket (Admin only) ---
 router.delete('/:ticketId/messages/:messageId', deleteMessage); // Using named export from controller
+
+// --- NEW ROUTE: Delete a ticket (Admin only) ---
+router.delete('/:id', deleteTicket);
 
 export default router;
