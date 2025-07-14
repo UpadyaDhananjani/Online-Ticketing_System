@@ -177,6 +177,10 @@ const Ticket = () => {
                     </Badge>
                   </div>
                   <div className="mb-2">
+                    <span className="fw-semibold text-secondary">Assigned To:</span>{" "}
+                    {ticket.assignedTo?.name || ticket.assignedTo || '—'}
+                  </div>
+                  <div className="mb-2">
                     <span className="fw-semibold text-secondary">Status:</span>{" "}
                     <Badge bg={statusColors[ticket.status] || "secondary"} className="px-3 py-2 text-capitalize">
                       {ticket.status}

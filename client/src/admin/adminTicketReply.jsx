@@ -5,6 +5,7 @@ import "primereact/resources/primereact.min.css";
 import axios from "axios";
 import { sendTicketReply, resolveTicket, deleteAdminMessage, getAdminTicketById } from "../api/ticketApi"; 
 
+
 import { Container, Card, Button, Form, Row, Col, Badge } from "react-bootstrap";
 import MessageHistory from "../components/MessageHistory/MessageHistory";
 import { toast } from 'react-toastify';
@@ -115,7 +116,7 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
 
   const fetchTicket = async () => {
     try {
-      const res = await getAdminTicketById(ticket._id, token); 
+      const res = await getAdminTicketById(ticket._id, token);
       if (res.data) {
         setLocalStatus(res.data.status);
         setMessages(res.data.messages || []);
