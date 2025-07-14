@@ -3,51 +3,70 @@ import axios from 'axios';
 const API_URL = '/api/tickets'; // Base URL for user tickets
 const ADMIN_API_URL = '/api/admin/tickets'; // Base URL for admin tickets
 
-// Create ticket (user)
-export const createTicket = (data, token) =>
-  axios.post(API_URL, data, { headers: { Authorization: `Bearer ${token}` } });
+// ---------------- USER TICKET ROUTES ---------------- //
 
-// Get tickets (user) - Relies on cookies via withCredentials
-export const getTickets = () => 
+// Create a new ticket (user)
+export const createTicket = (data, token) =>
+  axios.post(API_URL, data, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+// Get all tickets (user) - relies on cookies
+export const getTickets = () =>
   axios.get(API_URL, { withCredentials: true });
 
-// Update ticket (user)
+// Update a ticket (user)
 export const updateTicket = (id, data, token) =>
-  axios.put(`${API_URL}/${id}`, data, { headers: { Authorization: `Bearer ${token}` } });
+  axios.put(`${API_URL}/${id}`, data, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
 
-// Close ticket (user)
+// Close a ticket (user)
 export const closeTicket = (id, token) =>
-  axios.patch(`${API_URL}/${id}/close`, {}, { headers: { Authorization: `Bearer ${token}` } });
+  axios.patch(`${API_URL}/${id}/close`, {}, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
 
-// Get all tickets (admin) - Uses token for Authorization header
-export const getAllTickets = (token) => 
-  axios.get(ADMIN_API_URL, { headers: { Authorization: `Bearer ${token}` } });
+// Delete a user message (can only delete their own message)
+export const deleteUserMessage = (ticketId, messageId, token) =>
+  axios.delete(`${API_URL}/${ticketId}/messages/${messageId}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
 
-// Send ticket reply (admin) - Uses token
+
+// ---------------- ADMIN TICKET ROUTES ---------------- //
+
+// Get all tickets (admin)
+export const getAllTickets = (token) =>
+  axios.get(ADMIN_API_URL, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+// Get a single ticket by ID (admin)
+export const getAdminTicketById = (ticketId, token) =>
+  axios.get(`${ADMIN_API_URL}/${ticketId}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+// Send a reply to a ticket (admin)
 export const sendTicketReply = (ticketId, data, token) =>
   axios.post(`${ADMIN_API_URL}/${ticketId}/reply`, data, {
     headers: { Authorization: `Bearer ${token}` }
   });
 
-// Resolve ticket (admin) - Uses token
+// Resolve a ticket (admin)
 export const resolveTicket = (ticketId, token) =>
   axios.patch(`${ADMIN_API_URL}/${ticketId}/resolve`, null, {
     headers: { Authorization: `Bearer ${token}` }
   });
 
-// Get a single ticket for admin (e.g., for TicketReply) - Uses token
-export const getAdminTicketById = (ticketId, token) =>
-  axios.get(`${ADMIN_API_URL}/${ticketId}`, { 
-    headers: { Authorization: `Bearer ${token}` }
-  });
-
-// --- CRITICAL: Ensure this export is present and spelled correctly ---
+// Delete any message from ticket (admin)
 export const deleteAdminMessage = (ticketId, messageId, token) =>
   axios.delete(`${ADMIN_API_URL}/${ticketId}/messages/${messageId}`, {
     headers: { Authorization: `Bearer ${token}` }
   });
 
-// --- NEW: Delete a ticket as admin ---
+// Delete a ticket entirely (admin)
 export const deleteAdminTicket = (ticketId, token) =>
   axios.delete(`${ADMIN_API_URL}/${ticketId}`, {
     headers: { Authorization: `Bearer ${token}` }

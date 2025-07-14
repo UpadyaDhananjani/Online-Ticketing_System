@@ -1,4 +1,3 @@
-// server/routes/ticketRoutes.js
 import express from 'express';
 import {
   createTicket,
@@ -6,75 +5,69 @@ import {
   updateTicket,
   closeTicket,
   reopenTicket,
-  upload,
   getTicketById,
-
   getTicketSummary,
-
-  addUserReply // <-- IMPORT THE NEW FUNCTION
-
-
+  addUserReply,
+  deleteUserMessage
 } from '../controllers/ticketController.js';
-import uploadMiddleware from '../middleware/uploadMiddleware.js';
 
-import authMiddleware from '../middleware/authMiddleware.js'; // <-- This is correctly imported
+import uploadMiddleware from '../middleware/uploadMiddleware.js'; // For attachments (Multer)
+import authMiddleware from '../middleware/authMiddleware.js'; // For authentication
 
 const router = express.Router();
 
-// Create a ticket (with image and assignedUnit)
-// --- CONFIRMATION: authMiddleware is BEFORE upload.single('image') ---
+// ---------------------------------------------
+// Ticket Creation (with image)
+// @route   POST /api/tickets
+// @access  Private (User)
 router.post('/', authMiddleware, uploadMiddleware.array('attachments', 5), createTicket);
 
-// Get all tickets for user (or all for admin)
-router.get('/', authMiddleware, getUserTickets); // Confirmed authMiddleware is here
+// ---------------------------------------------
+// Get all tickets (user or admin based on role)
+// @route   GET /api/tickets
+// @access  Private
+router.get('/', authMiddleware, getUserTickets);
 
-// Update a ticket (including assignedUnit)
+// ---------------------------------------------
+// Update a ticket
+// @route   PUT /api/tickets/:id
+// @access  Private
 router.put('/:id', authMiddleware, updateTicket);
 
+// ---------------------------------------------
 // Close a ticket
+// @route   PATCH /api/tickets/:id/close
+// @access  Private
 router.patch('/:id/close', authMiddleware, closeTicket);
 
+// ---------------------------------------------
 // Reopen a ticket
+// @route   PATCH /api/tickets/:id/reopen
+// @access  Private
 router.patch('/:id/reopen', authMiddleware, reopenTicket);
 
+// ---------------------------------------------
+// Ticket Summary
+// @route   GET /api/tickets/summary
+// @access  Public (or make Private if needed)
+router.get('/summary', getTicketSummary);
 
-// --- Correct order: Specific '/summary' route BEFORE general '/:id' route ---
-router.get('/summary', getTicketSummary); // No authMiddleware here if it's public
-
-
+// ---------------------------------------------
+// Get ticket by ID
+// @route   GET /api/tickets/:id
+// @access  Private
 router.get('/:id', authMiddleware, getTicketById);
 
+// ---------------------------------------------
+// Add a reply to a ticket (with attachments)
+// @route   POST /api/tickets/:id/reply
+// @access  Private
+router.post('/:id/reply', authMiddleware, uploadMiddleware.array('attachments', 5), addUserReply);
 
-// Add a user reply to a ticket
-router.post('/:id/reply', uploadMiddleware.array('attachments', 5), addUserReply);
-
-
-// Delete a message from a ticket
-router.delete('/:ticketId/messages/:messageId', async (req, res) => {
-  try {
-    const { ticketId, messageId } = req.params;
-    const ticket = await Ticket.findById(ticketId);
-    if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
-
-    // Find the message index
-    const msgIndex = ticket.messages.findIndex(m => m._id.toString() === messageId);
-    if (msgIndex === -1) return res.status(404).json({ error: 'Message not found' });
-
-    // Optionally: Check if the requester is allowed to delete (authorRole or user check)
-    // Example: Only allow if admin or the message author is the current user
-    // if (ticket.messages[msgIndex].authorRole === 'admin' && !req.user.isAdmin) return res.status(403).json({ error: 'Forbidden' });
-
-    ticket.messages.splice(msgIndex, 1);
-    ticket.updatedAt = Date.now();
-    await ticket.save();
-
-    res.json({ success: true, ticket });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Get a ticket by ID
-
+// ---------------------------------------------
+// Delete a user message from a ticket
+// @route   DELETE /api/tickets/:ticketId/messages/:messageId
+// @access  Private (User can delete own messages)
+router.delete('/:ticketId/messages/:messageId', authMiddleware, deleteUserMessage);
 
 export default router;
