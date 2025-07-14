@@ -10,19 +10,15 @@ import Home2 from './components/Home2.jsx';
 import Login from './components/Login.jsx';
 import ResetPassword from './components/ResetPassword.jsx';
 import EmailVerify from './components/EmailVerify.jsx';
-import Login from './components/Login.jsx';
 import TicketsPage from './pages/TicketsPage';
 import TicketList from './components/TicketList'; // User-facing TicketList
 import CreateTicket from './components/CreateTicket';
 import Ticket from './pages/Ticket'; // Assuming this is the single ticket view for users
 import AdminDashboard from './admin/AdminDashboard';
-import TicketReply from './admin/TicketReply'; // <-- THIS IS THE IMPORT CAUSING THE ERROR. Ensure the file exists at this path: client/src/admin/TicketReply.jsx
+import TicketReply from './admin/adminTicketReply.jsx'; // <-- THIS IS THE IMPORT CAUSING THE ERROR. Ensure the file exists at this path: client/src/admin/TicketReply.jsx
 
 import { ToastContainer } from 'react-toastify'; // For toast notifications
 
-import Ticket from './pages/Ticket';
-import AdminDashboard from './admin/AdminDashboard'; // This imports the Admin Dashboard component
-import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'; // Keep this for react-toastify's own styles
 import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS for styling
 import 'bootstrap-icons/font/bootstrap-icons.css'; // Import Bootstrap Icons for icons
@@ -35,8 +31,6 @@ import './App.css'; // Your custom CSS
 import { AppContextProvider, AppContent } from './context/AppContext'; // Context provider and consumer
 import ProtectedRoute from './components/ProtectedRoute'; // Confirming this import is present and correct
 import './App.css'; // Keep this import for your Tailwind CSS setup
-import { AppContextProvider } from './context/AppContext';
-import ProtectedRoute from './components/ProtectedRoute';
 
 function App() { 
   const location = useLocation();

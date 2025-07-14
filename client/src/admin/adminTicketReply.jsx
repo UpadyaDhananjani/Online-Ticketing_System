@@ -4,12 +4,7 @@ import "primereact/resources/themes/lara-light-indigo/theme.css";
 import "primereact/resources/primereact.min.css";
 import axios from "axios";
 import { sendTicketReply, resolveTicket, deleteAdminMessage, getAdminTicketById } from "../api/ticketApi"; 
-import {
-  sendTicketReply,
-  resolveTicket,
-  deleteAdminMessage,
-  getAdminTicketById
-} from "../api/ticketApi";
+
 import { Container, Card, Button, Form, Row, Col, Badge } from "react-bootstrap";
 import MessageHistory from "../components/MessageHistory/MessageHistory";
 import { toast } from 'react-toastify';
@@ -103,9 +98,7 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
     setMessages(prev => prev.filter(m => m._id !== messageId));
 
     try {
-      console.log(`Attempting to delete message: ${messageId} from ticket: ${ticket._id}`);
-      const res = await deleteAdminMessage(ticket._id, messageId, token); 
-      
+       console.log(`Attempting to delete message: ${messageId} from ticket: ${ticket._id}`);
       const res = await deleteAdminMessage(ticket._id, messageId, token);
       if (res.data.success) {
         toast.success(res.data.message || "Message deleted successfully.");
@@ -122,7 +115,6 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
 
   const fetchTicket = async () => {
     try {
-      const res = await getAdminTicketById(ticket._id, token); 
       const res = await getAdminTicketById(ticket._id, token);
       if (res.data) {
         setLocalStatus(res.data.status);
