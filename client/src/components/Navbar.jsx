@@ -6,19 +6,19 @@ import { toast } from 'react-toastify';
 import axios from 'axios';
 
 const Navbar = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
+    const navigate = useNavigate();
+    const location = useLocation();
 
-  const { userData, setIsLoggedin, setUserData, backendUrl, isLoggedin } = useContext(AppContent);
-  const [showDropdown, setShowDropdown] = useState(false);
+    const { userData, setIsLoggedin, setUserData, backendUrl, isLoggedin } = useContext(AppContent);
+    const [showDropdown, setShowDropdown] = useState(false);
 
-  // --- DEBUG LOG START ---
-  console.log("Navbar: userData:", userData);
-  console.log("Navbar: isLoggedin:", isLoggedin);
-  if (userData) {
-    console.log("Navbar: userData.isAccountVerified:", userData.isAccountVerified);
-  }
-  // --- DEBUG LOG END ---
+    // --- DEBUG LOG START ---
+    console.log("Navbar: userData:", userData);
+    console.log("Navbar: isLoggedin:", isLoggedin);
+    if (userData) {
+        console.log("Navbar: userData.isAccountVerified:", userData.isAccountVerified);
+    }
+    // --- DEBUG LOG END ---
 
   const sendVerificationOtp = async () => {
     if (!userData || !userData.id) { // Use userData.id as per AppContext structure
@@ -33,24 +33,24 @@ const Navbar = () => {
         userId: userData.id // Send the userId in the request body
       });
 
-      if (data.success) {
-        navigate('/email-verify');
-        toast.success(data.message);
-      } else {
-        toast.error(data.message);
-      }
-    } catch (error) {
-      const errorMsg = error.response?.data?.message || error.message || "An error occurred while sending OTP.";
-      toast.error(errorMsg);
-    } finally {
-      setShowDropdown(false);
-    }
-  };
+            if (data.success) {
+                navigate('/email-verify');
+                toast.success(data.message);
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            const errorMsg = error.response?.data?.message || error.message || "An error occurred while sending OTP.";
+            toast.error(errorMsg);
+        } finally {
+            setShowDropdown(false);
+        }
+    };
 
-  const handleLoginClick = () => {
-    navigate('/login');
-    setShowDropdown(false);
-  };
+    const handleLoginClick = () => {
+        navigate('/login');
+        setShowDropdown(false);
+    };
 
   const logout = async () => {
     try {
@@ -71,10 +71,19 @@ const Navbar = () => {
     }
   };
 
-  const toggleDropdown = () => {
-    setShowDropdown(!showDropdown);
-  };
+    const toggleDropdown = () => {
+        setShowDropdown(!showDropdown);
+    };
 
+    return (
+        <div className="w-full flex justify-between items-center p-4 sm:p-6 sm:px-24 absolute top-0 z-50">
+            {/* Left Section: Logo */}
+            <img
+                src={assets.logo}
+                alt="logo"
+                className="w-28 sm:w-32 cursor-pointer"
+                onClick={() => navigate('/')}
+            />
   return (
     <div className="w-full flex justify-between items-center p-4 sm:p-6 sm:px-24">
       {/* Left Section: Logo */}

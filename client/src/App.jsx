@@ -1,4 +1,6 @@
 // client/src/App.jsx
+// This file defines the main application routes and layout.
+
 import React, { useContext } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
