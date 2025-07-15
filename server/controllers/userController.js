@@ -31,3 +31,13 @@ export const getUserData = async (req, res) => {
     });
   }
 };
+
+export const getUsersByUnit = async (req, res) => {
+  try {
+    const { unit } = req.params;
+    const users = await userModel.find({ unit }).select('_id name email');
+    res.json({ success: true, users });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

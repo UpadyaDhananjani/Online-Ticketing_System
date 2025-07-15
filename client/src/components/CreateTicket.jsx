@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Form, Button, Card } from 'react-bootstrap';
 
 import { toast } from "react-toastify";
@@ -22,7 +22,23 @@ function CreateTicket() {
   const [type, setType] = useState('incident');
   const [assignedUnit, setAssignedUnit] = useState(UNIT_OPTIONS[0]);
   const [images, setImages] = useState([]);
+  const [unitUsers, setUnitUsers] = useState([]);
+  const [assignedTo, setAssignedTo] = useState("");
   const navigate = useNavigate(); // Initialize useNavigate
+
+  useEffect(() => {
+    if (!assignedUnit) {
+      setUnitUsers([]);
+      setAssignedTo("");
+      return;
+    }
+    axios.get(`/api/user/by-unit/${encodeURIComponent(assignedUnit)}`, { withCredentials: true })
+      .then(res => {
+        setUnitUsers(res.data.users || []);
+        setAssignedTo(""); // Reset assigned person when unit changes
+      })
+      .catch(() => setUnitUsers([]));
+  }, [assignedUnit]);
 
   const handleImageChange = (e) => {
     setImages(e.target.files);
@@ -35,6 +51,7 @@ function CreateTicket() {
     formData.append('description', description);
     formData.append('type', type);
     formData.append('assignedUnit', assignedUnit);
+    formData.append('assignedTo', assignedTo);
     if (images && images.length > 0) {
       for (let i = 0; i < images.length; i++) {
         formData.append('attachments', images[i]);
@@ -116,6 +133,21 @@ function CreateTicket() {
                   <Form.Select value={assignedUnit} onChange={e => setAssignedUnit(e.target.value)}>
                     {UNIT_OPTIONS.map(unit => (
                       <option key={unit} value={unit}>{unit}</option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+                <Form.Group className="mb-3" controlId="formAssignedTo">
+                  <Form.Label>Assign to Person</Form.Label>
+                  <Form.Select
+                    value={assignedTo}
+                    onChange={e => setAssignedTo(e.target.value)}
+                    required={unitUsers.length > 0}
+                  >
+                    <option value="">Select a person</option>
+                    {unitUsers.map(user => (
+                      <option key={user._id} value={user._id}>
+                        {user.name} ({user.email})
+                      </option>
                     ))}
                   </Form.Select>
                 </Form.Group>

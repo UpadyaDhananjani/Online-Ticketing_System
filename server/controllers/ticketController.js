@@ -4,12 +4,10 @@ import userModel from '../models/userModel.js';
 import multer from 'multer';
 import path from 'path';
 
-// ---------------------
-// Multer Setup
-// ---------------------
+// Multer setup
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/');
+    cb(null, 'uploads/'); // Ensure this folder exists
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + path.extname(file.originalname));
@@ -28,12 +26,15 @@ export const upload = multer({
   }
 });
 
-// ---------------------
-// Create Ticket
-// ---------------------
+// Create a new ticket
 export const createTicket = async (req, res) => {
   try {
-    const { subject, description, type, assignedUnit } = req.body;
+    const { subject, description, type, assignedUnit, assignedTo } = req.body;
+
+    console.log("--- createTicket function started ---");
+    console.log("req.user:", req.user);
+    console.log("Request Body:", req.body);
+    console.log("Uploaded File:", req.file);
 
     if (!req.user || !req.user._id) {
       return res.status(401).json({ error: "User not authenticated to create ticket." });
@@ -43,6 +44,7 @@ export const createTicket = async (req, res) => {
       return res.status(400).json({ error: "assignedUnit is required" });
     }
 
+    // Handle multiple attachments
     let attachments = [];
     if (req.files && req.files.length > 0) {
       attachments = req.files.map(f => `/uploads/${f.filename}`);
@@ -54,12 +56,14 @@ export const createTicket = async (req, res) => {
       description,
       type,
       assignedUnit,
-      attachments
+      attachments, // Store as array
+      assignedTo: assignedTo || undefined // Save assignedTo if provided
     });
 
     await ticket.save();
-
     const populatedTicket = await Ticket.findById(ticket._id).populate('user', 'name');
+
+    console.log("--- createTicket function finished ---");
     return res.status(201).json(populatedTicket);
   } catch (err) {
     console.error("Error creating ticket:", err);
@@ -67,24 +71,26 @@ export const createTicket = async (req, res) => {
   }
 };
 
-// ---------------------
-// Get Tickets (User's own)
-// ---------------------
+// Get all tickets
 export const getUserTickets = async (req, res) => {
   try {
-    const tickets = await Ticket.find({ user: req.user._id })
-      .populate('user', 'name')
+    const userId = req.user._id;
+    const tickets = await Ticket.find({
+      $or: [
+        { user: userId },
+        { assignedTo: userId }
+      ]
+    })
+      .populate('user', 'name email')
+      .populate('assignedTo', 'name email')
       .sort({ createdAt: -1 });
-    return res.json(tickets);
+    res.json(tickets);
   } catch (err) {
-    console.error("Error fetching user tickets:", err);
-    return res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 };
 
-// ---------------------
-// Update Ticket
-// ---------------------
+// Update/Edit a ticket
 export const updateTicket = async (req, res) => {
   try {
     const { id } = req.params;
@@ -95,7 +101,6 @@ export const updateTicket = async (req, res) => {
       description,
       updatedAt: Date.now()
     };
-
     if (assignedUnit) updateFields.assignedUnit = assignedUnit;
     if (status) updateFields.status = status;
 
@@ -105,20 +110,14 @@ export const updateTicket = async (req, res) => {
       { new: true }
     ).populate('user', 'name');
 
-    if (!ticket) {
-      return res.status(404).json({ error: 'Ticket not found or not editable' });
-    }
-
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found or not editable' });
     return res.json(ticket);
   } catch (err) {
-    console.error("Error updating ticket:", err);
     return res.status(500).json({ error: err.message });
   }
 };
 
-// ---------------------
-// Close Ticket
-// ---------------------
+// Close a ticket
 export const closeTicket = async (req, res) => {
   try {
     const { id } = req.params;
@@ -128,20 +127,14 @@ export const closeTicket = async (req, res) => {
       { new: true }
     ).populate('user', 'name');
 
-    if (!ticket) {
-      return res.status(404).json({ error: 'Ticket not found or already closed' });
-    }
-
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found or already closed' });
     return res.json(ticket);
   } catch (err) {
-    console.error("Error closing ticket:", err);
     return res.status(500).json({ error: err.message });
   }
 };
 
-// ---------------------
-// Reopen Ticket
-// ---------------------
+// Reopen a ticket
 export const reopenTicket = async (req, res) => {
   try {
     const { id } = req.params;
@@ -151,57 +144,50 @@ export const reopenTicket = async (req, res) => {
       { new: true }
     ).populate('user', 'name');
 
-    if (!ticket) {
-      return res.status(404).json({ error: 'Ticket not found or not closed' });
-    }
-
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found or not closed' });
     return res.json(ticket);
   } catch (err) {
-    console.error("Error reopening ticket:", err);
     return res.status(500).json({ error: err.message });
   }
 };
 
-// ---------------------
-// Get Ticket by ID
-// ---------------------
+// Get ticket by ID
 export const getTicketById = async (req, res) => {
   try {
-    const ticket = await Ticket.findById(req.params.id).populate('user', 'name');
+    const ticket = await Ticket.findById(req.params.id)
+      .populate('user', 'name')
+      .populate('assignedTo', 'name email'); // <-- populate assignedTo
     if (!ticket) {
       return res.status(404).json({ error: 'Ticket not found' });
     }
     return res.json(ticket);
   } catch (err) {
-    console.error("Error getting ticket by ID:", err);
     return res.status(500).json({ error: err.message });
   }
 };
 
-// ---------------------
-// Ticket Summary
-// ---------------------
+// Get summary
 export const getTicketSummary = async (req, res) => {
   try {
-    const open = await Ticket.countDocuments({ status: 'open' });
-    const inProgress = await Ticket.countDocuments({ status: 'in progress' });
-    const resolved = await Ticket.countDocuments({ status: 'resolved' });
+    const openCount = await Ticket.countDocuments({ status: 'open' });
+    const inProgressCount = await Ticket.countDocuments({ status: 'in progress' });
+    const resolvedCount = await Ticket.countDocuments({ status: 'resolved' });
 
-    return res.json({ open, inProgress, resolved });
+    return res.json({
+      open: openCount,
+      inProgress: inProgressCount,
+      resolved: resolvedCount,
+    });
   } catch (err) {
-    console.error('Error fetching ticket summary:', err);
-    return res.status(500).json({ error: 'Failed to fetch ticket summary.' });
+    return res.status(500).json({ error: 'Failed to fetch ticket summary from server.' });
   }
 };
 
-// ---------------------
-// Add Reply to Ticket (User)
-// ---------------------
+// Add reply to ticket (user)
 export const addUserReply = async (req, res) => {
   try {
     const { id } = req.params;
     const { content } = req.body;
-
     let attachments = [];
     if (req.files && req.files.length > 0) {
       attachments = req.files.map(f => `/uploads/${f.filename}`);
@@ -214,6 +200,7 @@ export const addUserReply = async (req, res) => {
       return res.status(401).json({ error: "User not authenticated." });
     }
 
+    ticket.messages = ticket.messages || [];
     ticket.messages.push({
       author: req.user._id,
       authorRole: 'user',
@@ -225,16 +212,13 @@ export const addUserReply = async (req, res) => {
     ticket.updatedAt = Date.now();
     await ticket.save();
 
-    return res.json(ticket);
+    res.json(ticket);
   } catch (err) {
-    console.error("Error adding user reply:", err);
     return res.status(500).json({ error: err.message });
   }
 };
 
-// ---------------------
 // Delete User Message
-// ---------------------
 export const deleteUserMessage = async (req, res) => {
   try {
     const { ticketId, messageId } = req.params;
@@ -265,7 +249,6 @@ export const deleteUserMessage = async (req, res) => {
 
     return res.status(200).json({ success: true, message: 'Message deleted successfully.' });
   } catch (error) {
-    console.error("Delete Message Error:", error);
     return res.status(500).json({ success: false, message: 'Failed to delete message due to server error.' });
   }
 };

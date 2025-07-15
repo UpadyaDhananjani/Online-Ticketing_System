@@ -108,12 +108,12 @@ const Navbar = () => {
                     <div className="user-dropdown-menu">
                         <ul className="list-none m-0 p-0">
                             {userData.name && (
-                                <li className="dropdown-item font-bold text-indigo-900 cursor-default" style={{ cursor: 'default' }}>
+                                <li className="dropdown-item font-bold text-indigo-900 cursor-default">
                                     {userData.name}
                                 </li>
                             )}
                             {userData.unit && (
-                                <li className="dropdown-item font-semibold text-indigo-700 cursor-default" style={{ cursor: 'default' }}>
+                                <li className="dropdown-item font-semibold text-indigo-700 cursor-default">
                                     {userData.unit}
                                 </li>
                             )}
