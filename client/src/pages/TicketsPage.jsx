@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import TicketList from '../components/TicketList';
 import { Tabs, Tab } from 'react-bootstrap';
-import { BsSend, BsInbox } from 'react-icons/bs';
+import { BsSend, BsInbox, BsArrowRepeat } from 'react-icons/bs';
 import { AppContent } from '../context/AppContext';
 
 function TicketsPage({ token, filter }) {
@@ -41,14 +41,24 @@ function TicketsPage({ token, filter }) {
             <span className="d-flex align-items-center gap-2">
               <BsInbox size={18} />
               <span>Tickets Received</span>
-              <span className="badge bg-info text-dark d-inline-flex align-items-center ms-1" style={{ fontSize: '0.85em' }}>
-                <i className="bi bi-person-badge me-1"></i> Assigned
-              </span>
             </span>
           }
         >
           <div className="tab-pane-fade-in">
             <TicketList mode="received" userId={userId} />
+          </div>
+        </Tab>
+        <Tab
+          eventKey="reassigned"
+          title={
+            <span className="d-flex align-items-center gap-2">
+              <BsArrowRepeat size={18} />
+              <span>Reassigned</span>
+            </span>
+          }
+        >
+          <div className="tab-pane-fade-in">
+            {/* No logic or TicketList here, just an empty tab or placeholder */}
           </div>
         </Tab>
       </Tabs>
