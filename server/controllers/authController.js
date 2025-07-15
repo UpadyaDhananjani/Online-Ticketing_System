@@ -196,7 +196,7 @@ export const adminLogin = async (req, res) => {
         console.log("CONTROLLER: Admin Login credentials MATCHED.");
         // Dummy admin ID for the hardcoded admin
         const adminId = "65c3b957388703a1d2f62365";
-        const adminName = "Super Admin";
+        const adminName = "Admin";
 
         const token = generateToken(adminId, 'admin');
 
