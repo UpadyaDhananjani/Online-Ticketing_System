@@ -99,7 +99,7 @@ const AppRoutes = () => {
               {/* User and admin dashboard */}
               <Route path="/home" element={<Home />} />
               <Route path="/tickets-page" element={<TicketsPage />} />
-              <Route path="/tickets" element={<TicketList />} />
+              <Route path="/tickets" element={<TicketsPage />} />
               <Route path="/create-ticket" element={<CreateTicket />} />
               <Route path="/tickets/:id" element={<Ticket />} />
 
