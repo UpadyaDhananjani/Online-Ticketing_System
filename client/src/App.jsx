@@ -108,7 +108,7 @@ const AppRoutes = () => {
                             {/* User dashboard (Note: "/home" is still separate if needed for non-root access) */}
                             <Route path="/home" element={<Home />} />
                             <Route path="/tickets-page" element={<TicketsPage />} />
-                            <Route path="/tickets" element={<TicketList />} />
+                            <Route path="/tickets" element={<TicketsPage />} />
                             <Route path="/create-ticket" element={<CreateTicket />} />
                             <Route path="/tickets/:id" element={<Ticket />} />
 

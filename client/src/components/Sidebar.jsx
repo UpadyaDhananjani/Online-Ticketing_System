@@ -1,25 +1,17 @@
 // client/src/components/Sidebar.jsx
-import React, { useContext } from 'react'; // <--- Import useContext
+import React, { useContext } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Nav, Navbar } from 'react-bootstrap';
-import { AppContent } from '../context/AppContext'; // <--- Import AppContent
+import { AppContent } from '../context/AppContext';
 
 function Sidebar() {
     const location = useLocation();
-    // <--- Get userData and loadingAuth from AppContext
     const { userData, loadingAuth, isLoggedin } = useContext(AppContent);
 
-    // Determine if the user is an admin or a regular user
-    // We also check !loadingAuth to ensure userData is reliable
     const isAdmin = !loadingAuth && userData && userData.role === 'admin';
-    const isRegularUser = !loadingAuth && userData && userData.role === 'user'; // Explicitly check for 'user' role
+    const isRegularUser = !loadingAuth && userData && userData.role === 'user';
 
-    // If still loading auth state, don't render sidebar content yet
-    // Or if not logged in, only render public links if any (though for sidebar usually null is fine)
     if (loadingAuth || !isLoggedin) {
-        // You can return null or a minimal sidebar here if the user is not logged in
-        // or if authentication is still loading.
-        // For now, returning null to hide it completely when not logged in or loading.
         return null;
     }
 
@@ -39,10 +31,6 @@ function Sidebar() {
                 {/* You can add your brand/logo here if needed */}
             </Navbar.Brand>
             <Nav className="flex-column w-100">
-
-                {/* --- Links for ALL Logged-in Users (conditional on role below) --- */}
-
-                {/* Home Link - Navigates to "/" (App.jsx handles if it goes to Home2 or AdminDashboard) */}
                 <Nav.Link
                     as={NavLink}
                     to="/"
@@ -50,25 +38,17 @@ function Sidebar() {
                 >
                     Home
                 </Nav.Link>
-
-                {/* --- Conditional Links based on Role --- */}
-
                 {isAdmin && (
-                    <>
-                        {/* Admin-specific links */}
-                        <Nav.Link
-                            as={NavLink}
-                            to="/admin"
-                            className="sidebar-nav-link"
-                        >
-                            Admin Dashboard
-                        </Nav.Link>
-                    </>
+                    <Nav.Link
+                        as={NavLink}
+                        to="/admin"
+                        className="sidebar-nav-link"
+                    >
+                        Admin Dashboard
+                    </Nav.Link>
                 )}
-
                 {isRegularUser && (
                     <>
-                        {/* Regular User-specific links */}
                         <Nav.Link
                             as={NavLink}
                             to="/create-ticket"
@@ -81,27 +61,11 @@ function Sidebar() {
                             to="/tickets"
                             className="sidebar-nav-link"
                         >
-                            My Tickets
-                        </Nav.Link>
-                        {/* Add "My Open Tickets" and "My Resolved Tickets" if needed, as in your previous version */}
-                        <Nav.Link
-                            as={NavLink}
-                            to="/tickets/open"
-                            className="sidebar-nav-link"
-                        >
-                            My Open Tickets
-                        </Nav.Link>
-                        <Nav.Link
-                            as={NavLink}
-                            to="/tickets/resolved"
-                            className="sidebar-nav-link"
-                        >
-                            My Resolved Tickets
+                            Track Ticket Status
                         </Nav.Link>
                     </>
                 )}
             </Nav>
-            {/* Embedded CSS for Sidebar Links (remains unchanged) */}
             <style>{`
                 .sidebar-nav-link {
                     font-weight: 500;
