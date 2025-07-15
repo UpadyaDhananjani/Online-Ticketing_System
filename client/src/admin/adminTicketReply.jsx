@@ -139,76 +139,111 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
   }));
 
   return (
-    <Container className="py-5" style={{ maxWidth: "900px" }}>
-      <Row className="justify-content-center">
-        <Col md={12} lg={10}>
-          <Button variant="link" onClick={onBack} className="mb-3 px-0">
-            &larr; Back to Tickets
+    <Container
+      className="py-8 flex justify-center items-start animate-fade-in"
+      style={{ maxWidth: "1200px", width: '100%' }}
+    >
+      <Row className="justify-content-center w-full">
+        <Col md={12} lg={12} className="w-full">
+          <Button
+            variant="link"
+            onClick={onBack}
+            className="mb-4 px-0 text-blue-600 hover:text-blue-800 transition-colors duration-200 flex items-center gap-2"
+            style={{ fontWeight: 600, fontSize: 18 }}
+          >
+            <i className="bi bi-arrow-left-circle-fill mr-2 text-xl align-middle"></i>
+            Back to Tickets
           </Button>
-          <Card className="shadow-sm">
-            <Card.Header className="bg-primary text-white">
-              <h4 className="mb-0">
-                Reply to: <Badge bg="light" text="dark">{ticket.subject}</Badge>
+          <Card
+            className="shadow-lg border-0 rounded-3xl transition-transform duration-200 hover:scale-[1.01] hover:shadow-2xl"
+            style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #e0e7ef 100%)', borderRadius: '1.5rem' }}
+          >
+            <Card.Header className="bg-gradient-to-r from-blue-600 to-blue-400 text-white rounded-t-3xl flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+              <h4 className="mb-0 flex items-center gap-2">
+                <i className="bi bi-chat-left-text-fill mr-2 text-2xl"></i>
+                Reply to:
+                <Badge bg="light" text="dark" className="ml-2 px-3 py-2 text-base rounded-xl shadow-sm">
+                  {ticket.subject}
+                </Badge>
               </h4>
-              <div className="mt-2">
-                <Badge bg="secondary" className="text-capitalize">
+              <div className="mt-2 md:mt-0 flex items-center gap-2">
+                <Badge bg="secondary" className="text-capitalize px-3 py-2 rounded-xl flex items-center gap-1">
                   <i className="bi bi-diagram-3 me-1"></i>
                   {ticket.assignedUnit || '—'}
                 </Badge>
+                <Badge bg="info" className="text-capitalize px-3 py-2 rounded-xl flex items-center gap-1">
+                  <i className="bi bi-person me-1"></i>
+                  {ticket.assignedTo && typeof ticket.assignedTo === 'object' && ticket.assignedTo.name
+                    ? ticket.assignedTo.name
+                    : '—'}
+                </Badge>
+                <Badge bg={localStatus === 'resolved' ? 'success' : 'info'} className="ml-2 px-3 py-2 rounded-xl animate-pulse">
+                  <i className={`bi ${localStatus === 'resolved' ? 'bi-check-circle-fill' : 'bi-hourglass-split'} mr-1`}></i>
+                  {localStatus.charAt(0).toUpperCase() + localStatus.slice(1)}
+                </Badge>
               </div>
             </Card.Header>
-            <Card.Body>
+            <Card.Body className="bg-white rounded-b-3xl p-6 md:p-8">
               {/* Message History */}
-              <MessageHistory
-                msg={messagesForHistory}
-                description={ticket.description}
-                image={ticket.image}
-                onDeleteMessage={handleDeleteMessage}
-                currentUserRole="admin"
-              />
+              <div className="mb-8">
+                <MessageHistory
+                  msg={messagesForHistory}
+                  description={ticket.description}
+                  image={ticket.image}
+                  onDeleteMessage={handleDeleteMessage}
+                  currentUserRole="admin"
+                />
+              </div>
 
               {/* Reply Form */}
-              <Form onSubmit={handleSubmit}>
-                <Form.Group className="mb-3 mt-4">
-                  <Form.Label>Reply</Form.Label>
-                  <Editor
-                    ref={quillRef}
-                    value={reply}
-                    onTextChange={(e) => setReply(e.htmlValue)}
-                    style={{ height: '320px', width: '100%' }}
-                    modules={modules}
-                  />
+              <Form onSubmit={handleSubmit} className="space-y-6">
+                <Form.Group className="mb-4 mt-4">
+                  <Form.Label className="font-semibold text-lg">Reply</Form.Label>
+                  <div className="rounded-xl border border-blue-200 shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-blue-400 transition-all duration-200">
+                    <Editor
+                      ref={quillRef}
+                      value={reply}
+                      onTextChange={(e) => setReply(e.htmlValue)}
+                      style={{ height: '320px', width: '100%', background: 'white' }}
+                      modules={modules}
+                    />
+                  </div>
                 </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>Attach Image</Form.Label>
+                <Form.Group className="mb-4">
+                  <Form.Label className="font-semibold text-lg">Attach Image</Form.Label>
                   <Form.Control
                     type="file"
                     accept="image/*"
                     multiple
                     onChange={handleImageChange}
                     disabled={uploading}
+                    className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all duration-200"
                   />
                   {imageFiles.length > 0 && (
-                    <div className="mt-2 text-success">
+                    <div className="mt-2 text-green-600 flex items-center gap-2 animate-fade-in">
                       <i className="bi bi-image me-1"></i>
                       {imageFiles.length} file(s) selected
                     </div>
                   )}
                 </Form.Group>
-                <div className="d-flex justify-content-between">
+                <div className="flex flex-col md:flex-row justify-between gap-4 mt-6">
                   <Button
                     type="button"
                     variant="warning"
                     onClick={handleResolve}
                     disabled={localStatus === "resolved"}
+                    className="transition-transform duration-200 hover:scale-105 hover:shadow-lg flex items-center gap-2"
                   >
+                    <i className="bi bi-check2-circle mr-1"></i>
                     Mark as Resolved
                   </Button>
                   <Button
                     type="submit"
                     variant="success"
                     disabled={!reply || !reply.trim() || uploading}
+                    className="transition-transform duration-200 hover:scale-105 hover:shadow-lg flex items-center gap-2"
                   >
+                    <i className="bi bi-send-fill mr-1"></i>
                     {uploading ? "Uploading..." : "Send Reply"}
                   </Button>
                 </div>
@@ -217,6 +252,13 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
           </Card>
         </Col>
       </Row>
+      <style>{`
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fade-in 0.7s cubic-bezier(0.4,0,0.2,1) both; }
+      `}</style>
     </Container>
   );
 }

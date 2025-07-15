@@ -173,7 +173,12 @@ const Ticket = () => {
                   </div>
                   <div className="mb-2">
                     <span className="fw-semibold text-secondary">Assigned To:</span>{" "}
-                    {ticket.assignedTo?.name || ticket.assignedTo || '—'}
+                    <Badge bg="info" className="text-capitalize">
+                      <i className="bi bi-person-badge me-1"></i>
+                      {ticket.assignedTo && typeof ticket.assignedTo === 'object' && ticket.assignedTo.name
+                        ? ticket.assignedTo.name
+                        : '—'}
+                    </Badge>
                   </div>
                   <div className="mb-2">
                     <span className="fw-semibold text-secondary">Status:</span>{" "}
