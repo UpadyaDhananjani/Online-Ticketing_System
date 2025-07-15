@@ -236,6 +236,7 @@ function TicketList({ onSelect, token, refresh }) {
               <th><i className="bi bi-tag me-1"></i>Type</th>
               <th><i className="bi bi-diagram-3 me-1"></i>Assigned Unit</th>
               <th><i className="bi bi-person me-1"></i>Requester</th>
+              <th><i className="bi bi-person-badge me-1"></i>Assigned To</th>
               <th><i className="bi bi-info-circle me-1"></i>Status</th>
               <th><i className="bi bi-clock-history me-1"></i>Last Update</th>
             </tr>
@@ -280,6 +281,14 @@ function TicketList({ onSelect, token, refresh }) {
                 <td>
                   <i className="bi bi-person-circle me-2 text-secondary"></i>
                   {ticket.user ? ticket.user.name : "N/A"}
+                </td>
+                <td>
+                  <Badge bg="info" className="text-capitalize">
+                    <i className="bi bi-person-badge me-1"></i>
+                    {ticket.assignedTo && typeof ticket.assignedTo === 'object' && ticket.assignedTo.name
+                      ? ticket.assignedTo.name
+                      : '—'}
+                  </Badge>
                 </td>
                 <td>
                   <Badge

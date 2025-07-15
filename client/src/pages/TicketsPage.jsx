@@ -41,6 +41,9 @@ function TicketsPage({ token, filter }) {
             <span className="d-flex align-items-center gap-2">
               <BsInbox size={18} />
               <span>Tickets Received</span>
+              <span className="badge bg-info text-dark d-inline-flex align-items-center ms-1" style={{ fontSize: '0.85em' }}>
+                <i className="bi bi-person-badge me-1"></i> Assigned
+              </span>
             </span>
           }
         >

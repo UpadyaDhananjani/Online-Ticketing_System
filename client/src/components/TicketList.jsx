@@ -80,6 +80,7 @@ function TicketList({ filter, mode = 'created', userId }) {
             ) : (
               <th style={thStyle}><i className="bi bi-person me-1"></i>Requester</th>
             )}
+            <th style={thStyle}><i className="bi bi-person-badge me-1"></i>Assigned To</th>
             <th style={thStyle}><i className="bi bi-info-circle me-1"></i>Status</th>
             <th style={thStyle}><i className="bi bi-calendar me-1"></i>Created</th>
           </tr>
@@ -87,7 +88,7 @@ function TicketList({ filter, mode = 'created', userId }) {
         <tbody>
           {filteredTickets.length === 0 ? (
             <tr>
-              <td colSpan={6} style={{ textAlign: 'center', padding: 20, color: '#888' }}>
+              <td colSpan={7} style={{ textAlign: 'center', padding: 20, color: '#888' }}>
                 No tickets found.
               </td>
             </tr>
@@ -129,6 +130,14 @@ function TicketList({ filter, mode = 'created', userId }) {
                     : (ticket.user?.name
                         ? `${ticket.user.name}${ticket.user.email ? ' (' + ticket.user.email + ')' : ''}`
                         : (ticket.user || '—'))}
+                </td>
+                <td style={tdStyle}>
+                  <Badge bg="info" className="text-capitalize px-3 py-2 rounded-xl flex items-center gap-1">
+                    <i className="bi bi-person me-1"></i>
+                    {ticket.assignedTo && typeof ticket.assignedTo === 'object' && ticket.assignedTo.name
+                      ? ticket.assignedTo.name
+                      : '—'}
+                  </Badge>
                 </td>
                 <td style={tdStyle}>
                   <Badge
