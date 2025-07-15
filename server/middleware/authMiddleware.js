@@ -26,7 +26,7 @@ const authMiddleware = async (req, res, next) => {
             // This object will be accessible in subsequent controllers (like getUserData).
             req.user = {
                 _id: decoded.id,
-                name: "Super Admin", // A logical name for your hardcoded admin
+                name: "Admin", // A logical name for your hardcoded admin
                 email: "admin@gmail.com", // The hardcoded admin's email
                 role: 'admin',
                 isAccountVerified: true // Assume admin accounts are verified
