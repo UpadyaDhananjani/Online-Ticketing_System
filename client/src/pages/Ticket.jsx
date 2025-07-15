@@ -1,8 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
-import {
-  Container, Row, Col, Spinner, Alert,
-  Card, Badge, Button, Form, Modal
-} from "react-bootstrap";
+import { Container, Row, Col, Spinner, Alert, Card, Badge, Button, Form, Modal } from "react-bootstrap";
 import { useParams } from "react-router-dom";
 import MessageHistory from "../components/MessageHistory/MessageHistory";
 import { Editor } from 'primereact/editor';
@@ -45,7 +42,6 @@ const Ticket = () => {
         setLoading(false);
       })
       .catch(err => {
-        console.error("Error fetching ticket:", err);
         setError(err.message || "Failed to fetch ticket.");
         toast.error(err.message || "Failed to fetch ticket.");
         setLoading(false);
@@ -83,7 +79,6 @@ const Ticket = () => {
         formData.append("attachments", imageFiles[i]);
       }
     }
-
     setUploading(true);
     try {
       const res = await fetch(`/api/tickets/${id}/reply`, {

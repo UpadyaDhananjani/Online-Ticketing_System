@@ -4,13 +4,16 @@ import transporter from '../config/nodemailer.js'; // Assuming you have this con
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-// Get User Data (requires authentication middleware)
+// Utility to determine environment
+const isProduction = process.env.NODE_ENV === 'production';
 
+// Utility to generate JWT token
+const generateToken = (userId, role) => {
+    return jwt.sign({ id: userId, role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+};
 
 // --- Register User ---
 export const register = async (req, res) => {
-// Register user
-const register = async (req, res) => {
     const { name, email, password, unit } = req.body;
     if (!name || !email || !password || !unit) {
         return res.json({ success: false, message: 'Missing Details' });
@@ -24,23 +27,18 @@ const register = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Create new user with default role 'user'
-        const user = new userModel({ name, email, password: hashedPassword, unit, role: 'user' });
-        await user.save();
+        const newUser = new userModel({ name, email, password: hashedPassword, unit, role: 'user' });
+        await newUser.save();
 
-        const token = generateToken(user._id, user.role);
+        const token = generateToken(newUser._id, newUser.role);
 
         res.cookie('token', token, {
-            httpOnly: true, // Prevents client-side JS from accessing the cookie
+            httpOnly: true,
             maxAge: 1000 * 60 * 60 * 24, // 1 day
-            // sameSite: 'None' requires secure: true. For localhost (HTTP), use 'Lax'.
             sameSite: isProduction ? 'None' : 'Lax',
-            secure: isProduction, // true for HTTPS in production, false for HTTP in dev
-            // domain: isProduction ? '.yourdomain.com' : undefined, // Set if deploying to a specific domain
+            secure: isProduction,
         });
         console.log("CONTROLLER: Registration successful. Cookie 'token' set.");
-        // Debugging: Log the Set-Cookie header to confirm it's being sent
-        console.log("CONTROLLER: Response Set-Cookie header after registration:", res.getHeaders()['set-cookie']);
-
 
         res.status(201).json({
             success: true,
@@ -49,7 +47,7 @@ const register = async (req, res) => {
                 id: newUser._id,
                 name: newUser.name,
                 email: newUser.email,
-                role: newUser.role, // Include role in userData
+                role: newUser.role,
             },
         });
     } catch (error) {
@@ -80,8 +78,6 @@ export const login = async (req, res) => {
 
         const token = generateToken(user._id, user.role);
 
-        // Determine cookie settings based on environment
-        const isProduction = process.env.NODE_ENV === 'production';
         res.cookie('token', token, {
             httpOnly: true,
             maxAge: 1000 * 60 * 60 * 24, // 1 day
@@ -89,9 +85,6 @@ export const login = async (req, res) => {
             secure: isProduction,
         });
         console.log("CONTROLLER: Login successful. Cookie 'token' set for user:", user.email);
-        // Debugging: Log the Set-Cookie header to confirm it's being sent
-        console.log("CONTROLLER: Response Set-Cookie header after login:", res.getHeaders()['set-cookie']);
-
 
         res.status(200).json({
             success: true,
@@ -100,7 +93,7 @@ export const login = async (req, res) => {
                 id: user._id,
                 name: user.name,
                 email: user.email,
-                role: user.role, // Include role in userData
+                role: user.role,
             },
         });
     } catch (error) {
@@ -119,7 +112,6 @@ export const logout = async (req, res) => {
             secure: isProduction,
         });
         console.log("CONTROLLER: Logout successful. Cookie 'token' cleared.");
-        console.log("CONTROLLER: Response Set-Cookie header after logout:", res.getHeaders()['set-cookie']); // Debugging
         res.status(200).json({ success: true, message: 'Logged out successfully!' });
     } catch (error) {
         console.error('CONTROLLER ERROR: Logout error:', error);
@@ -130,8 +122,6 @@ export const logout = async (req, res) => {
 // --- Get User Data (Protected Route - Populated by authMiddleware) ---
 export const getUserData = async (req, res) => {
     console.log("CONTROLLER: Get user data request received.");
-    // req.user is populated by authMiddleware if authentication is successful
-    console.log("CONTROLLER: req.user status:", req.user ? "User object exists (" + req.user.email + ")" : "User object is NULL/undefined");
     if (req.user) {
         return res.status(200).json({
             success: true,
@@ -144,8 +134,7 @@ export const getUserData = async (req, res) => {
             },
         });
     } else {
-        // This block should ideally not be hit if authMiddleware is correctly sending 401.
-        console.log("CONTROLLER: Get user data failed: User not authenticated (req.user is null/undefined). Sending 401.");
+        console.log("CONTROLLER: Get user data failed: User not authenticated.");
         return res.status(401).json({ success: false, message: "User not authenticated." });
     }
 };
@@ -196,7 +185,6 @@ export const adminLogin = async (req, res) => {
     const ADMIN_USERNAME = 'admin@gmail.com';
     const ADMIN_PASSWORD = 'admin123'; // In a real app, this would be a hashed password
 
-    // --- NEW LOGGING ---
     console.log(`CONTROLLER: Admin Login Attempt - Received Email: '${email}', Received Password: '${password}'`);
     console.log(`CONTROLLER: Expected Email: '${ADMIN_USERNAME}', Expected Password: '${ADMIN_PASSWORD}'`);
 
@@ -206,13 +194,12 @@ export const adminLogin = async (req, res) => {
     }
     if (email === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
         console.log("CONTROLLER: Admin Login credentials MATCHED.");
-        // Since we're not fetching from DB, create a dummy user ID for the token
-        const adminId = "65c3b957388703a1d2f62365"; // A fixed, arbitrary ID for the hardcoded admin
+        // Dummy admin ID for the hardcoded admin
+        const adminId = "65c3b957388703a1d2f62365";
         const adminName = "Super Admin";
 
-        const token = generateToken(adminId, 'admin'); // Generate token with 'admin' role
+        const token = generateToken(adminId, 'admin');
 
-        const isProduction = process.env.NODE_ENV === 'production';
         res.cookie('token', token, {
             httpOnly: true,
             maxAge: 1000 * 60 * 60 * 24, // 1 day
