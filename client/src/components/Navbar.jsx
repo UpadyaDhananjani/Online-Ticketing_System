@@ -76,7 +76,7 @@ const Navbar = () => {
   };
 
   return (
-    <div className="w-full flex justify-between items-center p-4 sm:p-6 sm:px-24 absolute top-0 z-50">
+    <div className="w-full flex justify-between items-center p-4 sm:p-6 sm:px-24">
       {/* Left Section: Logo */}
       <img
         src={assets.logo}
