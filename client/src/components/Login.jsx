@@ -1,4 +1,3 @@
-// client/src/components/Login.jsx
 import React, { useContext, useState, useEffect } from "react";
 import { assets } from "../assets/assets";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -9,7 +8,7 @@ import { toast } from "react-toastify";
 const Login = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const { backendUrl, setIsLoggedin, setUserData, getUserData } = useContext(AppContent);
+    const { backendUrl, setIsLoggedin, getUserData } = useContext(AppContent);
 
     const roleFromUrl = searchParams.get("role");
     const stateFromUrl = searchParams.get("state");
@@ -27,6 +26,7 @@ const Login = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [unit, setUnit] = useState("");
+
     const unitOptions = [
         "System and Network Administration",
         "Asyhub Unit",
@@ -54,6 +54,7 @@ const Login = () => {
             setState("Sign Up");
         }
 
+        // Reset form fields on URL param change
         setName("");
         setEmail("");
         setPassword("");
@@ -91,9 +92,9 @@ const Login = () => {
 
             if (responseData.success) {
                 toast.success(responseData.message || "Operation successful!");
-                setIsLoggedin(true); // Update login state in context
-                await getUserData(); // Fetch and set user data in context
-                navigate("/dashboard"); // Navigate to dashboard
+                setIsLoggedin(true);
+                await getUserData();
+                navigate("/dashboard");
             } else {
                 toast.error(responseData.message);
             }
@@ -129,7 +130,7 @@ const Login = () => {
                 </p>
 
                 <form onSubmit={onsubmitHandler}>
-                    {/* Render name and unit fields ONLY for Sign Up state AND if not admin role */}
+                    {/* Show name and unit only for user sign up */}
                     {currentRole !== "admin" && state === "Sign Up" && (
                         <>
                             <div className="mb-4 flex items-center gap-3 w-full px-5 py-2.5 rounded-full bg-[#333A5C]">
@@ -146,11 +147,13 @@ const Login = () => {
                             <div className="mb-4 flex items-center gap-3 w-full px-5 py-2.5 rounded-full bg-[#333A5C]">
                                 <select
                                     value={unit}
-                                    onChange={e => setUnit(e.target.value)}
+                                    onChange={(e) => setUnit(e.target.value)}
                                     className="bg-transparent outline-none w-full text-indigo-300"
                                     required
                                 >
-                                    <option value="" disabled>Select your unit</option>
+                                    <option value="" disabled>
+                                        Select your unit
+                                    </option>
                                     {unitOptions.map(u => (
                                         <option key={u} value={u}>{u}</option>
                                     ))}
@@ -183,7 +186,7 @@ const Login = () => {
                         />
                     </div>
 
-                    {/* Show Forgot password ONLY if not admin role AND in Login state */}
+                    {/* Show forgot password only if user is logging in */}
                     {currentRole !== "admin" && state === "Login" && (
                         <p
                             onClick={() => navigate("/reset-password")}
@@ -201,7 +204,7 @@ const Login = () => {
                     </button>
                 </form>
 
-                {/* Conditional text for toggling between Sign Up, Login, or Back to Role Selection */}
+                {/* Toggle links below form */}
                 {currentRole !== "admin" ? (
                     state === "Sign Up" ? (
                         <p className="text-gray-400 text-center text-xs mt-4">
@@ -214,7 +217,6 @@ const Login = () => {
                             </span>
                         </p>
                     ) : (
-                        // This is the part that will show when 'state' is "Login" (for regular users)
                         <p className="text-gray-400 text-center text-xs mt-4">
                             Don't have an account?{" "}
                             <span
@@ -226,7 +228,6 @@ const Login = () => {
                         </p>
                     )
                 ) : (
-                    // This is for the Admin Login page, offering to go back to role selection
                     <p className="text-gray-400 text-center text-xs mt-4">
                         <span
                             onClick={() => navigate("/loginselection")}
@@ -238,20 +239,21 @@ const Login = () => {
                 )}
             </div>
 
-            {/* Inline styles for the component */}
             <style>
                 {`
+                    /* Login component styles */
+
                     .login-container {
                         display: flex;
                         align-items: center;
                         justify-content: center;
                         min-height: 100vh;
-                        padding-left: 1.5rem; /* px-6 */
-                        padding-right: 1.5rem; /* px-6 */
-                        background: linear-gradient(to bottom right, #bfdbfe, #c084fc); /* from-blue-200 to-purple-400 */
+                        padding-left: 1.5rem;
+                        padding-right: 1.5rem;
+                        background: linear-gradient(to bottom right, #bfdbfe, #c084fc);
                     }
 
-                    @media (min-width: 640px) { /* sm:px-0 */
+                    @media (min-width: 640px) {
                         .login-container {
                             padding-left: 0;
                             padding-right: 0;
@@ -260,13 +262,13 @@ const Login = () => {
 
                     .login-logo {
                         position: absolute;
-                        left: 1.25rem; /* left-5 */
-                        top: 1.25rem; /* top-5 */
-                        width: 7rem; /* w-28 */
+                        left: 1.25rem;
+                        top: 1.25rem;
+                        width: 7rem;
                         cursor: pointer;
                     }
 
-                    @media (min-width: 640px) { /* sm:left-20, sm:w-32 */
+                    @media (min-width: 640px) {
                         .login-logo {
                             left: 5rem;
                             width: 8rem;
@@ -274,43 +276,44 @@ const Login = () => {
                     }
 
                     .login-form-card {
-                        background-color: #1e293b; /* bg-slate-900 */
-                        padding: 2.5rem; /* p-10 */
-                        border-radius: 0.5rem; /* rounded-lg */
-                        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+                        background-color: #1e293b;
+                        padding: 2.5rem;
+                        border-radius: 0.5rem;
+                        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+                            0 4px 6px -2px rgba(0, 0, 0, 0.05);
                         width: 100%;
-                        max-width: 24rem; /* sm:w-96 */
-                        color: #a78b4fa; /* text-indigo-300 */
-                        font-size: 0.875rem; /* text-sm */
+                        max-width: 24rem;
+                        color: #a78b4fa;
+                        font-size: 0.875rem;
                     }
 
                     .login-title {
-                        font-size: 1.875rem; /* text-3xl */
-                        font-weight: 600; /* font-semibold */
-                        color: #ffffff; /* text-white */
+                        font-size: 1.875rem;
+                        font-weight: 600;
+                        color: #ffffff;
                         text-align: center;
-                        margin-bottom: 0.75rem; /* mb-3 */
+                        margin-bottom: 0.75rem;
                     }
 
                     .login-subtitle {
                         text-align: center;
-                        font-size: 0.875rem; /* text-sm */
-                        margin-bottom: 1.5rem; /* mb-6 */
+                        font-size: 0.875rem;
+                        margin-bottom: 1.5rem;
                     }
 
                     .login-input-group {
-                        margin-bottom: 1rem; /* mb-4 */
+                        margin-bottom: 1rem;
                         display: flex;
                         align-items: center;
-                        gap: 0.75rem; /* gap-3 */
+                        gap: 0.75rem;
                         width: 100%;
-                        padding: 0.625rem 1.25rem; /* px-5 py-2.5 */
-                        border-radius: 9999px; /* rounded-full */
-                        background-color: #333A5C; /* bg-[#333A5C] */
+                        padding: 0.625rem 1.25rem;
+                        border-radius: 9999px;
+                        background-color: #333A5C;
                     }
 
                     .login-input-group img {
-                        width: 1.25rem; /* Adjust icon size if needed */
+                        width: 1.25rem;
                         height: 1.25rem;
                     }
 
@@ -318,51 +321,51 @@ const Login = () => {
                         background-color: transparent;
                         outline: none;
                         width: 100%;
-                        color: #ffffff; /* Ensure input text is visible */
+                        color: #ffffff;
                     }
-                    
-                    .login-input-field::placeholder { /* Style placeholder text */
-                        color: #a78bfa; /* text-indigo-300 */
+
+                    .login-input-field::placeholder {
+                        color: #a78bfa;
                         opacity: 0.7;
                     }
 
                     .forgot-password-link {
-                        margin-bottom: 1rem; /* mb-4 */
-                        color: #6366f1; /* text-indigo-500 */
+                        margin-bottom: 1rem;
+                        color: #6366f1;
                         cursor: pointer;
-                        text-decoration: none; /* Ensure no default underline */
+                        text-decoration: none;
                     }
 
                     .forgot-password-link:hover {
-                        text-decoration: underline; /* Add underline on hover */
+                        text-decoration: underline;
                     }
 
                     .login-submit-button {
                         width: 100%;
-                        padding-top: 0.625rem; /* py-2.5 */
-                        padding-bottom: 0.625rem; /* py-2.5 */
-                        border-radius: 9999px; /* rounded-full */
-                        background: linear-gradient(to right, #818cf8, #4f46e5); /* bg-gradient-to-r from-indigo-400 to-indigo-900 */
-                        color: #ffffff; /* text-white */
-                        font-weight: 500; /* font-medium */
+                        padding-top: 0.625rem;
+                        padding-bottom: 0.625rem;
+                        border-radius: 9999px;
+                        background: linear-gradient(to right, #818cf8, #4f46e5);
+                        color: #ffffff;
+                        font-weight: 500;
                         border: none;
                         cursor: pointer;
                         transition: background 0.3s ease;
                     }
 
                     .login-submit-button:hover {
-                        background: linear-gradient(to right, #6366f1, #4338ca); /* Darker gradient on hover */
+                        background: linear-gradient(to right, #6366f1, #4338ca);
                     }
 
                     .login-toggle-text {
-                        color: #9ca3af; /* text-gray-400 */
+                        color: #9ca3af;
                         text-align: center;
-                        font-size: 0.75rem; /* text-xs */
-                        margin-top: 1rem; /* mt-4 */
+                        font-size: 0.75rem;
+                        margin-top: 1rem;
                     }
 
                     .login-toggle-link {
-                        color: #60a5fa; /* text-blue-400 */
+                        color: #60a5fa;
                         cursor: pointer;
                         text-decoration: underline;
                     }
