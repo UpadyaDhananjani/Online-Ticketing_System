@@ -12,7 +12,7 @@ const statusColors = {
   "in progress": "info"
 };
 
-function TicketList({ filter, mode = 'created', userId }) { 
+function TicketList({ filter, mode = 'created', userId, onOpenReceivedCountChange }) { 
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -48,6 +48,14 @@ function TicketList({ filter, mode = 'created', userId }) {
   if (filter) {
     filteredTickets = filteredTickets.filter(ticket => ticket.status === filter);
   }
+
+  // Notify parent of open received tickets count
+  useEffect(() => {
+    if (mode === 'received' && typeof onOpenReceivedCountChange === 'function') {
+      const openReceivedCount = tickets.filter(ticket => (ticket.assignedTo === userId || ticket.assignedTo?._id === userId) && ticket.status === 'open').length;
+      onOpenReceivedCountChange(openReceivedCount);
+    }
+  }, [tickets, mode, userId, onOpenReceivedCountChange]);
 
   if (loading) {
     return <div style={{ textAlign: 'center', marginTop: 50 }}>Loading tickets...</div>;
