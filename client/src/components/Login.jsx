@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { AppContent } from "../context/AppContext";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { getPublicUnits } from "../api/ticketApi"; // Import the new public units API
 
 const Login = () => {
     const navigate = useNavigate();
@@ -26,15 +27,21 @@ const Login = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [unit, setUnit] = useState("");
+    const [units, setUnits] = useState([]); // State to store fetched units
 
-    const unitOptions = [
-        "System and Network Administration",
-        "Asyhub Unit",
-        "Statistics Unit",
-        "Audit Unit",
-        "Helpdesk Unit",
-        "Functional Unit"
-    ];
+    // Fetch units when component mounts
+    useEffect(() => {
+        const fetchUnits = async () => {
+            try {
+                const { data } = await getPublicUnits(); // Call the new public API
+                setUnits(data);
+            } catch (error) {
+                console.error("Error fetching public units:", error);
+                toast.error("Failed to load units for signup.");
+            }
+        };
+        fetchUnits();
+    }, []); // Empty dependency array means this runs once on mount
 
     useEffect(() => {
         const newRole = searchParams.get("role");
@@ -154,9 +161,13 @@ const Login = () => {
                                     <option value="" disabled>
                                         Select your unit
                                     </option>
-                                    {unitOptions.map(u => (
-                                        <option key={u} value={u}>{u}</option>
-                                    ))}
+                                    {units.length > 0 ? ( // Use fetched units here
+                                        units.map(u => (
+                                            <option key={u._id} value={u._id}>{u.name}</option>
+                                        ))
+                                    ) : (
+                                        <option value="" disabled>Loading units...</option>
+                                    )}
                                 </select>
                             </div>
                         </>

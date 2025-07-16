@@ -1,45 +1,57 @@
+// server/routes/adminRoutes.js
 import express from 'express';
-import { 
-  getAllTickets, 
-  addAdminReply, 
-  deleteMessage, // --- IMPORTED: New deleteMessage function ---
-  resolveTicket, // Imported named resolveTicket
-  markTicketOpen, // Imported named markTicketOpen
-  markTicketInProgress, // Imported named markTicketInProgress
-  deleteTicket // <-- Add this import
-} from '../controllers/ticketAdminController.js'; // All admin controllers from one file
+import {
+    getAllTickets,
+    addAdminReply,
+    deleteMessage,
+    resolveTicket,
+    markTicketOpen,
+    markTicketInProgress,
+    deleteTicket,
+    getAdminTicketById,
+    getUsersByUnit, // Keep this
+    reassignTicket // Keep this
+} from '../controllers/ticketAdminController.js';
 
-import authMiddleware from '../middleware/authMiddleware.js'; // Ensure authMiddleware is imported
-import upload from '../middleware/uploadMiddleware.js'; // Assuming this is your multer config for attachments
+import authMiddleware from '../middleware/authMiddleware.js';
+import upload from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
 
-// Apply authMiddleware to all admin routes
-router.use(authMiddleware); // --- FIXED: authMiddleware applied to all routes in this router ---
+router.use(authMiddleware);
 
-// Get all tickets for admin dashboard (now correctly populates user)
+// =========================================================================
+// IMPORTANT: Order matters! Place more specific routes BEFORE generic ones.
+// =========================================================================
+
+// --- MODIFIED ROUTE: Get users by unit (now uses :unitName) ---
+router.get('/users/by-unit-name/:unitName', getUsersByUnit); // Changed from :unitId to :unitName
+
+// Reassign a ticket (uses :id, but has a specific '/assign' suffix)
+router.patch('/:id/assign', reassignTicket);
+
+// Main route for getting all tickets (no ID parameter)
 router.get('/', getAllTickets);
+
+// Get a single ticket by ID for admin (GENERIC :id route - must come AFTER specific ones)
+router.get('/:id', getAdminTicketById);
 
 // Add reply with optional attachments
 router.post(
-  '/:id/reply',
-  upload.array('attachments', 5), // up to 5 files
-  addAdminReply
+    '/:id/reply',
+    upload.array('attachments', 5),
+    addAdminReply
 );
 
-// Mark ticket as resolved
-router.patch('/:id/resolve', resolveTicket); // Using named export from controller
+// Mark ticket status changes (specific suffixes after :id)
+router.patch('/:id/resolve', resolveTicket);
+router.patch('/:id/open', markTicketOpen);
+router.patch('/:id/in-progress', markTicketInProgress);
 
-// Mark ticket as open
-router.patch('/:id/open', markTicketOpen); // Using named export from controller
+// Delete a message from a ticket (two ID parameters)
+router.delete('/:ticketId/messages/:messageId', deleteMessage);
 
-// Mark ticket as in progress
-router.patch('/:id/in-progress', markTicketInProgress); // Using named export from controller, changed path to kebab-case
-
-// --- NEW ROUTE: Delete a message from a ticket (Admin only) ---
-router.delete('/:ticketId/messages/:messageId', deleteMessage); // Using named export from controller
-
-// --- NEW ROUTE: Delete a ticket (Admin only) ---
+// Delete a ticket entirely (generic :id delete route)
 router.delete('/:id', deleteTicket);
 
 export default router;

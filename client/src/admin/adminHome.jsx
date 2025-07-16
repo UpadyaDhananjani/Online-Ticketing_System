@@ -17,6 +17,7 @@ import {
     BsGearFill,
     BsHeadset
 } from "react-icons/bs";
+import UnitUsersModal from "./UnitUsersModal.jsx";
 
 
 const adminHome = () => { // Changed component name to PascalCase for convention
@@ -31,6 +32,8 @@ const adminHome = () => { // Changed component name to PascalCase for convention
     const [recentIssues, setRecentIssues] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [showUnitModal, setShowUnitModal] = useState(false);
+    const [selectedUnit, setSelectedUnit] = useState("");
 
     const statusColors = {
         open: "success",
@@ -245,6 +248,72 @@ const adminHome = () => { // Changed component name to PascalCase for convention
                         </div>
                     </Col>
                 </Row>
+
+
+
+  {/* ICT Directorate Units Section */}
+  <div className="text-center mb-4 mt-5">
+          <h2 className="fw-bold mb-1" style={{ color: '#1a2233', fontSize: 28 }}>ICT Directorate Units</h2>
+          <div className="text-muted" style={{ fontSize: 16 }}>Key units supporting ICT operations</div>
+        </div>
+        <Row className="g-4 justify-content-center mb-5">
+          <Col xs={12} sm={6} md={4} lg={4}>
+            <Card className="h-100 shadow-sm border-0 rounded-3 transition-all duration-200 hover:scale-[1.03] hover:shadow-lg bg-white" style={{ cursor: 'pointer' }} onClick={() => { setSelectedUnit("Asyhub Unit"); setShowUnitModal(true); }}>
+              <Card.Body className="d-flex flex-column align-items-center justify-content-center p-4">
+                <BsPeopleFill size={38} className="mb-3 text-primary" />
+                <Card.Title className="fw-bold mb-2" style={{ fontSize: 20 }}>Asyhub Unit</Card.Title>
+                <Card.Text className="text-muted text-center">Handles Asyhub platform operations and integration.</Card.Text>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col xs={12} sm={6} md={4} lg={4}>
+            <Card className="h-100 shadow-sm border-0 rounded-3 transition-all duration-200 hover:scale-[1.03] hover:shadow-lg bg-white" style={{ cursor: 'pointer' }} onClick={() => { setSelectedUnit("System & Network Administration Unit"); setShowUnitModal(true); }}>
+              <Card.Body className="d-flex flex-column align-items-center justify-content-center p-4">
+                <BsCpuFill size={38} className="mb-3 text-info" />
+                <Card.Title className="fw-bold mb-2" style={{ fontSize: 20 }}>System & Network Administration Unit</Card.Title>
+                <Card.Text className="text-muted text-center">Manages servers, networks, and IT infrastructure.</Card.Text>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col xs={12} sm={6} md={4} lg={4}>
+            <Card className="h-100 shadow-sm border-0 rounded-3 transition-all duration-200 hover:scale-[1.03] hover:shadow-lg bg-white" style={{ cursor: 'pointer' }} onClick={() => { setSelectedUnit("Statistics Unit"); setShowUnitModal(true); }}>
+              <Card.Body className="d-flex flex-column align-items-center justify-content-center p-4">
+                <BsBarChartFill size={38} className="mb-3 text-success" />
+                <Card.Title className="fw-bold mb-2" style={{ fontSize: 20 }}>Statistics Unit</Card.Title>
+                <Card.Text className="text-muted text-center">Oversees data analysis and reporting for ICT.</Card.Text>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col xs={12} sm={6} md={4} lg={4}>
+            <Card className="h-100 shadow-sm border-0 rounded-3 transition-all duration-200 hover:scale-[1.03] hover:shadow-lg bg-white" style={{ cursor: 'pointer' }} onClick={() => { setSelectedUnit("Audit Unit"); setShowUnitModal(true); }}>
+              <Card.Body className="d-flex flex-column align-items-center justify-content-center p-4">
+                <BsClipboardCheck size={38} className="mb-3 text-warning" />
+                <Card.Title className="fw-bold mb-2" style={{ fontSize: 20 }}>Audit Unit</Card.Title>
+                <Card.Text className="text-muted text-center">Ensures compliance and conducts ICT audits.</Card.Text>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col xs={12} sm={6} md={4} lg={4}>
+            <Card className="h-100 shadow-sm border-0 rounded-3 transition-all duration-200 hover:scale-[1.03] hover:shadow-lg bg-white" style={{ cursor: 'pointer' }} onClick={() => { setSelectedUnit("Functional Unit"); setShowUnitModal(true); }}>
+              <Card.Body className="d-flex flex-column align-items-center justify-content-center p-4">
+                <BsGearFill size={38} className="mb-3 text-secondary" />
+                <Card.Title className="fw-bold mb-2" style={{ fontSize: 20 }}>Functional Unit</Card.Title>
+                <Card.Text className="text-muted text-center">Supports business applications and user needs.</Card.Text>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col xs={12} sm={6} md={4} lg={4}>
+            <Card className="h-100 shadow-sm border-0 rounded-3 transition-all duration-200 hover:scale-[1.03] hover:shadow-lg bg-white" style={{ cursor: 'pointer' }} onClick={() => { setSelectedUnit("Helpdesk Unit"); setShowUnitModal(true); }}>
+              <Card.Body className="d-flex flex-column align-items-center justify-content-center p-4">
+                <BsHeadset size={38} className="mb-3 text-danger" />
+                <Card.Title className="fw-bold mb-2" style={{ fontSize: 20 }}>Helpdesk Unit</Card.Title>
+                <Card.Text className="text-muted text-center">Provides frontline IT support and assistance.</Card.Text>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+        <UnitUsersModal show={showUnitModal} unit={selectedUnit} onHide={() => setShowUnitModal(false)} token={userData?.token} userData={userData} />
+
 
                 {/* Recent Issues section */}
                 <Row className="mt-5">

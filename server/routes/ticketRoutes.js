@@ -8,7 +8,8 @@ import {
   getTicketById,
   getTicketSummary,
   addUserReply,
-  deleteUserMessage
+  deleteUserMessage,
+  deleteUserTicket
 } from '../controllers/ticketController.js';
 
 import uploadMiddleware from '../middleware/uploadMiddleware.js'; // For attachments (Multer)
@@ -69,5 +70,11 @@ router.post('/:id/reply', authMiddleware, uploadMiddleware.array('attachments', 
 // @route   DELETE /api/tickets/:ticketId/messages/:messageId
 // @access  Private (User can delete own messages)
 router.delete('/:ticketId/messages/:messageId', authMiddleware, deleteUserMessage);
+
+// ---------------------------------------------
+// Delete a user ticket
+// @route   DELETE /api/tickets/:id
+// @access  Private (User can delete own tickets)
+router.delete('/:id', authMiddleware, deleteUserTicket);
 
 export default router;
