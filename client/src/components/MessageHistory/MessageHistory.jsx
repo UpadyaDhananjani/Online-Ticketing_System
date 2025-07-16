@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { Card, Row, Col, Badge, Button, Dropdown } from "react-bootstrap";
 import { useState } from "react";
 
-const MessageHistory = ({ msg, description, image, onDeleteMessage, onAttachmentClick }) => {
+const MessageHistory = ({ msg, description, image, onDeleteMessage, onAttachmentClick, currentUserId }) => {
   const [hoveredIdx, setHoveredIdx] = useState(null);
   return (
     <Card className="shadow-sm mb-4 border-0" style={{ background: "#f8fafd" }}>
@@ -51,9 +51,9 @@ const MessageHistory = ({ msg, description, image, onDeleteMessage, onAttachment
               <Row key={i} className="mb-3">
                 <Col
                   xs={12}
-                  md={{ span: 10, offset: m.sender === "Admin" ? 2 : 0 }}
+                  md={{ span: 10, offset: String(m.authorId) === String(currentUserId) ? 2 : 0 }}
                   className={`d-flex ${
-                    m.sender === "Admin"
+                    String(m.authorId) === String(currentUserId)
                       ? "justify-content-end"
                       : "justify-content-start"
                   }`}
@@ -83,8 +83,8 @@ const MessageHistory = ({ msg, description, image, onDeleteMessage, onAttachment
                       <span className="text-muted small">
                         {new Date(m.date).toLocaleString()}
                       </span>
-                      {/* Dropdown only on hover */}
-                      {hoveredIdx === i && (
+                      {/* Dropdown only on hover, only for own messages */}
+                      {hoveredIdx === i && String(m.authorId) === String(currentUserId) && (
                         <Dropdown align="end" className="ms-auto">
                           <Dropdown.Toggle
                             variant="link"
@@ -176,6 +176,7 @@ MessageHistory.propTypes = {
   description: PropTypes.string,
   image: PropTypes.string,
   onDeleteMessage: PropTypes.func,
+  currentUserId: PropTypes.any,
 };
 
 export default MessageHistory;

@@ -128,11 +128,16 @@ export const deleteMessage = async (req, res) => {
             console.error(`Admin: Ticket not found for ID: ${ticketId}`);
             return res.status(404).json({ success: false, message: 'Ticket not found.' });
         }
-        const messageIndex = ticket.messages.findIndex(msg => msg._id.toString() === messageId);
+
+        // Find the index of the message to be deleted
+        const messageIndex = ticket.messages.findIndex(
+          msg => msg._id.toString() === messageId && msg.author && msg.author.toString() === req.user._id.toString()
+        );
+
         if (messageIndex === -1) {
-            console.error(`Admin: Message not found for ID: ${messageId} in ticket ${ticketId}`);
-            return res.status(404).json({ success: false, message: 'Message not found in this ticket.' });
+          return res.status(403).json({ success: false, message: 'You can only delete your own messages.' });
         }
+
         ticket.messages.splice(messageIndex, 1);
         ticket.updatedAt = Date.now();
         await ticket.save();

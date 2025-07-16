@@ -7,9 +7,13 @@ import connectDB from './config/mongodb.js';
 import userRoutes from './routes/userRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import ticketRoutes from './routes/ticketRoutes.js';
-import adminRoutes from './routes/ticketAdminRoutes.js';
-import publicRoutes from './routes/publicRoutes.js'; // <--- NEW IMPORT
+import ticketAdminRoutes from './routes/ticketAdminRoutes.js';
+import uploadRoutes from "./routes/uploadRoutes.js";
 
+// Import authMiddleware here since you're using it directly in this file
+import authMiddleware from './middleware/authMiddleware.js'; // <--- Ensure this import is present
+
+// Initialize environment variables
 dotenv.config();
 connectDB();
 
@@ -28,10 +32,19 @@ app.use(cookieParser());
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/tickets', ticketRoutes);
-app.use('/api/admin/tickets', adminRoutes);
-app.use('/api/public', publicRoutes); // <--- NEW PUBLIC ROUTES
+app.use('/api/admin/tickets', ticketAdminRoutes);
+app.use('/api/upload', uploadRoutes);
 
-// Error handling middleware (if you have one)
-// app.use(errorHandler);
+// Authentication check endpoint - now correctly protected by authMiddleware
+app.get('/api/auth/is-auth', authMiddleware, (req, res) => {
+    // If authMiddleware successfully passes, it means the user is authenticated.
+    // We can send a simple success or even basic user info (though get-user-data is better for full data)
+    res.json({ success: true, message: "User is authenticated.", userId: req.user._id });
+});
 
-app.listen(PORT, () => console.log(`Server started on PORT:${PORT}`));
+// Static file serving for uploads
+const uploadsDir = path.join(process.cwd(), 'uploads');
+app.use('/uploads', express.static(uploadsDir));
+
+// --- Server initialization ---
+app.listen(port, () => console.log(`Server started on PORT:${port}`));
