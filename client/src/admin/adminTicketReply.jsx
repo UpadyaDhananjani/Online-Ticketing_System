@@ -138,6 +138,10 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
     pending: msg.pending
   }));
 
+  // Helper to get absolute URL for attachments
+  const getAttachmentUrl = (url) =>
+    url.startsWith('http') ? url : `${window.location.origin.replace(/:[0-9]+$/, ':4000')}${url}`;
+
   return (
     <Container
       className="py-8 flex justify-center items-start animate-fade-in"
@@ -185,6 +189,37 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
             </Card.Header>
             <Card.Body className="bg-white rounded-b-3xl p-6 md:p-8">
               {/* Message History */}
+              {ticket.attachments && ticket.attachments.length > 0 && (
+                <div className="mb-4">
+                  <h5 className="font-semibold mb-2 flex items-center gap-2">
+                    <i className="bi bi-image text-blue-400"></i> Attachments
+                  </h5>
+                  <div className="flex flex-wrap gap-3">
+                    {ticket.attachments.map((url, idx) => (
+                      <a
+                        key={idx}
+                        href={getAttachmentUrl(url)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block"
+                      >
+                        {url.match(/\.(jpg|jpeg|png)$/i) ? (
+                          <img
+                            src={getAttachmentUrl(url)}
+                            alt={`attachment-${idx}`}
+                            style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
+                            className="hover:scale-105 transition"
+                          />
+                        ) : (
+                          <span className="px-3 py-2 bg-gray-100 rounded shadow text-blue-700 font-semibold hover:bg-blue-50 transition">
+                            {url.split('/').pop()}
+                          </span>
+                        )}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="mb-8">
                 <MessageHistory
                   msg={messagesForHistory}

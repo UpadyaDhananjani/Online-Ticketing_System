@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Badge } from 'react-bootstrap';
+import { Badge, Button } from 'react-bootstrap';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { BsTrash } from 'react-icons/bs';
 
 const statusColors = {
   open: "success",
@@ -16,6 +17,7 @@ function TicketList({ filter, mode = 'created', userId, onOpenReceivedCountChang
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selected, setSelected] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -57,6 +59,41 @@ function TicketList({ filter, mode = 'created', userId, onOpenReceivedCountChang
     }
   }, [tickets, mode, userId, onOpenReceivedCountChange]);
 
+  // Selection logic
+  const isAllSelected = filteredTickets.length > 0 && selected.length === filteredTickets.length;
+  const toggleSelectAll = () => {
+    if (isAllSelected) setSelected([]);
+    else setSelected(filteredTickets.map(t => t._id));
+  };
+  const toggleSelect = (id) => {
+    setSelected(sel => sel.includes(id) ? sel.filter(x => x !== id) : [...sel, id]);
+  };
+
+  // Delete selected tickets
+  const handleDeleteSelected = async () => {
+    if (!window.confirm('Are you sure you want to delete the selected tickets?')) return;
+    let successCount = 0;
+    let failCount = 0;
+    for (const id of selected) {
+      try {
+        await axios.delete(`/api/tickets/${id}`, { withCredentials: true });
+        successCount++;
+      } catch (err) {
+        failCount++;
+      }
+    }
+    if (successCount > 0) toast.success(`${successCount} ticket(s) deleted.`);
+    if (failCount > 0) toast.error(`${failCount} ticket(s) failed to delete.`);
+    setSelected([]);
+    // Refresh tickets
+    setLoading(true);
+    try {
+      const res = await axios.get('/api/tickets', { withCredentials: true });
+      setTickets(res.data);
+    } catch (err) {}
+    setLoading(false);
+  };
+
   if (loading) {
     return <div style={{ textAlign: 'center', marginTop: 50 }}>Loading tickets...</div>;
   }
@@ -67,6 +104,14 @@ function TicketList({ filter, mode = 'created', userId, onOpenReceivedCountChang
 
   return (
     <div style={{ maxWidth: '100%', width: '100%', margin: '30px auto', marginLeft: '10px', marginRight: '10px' }}>
+      {mode === 'created' && selected.length > 0 && (
+        <div className="mb-3 flex items-center gap-3">
+          <Button variant="danger" className="flex items-center gap-2 shadow hover:scale-105 transition" onClick={handleDeleteSelected}>
+            <BsTrash /> Delete Selected
+          </Button>
+          <span className="text-gray-500 text-sm">{selected.length} selected</span>
+        </div>
+      )}
       <h2 style={{ textAlign: 'center', marginBottom: 20 }}>
         {mode === 'created' ? 'My Created Tickets' : 'Tickets Assigned to Me'}
       </h2>
@@ -80,6 +125,11 @@ function TicketList({ filter, mode = 'created', userId, onOpenReceivedCountChang
       }}>
         <thead style={{ background: '#f5f6fa' }}>
           <tr>
+            {mode === 'created' && (
+              <th style={thStyle}>
+                <input type="checkbox" checked={isAllSelected} onChange={toggleSelectAll} />
+              </th>
+            )}
             <th style={thStyle}><i className="bi bi-card-text me-1"></i>Subject</th>
             <th style={thStyle}><i className="bi bi-tag me-1"></i>Type</th>
             <th style={thStyle}><i className="bi bi-diagram-3 me-1"></i>Assigned Unit</th>
@@ -96,7 +146,7 @@ function TicketList({ filter, mode = 'created', userId, onOpenReceivedCountChang
         <tbody>
           {filteredTickets.length === 0 ? (
             <tr>
-              <td colSpan={7} style={{ textAlign: 'center', padding: 20, color: '#888' }}>
+              <td colSpan={mode === 'created' ? 8 : 7} style={{ textAlign: 'center', padding: 20, color: '#888' }}>
                 No tickets found.
               </td>
             </tr>
@@ -114,6 +164,16 @@ function TicketList({ filter, mode = 'created', userId, onOpenReceivedCountChang
                 onMouseOver={e => e.currentTarget.style.background = '#f0f4ff'}
                 onMouseOut={e => e.currentTarget.style.background = ticket.status === 'open' ? '#e6ffe6' : ''}
               >
+                {mode === 'created' && (
+                  <td style={tdStyle}>
+                    <input
+                      type="checkbox"
+                      checked={selected.includes(ticket._id)}
+                      onClick={e => e.stopPropagation()}
+                      onChange={() => toggleSelect(ticket._id)}
+                    />
+                  </td>
+                )}
                 <td style={tdStyle}>
                   <i className="bi bi-card-text me-2 text-primary"></i>
                   {ticket.subject}

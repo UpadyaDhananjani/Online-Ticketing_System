@@ -53,12 +53,14 @@ function CreateTicket() {
     if (images && images.length > 0) {
       for (let i = 0; i < images.length; i++) {
         const file = images[i];
-        if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
-          newErrors.images = "Only JPG, JPEG, PNG files are allowed.";
-          break;
-        }
-        if (file.size > 2 * 1024 * 1024) {
-          newErrors.images = "Each image must be less than 2MB.";
+        const allowedTypes = [
+          'image/jpeg', 'image/png', 'image/jpg',
+          'application/pdf',
+          'application/msword',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        ];
+        if (!allowedTypes.includes(file.type)) {
+          newErrors.images = "Only JPG, JPEG, PNG, PDF, DOC, DOCX files are allowed.";
           break;
         }
       }
@@ -199,7 +201,7 @@ function CreateTicket() {
                   </Form.Label>
                   <Form.Control
                     type="file"
-                    accept=".jpg,.jpeg,.png"
+                    accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
                     multiple
                     onChange={handleImageChange}
                     className={`transition-all focus:ring-2 focus:ring-blue-300 ${errors.images ? 'border-red-500' : ''}`}

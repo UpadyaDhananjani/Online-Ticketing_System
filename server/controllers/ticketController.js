@@ -252,3 +252,19 @@ export const deleteUserMessage = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Failed to delete message due to server error.' });
   }
 };
+
+// Delete a ticket (user)
+export const deleteUserTicket = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const ticket = await Ticket.findById(id);
+    if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found.' });
+    if (!req.user || ticket.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'Not authorized to delete this ticket.' });
+    }
+    await Ticket.deleteOne({ _id: id });
+    return res.json({ success: true, message: 'Ticket deleted successfully.' });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+}
