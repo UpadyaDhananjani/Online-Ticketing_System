@@ -51,9 +51,9 @@ const MessageHistory = ({ msg, description, image, onDeleteMessage, onAttachment
               <Row key={i} className="mb-3">
                 <Col
                   xs={12}
-                  md={{ span: 10, offset: m.sender === "Admin" ? 2 : 0 }}
+                  md={{ span: 10, offset: String(m.authorId) === String(currentUserId) ? 2 : 0 }}
                   className={`d-flex ${
-                    m.sender === "Admin"
+                    String(m.authorId) === String(currentUserId)
                       ? "justify-content-end"
                       : "justify-content-start"
                   }`}
