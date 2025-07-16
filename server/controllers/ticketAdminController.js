@@ -80,14 +80,14 @@ export const deleteMessage = async (req, res) => {
         }
 
         // Find the index of the message to be deleted
-        const messageIndex = ticket.messages.findIndex(msg => msg._id.toString() === messageId);
+        const messageIndex = ticket.messages.findIndex(
+          msg => msg._id.toString() === messageId && msg.author && msg.author.toString() === req.user._id.toString()
+        );
 
         if (messageIndex === -1) {
-            console.error(`Admin: Message not found for ID: ${messageId} in ticket ${ticketId}`);
-            return res.status(404).json({ success: false, message: 'Message not found in this ticket.' });
+          return res.status(403).json({ success: false, message: 'You can only delete your own messages.' });
         }
 
-        // Remove the message from the array
         ticket.messages.splice(messageIndex, 1);
 
         // Update the ticket's updatedAt timestamp
