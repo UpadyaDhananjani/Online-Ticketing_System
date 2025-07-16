@@ -66,7 +66,7 @@ function TicketList({ filter, mode = 'created', userId, onOpenReceivedCountChang
   }
 
   return (
-    <div style={{ maxWidth: 900, margin: '30px auto' }}>
+    <div style={{ maxWidth: '100%', width: '100%', margin: '30px auto', marginLeft: '10px', marginRight: '10px' }}>
       <h2 style={{ textAlign: 'center', marginBottom: 20 }}>
         {mode === 'created' ? 'My Created Tickets' : 'Tickets Assigned to Me'}
       </h2>

@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useContext } from "react";
 import { Container, Row, Col, Spinner, Alert, Card, Badge, Button, Form, Modal } from "react-bootstrap";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import MessageHistory from "../components/MessageHistory/MessageHistory";
 import { Editor } from 'primereact/editor';
 import { toast } from 'react-toastify';
 import { AppContent } from '../context/AppContext';
 import { deleteUserMessage } from '../api/ticketApi';
+import { BsTicketDetailed, BsDiagram3, BsPersonBadge, BsInfoCircle, BsTag, BsCalendar, BsXCircle, BsImage, BsSend, BsArrowLeft, BsCardText } from 'react-icons/bs';
 
 const statusColors = {
   open: "success",
@@ -14,8 +15,17 @@ const statusColors = {
   reopened: "warning"
 };
 
+const statusBg = {
+  open: "bg-green-100 text-green-700 border-green-300",
+  closed: "bg-red-100 text-red-700 border-red-300",
+  resolved: "bg-blue-100 text-blue-700 border-blue-300",
+  reopened: "bg-yellow-100 text-yellow-700 border-yellow-300",
+  'in progress': "bg-cyan-100 text-cyan-700 border-cyan-300"
+};
+
 const Ticket = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { userData } = useContext(AppContent);
   const token = userData?.token;
   const currentUserId = userData?.user?._id;
@@ -122,13 +132,13 @@ const Ticket = () => {
   };
 
   if (loading) return (
-    <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: "60vh" }}>
+    <Container className="d-flex justify-content-center align-items-center min-h-screen animate-fade-in" style={{ minHeight: "60vh" }}>
       <Spinner animation="border" variant="primary" />
     </Container>
   );
 
   if (error) return (
-    <Container className="py-5">
+    <Container className="py-5 animate-fade-in">
       <Alert variant="danger" className="text-center">{error}</Alert>
     </Container>
   );
@@ -145,141 +155,163 @@ const Ticket = () => {
   }));
 
   return (
-    <Container className="py-4" style={{ maxWidth: 900 }}>
-      <Row className="justify-content-center">
-        <Col xs={12}>
-          <Card className="shadow-sm border-0 mb-4">
-            <Card.Body>
-              <Row>
-                <Col xs={12} md={8}>
-                  <h3 className="mb-2 text-primary">
-                    <i className="bi bi-ticket-detailed me-2"></i>
-                    Ticket Details
-                  </h3>
-                  <div className="mb-2">
-                    <span className="fw-semibold text-secondary">Subject:</span>{" "}
-                    <span className="fs-5">{ticket.subject}</span>
-                  </div>
-                  <div className="mb-2">
-                    <span className="fw-semibold text-secondary">Opened:</span>{" "}
-                    {ticket.createdAt && new Date(ticket.createdAt).toLocaleString()}
-                  </div>
-                  <div className="mb-2">
-                    <span className="fw-semibold text-secondary">Assigned Unit:</span>{" "}
-                    <Badge bg="secondary" className="text-capitalize">
-                      <i className="bi bi-diagram-3 me-1"></i>
-                      {ticket.assignedUnit || '—'}
-                    </Badge>
-                  </div>
-                  <div className="mb-2">
-                    <span className="fw-semibold text-secondary">Assigned To:</span>{" "}
-                    <Badge bg="info" className="text-capitalize">
-                      <i className="bi bi-person-badge me-1"></i>
-                      {ticket.assignedTo && typeof ticket.assignedTo === 'object' && ticket.assignedTo.name
-                        ? ticket.assignedTo.name
-                        : '—'}
-                    </Badge>
-                  </div>
-                  <div className="mb-2">
-                    <span className="fw-semibold text-secondary">Status:</span>{" "}
-                    <Badge bg={statusColors[ticket.status] || "secondary"} className="px-3 py-2 text-capitalize">
-                      {ticket.status}
-                    </Badge>
-                  </div>
-                  <div className="mb-2">
-                    <span className="fw-semibold text-secondary">Type:</span>{" "}
-                    <Badge bg="info" text="dark" className="text-capitalize">{ticket.type}</Badge>
-                  </div>
-                </Col>
-                <Col xs={12} md={4} className="d-flex align-items-center justify-content-md-end justify-content-start mt-3 mt-md-0">
-                  {ticket.status === "open" && (
-                    <Button variant="danger" onClick={handleCloseTicket} disabled={closing}>
-                      <i className="bi bi-x-circle me-2"></i>
-                      {closing ? "Closing..." : "Close Ticket"}
-                    </Button>
-                  )}
-                </Col>
-              </Row>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-
-      <Row>
-        <Col>
-          <MessageHistory
-            msg={messages}
-            description={ticket.description}
-            image={ticket.image}
-            currentUserRole="user"
-            onAttachmentClick={handleAttachmentClick}
-            onDeleteMessage={(messageId) => {
-              const message = messages.find(m => m._id === messageId);
-              if (message && message.authorId === currentUserId) {
-                handleDeleteMessage(messageId);
-              } else {
-                toast.error("You can only delete your own messages.");
-              }
-            }}
-          />
-        </Col>
-      </Row>
-
-      <Row>
-        <Col>
-          <Card className="shadow-sm mt-4">
-            <Card.Body>
-              <Form onSubmit={handleUserReply}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Reply</Form.Label>
-                  <Editor
-                    value={reply}
-                    onTextChange={(e) => setReply(e.htmlValue)}
-                    style={{ height: '180px', width: '100%' }}
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>Attach Image</Form.Label>
-                  <Form.Control
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleImageChange}
-                    disabled={uploading}
-                  />
-                  {imageFiles.length > 0 && (
-                    <div className="mt-2 text-success">
-                      <i className="bi bi-image me-1"></i>
-                      {imageFiles.length} files selected
+    <div className="bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen animate-fade-in" style={{ minHeight: '100vh' }}>
+      {/* Floating Back Button */}
+      <Button
+        variant="light"
+        className="absolute top-4 left-4 z-10 flex items-center gap-2 shadow-md rounded-full px-3 py-2 hover:bg-blue-100 transition"
+        onClick={() => navigate(-1)}
+        style={{ position: 'fixed', top: 24, left: 24 }}
+      >
+        <BsArrowLeft className="text-blue-500" size={20} /> Back
+      </Button>
+      <Container className="py-4" style={{ maxWidth: 1200, width: '100%' }}>
+        <Row className="justify-content-center">
+          <Col xs={12}>
+            <Card className="shadow-lg border-0 mb-4 animate-pop" style={{ borderRadius: 18 }}>
+              <Card.Body className="p-5">
+                <Row>
+                  <Col xs={12} md={8}>
+                    <h3 className="mb-4 text-blue-700 flex items-center gap-2">
+                      <BsTicketDetailed className="text-blue-500" size={28} />
+                      Ticket Details
+                    </h3>
+                    <div className="mb-3 flex items-center gap-2">
+                      <span className="font-semibold text-gray-600 flex items-center gap-2"><BsCardText /> Subject:</span>
+                      <span className="text-lg font-bold">{ticket.subject}</span>
                     </div>
-                  )}
-                </Form.Group>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  disabled={!reply || !reply.trim() || uploading}
-                >
-                  {uploading ? "Sending..." : "Send Reply"}
-                </Button>
-              </Form>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-
+                    <div className="mb-3 flex items-center gap-2">
+                      <span className="font-semibold text-gray-600 flex items-center gap-2"><BsCalendar /> Opened:</span>
+                      <span>{ticket.createdAt && new Date(ticket.createdAt).toLocaleString()}</span>
+                    </div>
+                    <div className="mb-3 flex items-center gap-2">
+                      <span className="font-semibold text-gray-600 flex items-center gap-2"><BsDiagram3 /> Assigned Unit:</span>
+                      <Badge bg="secondary" className="text-capitalize px-3 py-2 rounded-xl flex items-center gap-1">
+                        <BsDiagram3 className="me-1" />
+                        {ticket.assignedUnit || '—'}
+                      </Badge>
+                    </div>
+                    <div className="mb-3 flex items-center gap-2">
+                      <span className="font-semibold text-gray-600 flex items-center gap-2"><BsPersonBadge /> Assigned To:</span>
+                      <Badge bg="info" className="text-capitalize px-3 py-2 rounded-xl flex items-center gap-1">
+                        <BsPersonBadge className="me-1" />
+                        {ticket.assignedTo && typeof ticket.assignedTo === 'object' && ticket.assignedTo.name
+                          ? ticket.assignedTo.name
+                          : '—'}
+                      </Badge>
+                    </div>
+                    <div className="mb-3 flex items-center gap-2">
+                      <span className="font-semibold text-gray-600 flex items-center gap-2"><BsInfoCircle /> Status:</span>
+                      <span className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl border font-semibold text-base transition ${statusBg[ticket.status] || 'bg-gray-100 text-gray-700 border-gray-300'}`}> <BsInfoCircle /> {ticket.status}</span>
+                    </div>
+                    <div className="mb-3 flex items-center gap-2">
+                      <span className="font-semibold text-gray-600 flex items-center gap-2"><BsTag /> Type:</span>
+                      <Badge bg="info" text="dark" className="text-capitalize px-3 py-2 rounded-xl flex items-center gap-1"><BsTag />{ticket.type}</Badge>
+                    </div>
+                  </Col>
+                  <Col xs={12} md={4} className="d-flex align-items-center justify-content-md-end justify-content-start mt-3 mt-md-0">
+                    {ticket.status === "open" && (
+                      <Button
+                        variant="danger"
+                        onClick={handleCloseTicket}
+                        disabled={closing}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg shadow hover:scale-105 hover:shadow-lg transition-all duration-200 animate-pop"
+                      >
+                        <BsXCircle className="me-2" size={22} />
+                        {closing ? "Closing..." : "Close Ticket"}
+                      </Button>
+                    )}
+                  </Col>
+                </Row>
+                <hr className="my-5 border-blue-200 animate-fade-in" />
+                <Row>
+                  <Col>
+                    <MessageHistory
+                      msg={messages}
+                      description={ticket.description}
+                      image={ticket.image}
+                      currentUserRole="user"
+                      onAttachmentClick={handleAttachmentClick}
+                      onDeleteMessage={(messageId) => {
+                        const message = messages.find(m => m._id === messageId);
+                        if (message && message.authorId === currentUserId) {
+                          handleDeleteMessage(messageId);
+                        } else {
+                          toast.error("You can only delete your own messages.");
+                        }
+                      }}
+                    />
+                  </Col>
+                </Row>
+                <hr className="my-5 border-blue-200 animate-fade-in" />
+                <Row>
+                  <Col>
+                    <Card className="shadow-sm mt-4 animate-pop" style={{ borderRadius: 14 }}>
+                      <Card.Body>
+                        <Form onSubmit={handleUserReply} className="space-y-4">
+                          <Form.Group className="mb-4">
+                            <Form.Label className="font-semibold flex items-center gap-2"><BsSend className="text-blue-400" /> Reply</Form.Label>
+                            <Editor
+                              value={reply}
+                              onTextChange={(e) => setReply(e.htmlValue)}
+                              style={{ height: '180px', width: '100%' }}
+                            />
+                          </Form.Group>
+                          <Form.Group className="mb-4">
+                            <Form.Label className="font-semibold flex items-center gap-2"><BsImage className="text-blue-400" /> Attach Image</Form.Label>
+                            <Form.Control
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              onChange={handleImageChange}
+                              disabled={uploading}
+                            />
+                            {imageFiles.length > 0 && (
+                              <div className="mt-2 text-green-600 flex items-center gap-2 animate-fade-in">
+                                <BsImage /> {imageFiles.length} files selected
+                              </div>
+                            )}
+                          </Form.Group>
+                          <div className="d-grid">
+                            <Button
+                              type="submit"
+                              variant="primary"
+                              disabled={!reply || !reply.trim() || uploading}
+                              className="flex items-center gap-2 px-4 py-2 rounded-lg shadow hover:scale-105 hover:shadow-lg transition-all duration-200 animate-pop"
+                            >
+                              {uploading ? <span className="flex items-center gap-2"><BsSend className="animate-spin" /> Sending...</span> : <span className="flex items-center gap-2"><BsSend /> Send Reply</span>}
+                            </Button>
+                          </div>
+                        </Form>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                </Row>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+      </Container>
       {/* Image Zoom Modal */}
       <Modal show={showModal} onHide={() => setShowModal(false)} centered size="lg">
-        <Modal.Body className="d-flex flex-column align-items-center justify-content-center p-0" style={{ background: '#222' }}>
+        <Modal.Body className="d-flex flex-column align-items-center justify-content-center p-0" style={{ background: '#222', borderRadius: 16 }}>
           {modalImage && (
             <img
               src={modalImage}
               alt="attachment zoom"
-              style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain' }}
+              style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain', borderRadius: 12, boxShadow: '0 4px 24px rgba(0,0,0,0.25)' }}
+              className="animate-fade-in"
             />
           )}
         </Modal.Body>
       </Modal>
-    </Container>
+      <style>{`
+        @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .animate-pop { animation: popIn 0.5s cubic-bezier(.68,-0.55,.27,1.55); }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .animate-fade-in { animation: fadeIn 0.5s; }
+      `}</style>
+    </div>
   );
 };
 
