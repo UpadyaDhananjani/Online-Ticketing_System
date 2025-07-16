@@ -42,13 +42,15 @@ function TicketsPage({ token, filter }) {
             <span className="d-flex align-items-center gap-2 relative">
               <BsInbox size={18} />
               <span>Tickets Received</span>
-              {openReceivedCount > 0 && (
-                <span className="ml-1 inline-flex items-center justify-center relative">
-                  <BsBellFill className="text-red-500 animate-pulse" size={22} />
-                  <span className="absolute -top-2 -right-3 bg-red-600 text-white rounded-full px-2 py-0.5 text-xs font-bold shadow" style={{ minWidth: 20, minHeight: 20, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{openReceivedCount}</span>
-                  <span className="sr-only">Open tickets notification</span>
+              <span className="ml-1 inline-flex items-center justify-center relative">
+                <BsBellFill className={openReceivedCount > 0 ? "text-red-500 animate-pulse" : "text-gray-400"} size={22} />
+                <span className={
+                  `absolute -top-2 -right-3 rounded-full px-2 py-0.5 text-xs font-bold shadow ${openReceivedCount > 0 ? "bg-red-600 text-white" : "bg-gray-300 text-gray-500"}`
+                } style={{ minWidth: 20, minHeight: 20, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', opacity: openReceivedCount > 0 ? 1 : 0.5 }}>
+                  {openReceivedCount}
                 </span>
-              )}
+                <span className="sr-only">Open tickets notification</span>
+              </span>
             </span>
           }
         >
