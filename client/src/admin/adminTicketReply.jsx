@@ -2,103 +2,124 @@ import React, { useRef, useState, useEffect, useContext } from "react";
 import { Editor } from 'primereact/editor';
 import "primereact/resources/themes/lara-light-indigo/theme.css";
 import "primereact/resources/primereact.min.css";
-import axios from "axios";
-import { sendTicketReply, resolveTicket, deleteAdminMessage, getAdminTicketById } from "../api/ticketApi"; 
+// No direct axios import needed here if all calls go through ticketApi.js
+// import axios from "axios";
 
+import {
+    sendTicketReply,
+    resolveTicket,
+    deleteAdminMessage,
+    getAdminTicketById,
+    getPublicUnits,
+    getUsersByUnit,
+    reassignTicket
+} from "../api/ticketApi"; // CORRECTED PATH: From src/admin to src/api is one level up then into api
 
-import { Container, Card, Button, Form, Row, Col, Badge } from "react-bootstrap";
-import MessageHistory from "../components/MessageHistory/MessageHistory";
+import { Container, Card, Button, Form, Row, Col, Badge, Dropdown } from "react-bootstrap";
+// CORRECTED PATH FOR MESSAGEHISTORY
+import MessageHistory from "../components/MessageHistory/MessageHistory"; // <--- THIS LINE IS CHANGED
 import { toast } from 'react-toastify';
 import { AppContent } from "../context/AppContext";
 
-function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) {
+// Removed 'token' prop from TicketReply component as it's not directly used
+// and `withCredentials: true` in axiosInstance should handle auth.
+function TicketReply({ ticket, onBack, onStatusChange, onTicketUpdate }) {
   const { userData } = useContext(AppContent);
-  const [reply, setReply] = useState("");
-  const [imageFiles, setImageFiles] = useState([]);
-  const [uploading, setUploading] = useState(false);
-  const [localStatus, setLocalStatus] = useState(ticket.status);
-  const [messages, setMessages] = useState(ticket.messages || []);
-  const quillRef = useRef();
+    const [reply, setReply] = useState("");
+    const [imageFiles, setImageFiles] = useState([]);
+    const [uploading, setUploading] = useState(false);
+    const [localStatus, setLocalStatus] = useState(ticket.status);
+    const [messages, setMessages] = useState(ticket.messages || []);
+    const quillRef = useRef();
 
-  useEffect(() => {
-    setMessages(ticket.messages || []);
-    setLocalStatus(ticket.status);
-  }, [ticket]);
+    // --- NEW STATE FOR REASSIGN FEATURE ---
+    const [showReassignDropdown, setShowReassignDropdown] = useState(false);
+    const [units, setUnits] = useState([]);
+    const [selectedUnit, setSelectedUnit] = useState(null);
+    const [usersInUnit, setUsersInUnit] = useState([]);
+    // ------------------------------------
 
-  const modules = {
-    toolbar: {
-      container: [
-        [
-          "bold", "italic", "underline", "strike",
-          "link",
-          { list: "ordered" }, { list: "bullet" }
-        ]
-      ]
-    }
-  };
+    useEffect(() => {
+        setMessages(ticket.messages || []);
+        setLocalStatus(ticket.status);
+    }, [ticket]);
 
-  const handleImageChange = (e) => {
-    setImageFiles(e.target.files);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const formData = new FormData();
-    formData.append("content", reply);
-    if (imageFiles && imageFiles.length > 0) {
-      for (let i = 0; i < imageFiles.length; i++) {
-        formData.append("attachments", imageFiles[i]);
-      }
-    }
-
-    setUploading(true);
-
-    // Optimistically add message
-    const tempId = Date.now().toString();
-    const optimisticMessage = {
-      _id: tempId,
-      authorRole: "admin",
-      content: reply,
-      date: new Date().toISOString(),
-      attachments: [],
-      pending: true
+    const modules = {
+        toolbar: {
+            container: [
+                [
+                    "bold", "italic", "underline", "strike",
+                    "link",
+                    { list: "ordered" }, { list: "bullet" }
+                ]
+            ]
+        }
     };
-    setMessages([...messages, optimisticMessage]);
 
-    try {
-      await sendTicketReply(ticket._id, formData, token);
-      setReply("");
-      setImageFiles([]);
-      setLocalStatus("in progress");
-      if (onStatusChange) onStatusChange("in progress");
-      await fetchTicket();
-      toast.success("Reply sent successfully!");
-    } catch (err) {
-      // Remove optimistic message on failure
-      setMessages(prev => prev.filter(m => m._id !== tempId));
-      console.error("Failed to send reply:", err);
-      toast.error(err.response?.data?.message || "Failed to send reply.");
-    }
-    setUploading(false);
-  };
+    const handleImageChange = (e) => {
+        setImageFiles(e.target.files);
+    };
 
-  const handleResolve = async () => {
-    setLocalStatus("resolved"); // Optimistic UI update
-    try {
-      await resolveTicket(ticket._id, token);
-      if (onStatusChange) onStatusChange("resolved");
-      await fetchTicket();
-      onBack();
-      toast.success("Ticket resolved successfully!");
-    } catch (err) {
-      setLocalStatus(ticket.status); // Revert if error
-      toast.error(err.response?.data?.message || "Failed to resolve ticket.");
-    }
-  };
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append("content", reply);
+        if (imageFiles && imageFiles.length > 0) {
+            for (let i = 0; i < imageFiles.length; i++) {
+                formData.append("attachments", imageFiles[i]);
+            }
+        }
 
-  const handleDeleteMessage = async (messageId) => {
-    const previousMessages = messages;
-    setMessages(prev => prev.filter(m => m._id !== messageId));
+        setUploading(true);
+
+        // Optimistically add message
+        const tempId = Date.now().toString();
+        const optimisticMessage = {
+            _id: tempId,
+            authorRole: "admin",
+            content: reply,
+            date: new Date().toISOString(),
+            attachments: [],
+            pending: true
+        };
+        setMessages([...messages, optimisticMessage]);
+
+        try {
+            // No 'token' parameter needed if using axiosInstance with withCredentials
+            await sendTicketReply(ticket._id, formData);
+            setReply("");
+            setImageFiles([]);
+            setLocalStatus("in progress");
+            if (onStatusChange) onStatusChange("in progress");
+            await fetchTicket();
+            toast.success("Reply sent successfully!");
+        } catch (err) {
+            // Remove optimistic message on failure
+            setMessages(prev => prev.filter(m => m._id !== tempId));
+            console.error("Failed to send reply:", err);
+            toast.error(err.response?.data?.message || "Failed to send reply.");
+        }
+        setUploading(false);
+    };
+
+    const handleResolve = async () => {
+        setLocalStatus("resolved"); // Optimistic UI update
+        try {
+            // No 'token' parameter needed
+            await resolveTicket(ticket._id);
+            if (onStatusChange) onStatusChange("resolved");
+            await fetchTicket();
+            onBack(); // Go back after resolving
+            toast.success("Ticket resolved successfully!");
+        } catch (err) {
+            setLocalStatus(ticket.status); // Revert if error
+            toast.error(err.response?.data?.message || "Failed to resolve ticket.");
+        }
+    };
+
+    const handleDeleteMessage = async (messageId) => {
+        const previousMessages = messages;
+        setMessages(prev => prev.filter(m => m._id !== messageId));
 
     try {
       console.log(`Attempting to delete message: ${messageId} from ticket: ${ticket._id}`);
@@ -237,72 +258,73 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
                 />
               </div>
 
-              {/* Reply Form */}
-              <Form onSubmit={handleSubmit} className="space-y-6">
-                <Form.Group className="mb-4 mt-4">
-                  <Form.Label className="font-semibold text-lg">Reply</Form.Label>
-                  <div className="rounded-xl border border-blue-200 shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-blue-400 transition-all duration-200">
-                    <Editor
-                      ref={quillRef}
-                      value={reply}
-                      onTextChange={(e) => setReply(e.htmlValue)}
-                      style={{ height: '320px', width: '100%', background: 'white' }}
-                      modules={modules}
-                    />
-                  </div>
-                </Form.Group>
-                <Form.Group className="mb-4">
-                  <Form.Label className="font-semibold text-lg">Attach Image</Form.Label>
-                  <Form.Control
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleImageChange}
-                    disabled={uploading}
-                    className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all duration-200"
-                  />
-                  {imageFiles.length > 0 && (
-                    <div className="mt-2 text-green-600 flex items-center gap-2 animate-fade-in">
-                      <i className="bi bi-image me-1"></i>
-                      {imageFiles.length} file(s) selected
-                    </div>
-                  )}
-                </Form.Group>
-                <div className="flex flex-col md:flex-row justify-between gap-4 mt-6">
-                  <Button
-                    type="button"
-                    variant="warning"
-                    onClick={handleResolve}
-                    disabled={localStatus === "resolved"}
-                    className="transition-transform duration-200 hover:scale-105 hover:shadow-lg flex items-center gap-2"
-                  >
-                    <i className="bi bi-check2-circle mr-1"></i>
-                    Mark as Resolved
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="success"
-                    disabled={!reply || !reply.trim() || uploading}
-                    className="transition-transform duration-200 hover:scale-105 hover:shadow-lg flex items-center gap-2"
-                  >
-                    <i className="bi bi-send-fill mr-1"></i>
-                    {uploading ? "Uploading..." : "Send Reply"}
-                  </Button>
-                </div>
-              </Form>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-      <style>{`
-        @keyframes fade-in {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in { animation: fade-in 0.7s cubic-bezier(0.4,0,0.2,1) both; }
-      `}</style>
-    </Container>
-  );
+                            {/* Reply Form */}
+                            <Form onSubmit={handleSubmit} className="space-y-6">
+                                <Form.Group className="mb-4 mt-4">
+                                    <Form.Label className="font-semibold text-lg">Reply</Form.Label>
+                                    <div className="rounded-xl border border-blue-200 shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-blue-400 transition-all duration-200">
+                                        <Editor
+                                            ref={quillRef}
+                                            value={reply}
+                                            onTextChange={(e) => setReply(e.htmlValue)}
+                                            style={{ height: '320px', width: '100%', background: 'white' }}
+                                            modules={modules}
+                                        />
+                                    </div>
+                                </Form.Group>
+                                <Form.Group className="mb-4">
+                                    <Form.Label className="font-semibold text-lg">Attach Image</Form.Label>
+                                    <Form.Control
+                                        type="file"
+                                        accept="image/*"
+                                        multiple
+                                        onChange={handleImageChange}
+                                        disabled={uploading}
+                                        className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all duration-200"
+                                    />
+                                    {imageFiles.length > 0 && (
+                                        <div className="mt-2 text-green-600 flex items-center gap-2 animate-fade-in">
+                                            <i className="bi bi-image me-1"></i>
+                                            {imageFiles.length} file(s) selected
+                                        </div>
+                                    )}
+                                </Form.Group>
+                                <div className="flex flex-col md:flex-row justify-between gap-4 mt-6">
+                                    <Button
+                                        type="button"
+                                        variant="warning"
+                                        onClick={handleResolve}
+                                        disabled={localStatus === "resolved"}
+                                        className="transition-transform duration-200 hover:scale-105 hover:shadow-lg flex items-center gap-2"
+                                    >
+                                        <i className="bi bi-check2-circle mr-1"></i>
+                                        Mark as Resolved
+                                    </Button>
+                                    <Button
+                                        type="submit"
+                                        variant="success"
+                                        disabled={!reply || !reply.trim() || uploading}
+                                        className="transition-transform duration-200 hover:scale-105 hover:shadow-lg flex items-center gap-2"
+                                    >
+                                        <i className="bi bi-send-fill mr-1"></i>
+                                        {uploading ? "Uploading..." : "Send Reply"}
+                                    </Button>
+                                
+                                </div>
+                            </Form>
+                        </Card.Body>
+                    </Card>
+                </Col>
+            </Row>
+            <style>{`
+                @keyframes fade-in {
+                    from { opacity: 0; transform: translateY(20px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                .animate-fade-in { animation: fade-in 0.7s cubic-bezier(0.4,0,0.2,1) both; }
+            `}</style>
+        </Container>
+    );
 }
 
 export default TicketReply;

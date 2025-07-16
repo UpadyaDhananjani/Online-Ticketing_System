@@ -1,5 +1,6 @@
+// server/controllers/ticketAdminController.js
 import Ticket from '../models/ticketModel.js';
-import User from '../models/userModel.js'; // Ensure User model is imported for populate
+import User from '../models/userModel.js'; // Ensure User model is imported
 import path from 'path';
 import fs from 'fs';
 
@@ -7,14 +8,73 @@ import fs from 'fs';
 export const getAllTickets = async (req, res) => {
     try {
         const tickets = await Ticket.find({})
-            .populate('user', 'name email') // Populate the 'user' field (requester)
-            .populate('assignedTo', 'name email') // <--- ADDED THIS LINE to populate assignedTo
-            .sort({ createdAt: -1 }); // Sort by creation date descending
+            .populate('user', 'name email')
+            // No need to populate 'assignedTo' with 'name email' if assignedTo is not a User ObjectId
+            // If assignedTo is intended to be a User, it should be an ObjectId in ticketModel.js
+            .populate('assignedTo', 'name email') // Keep this if 'assignedTo' is a User reference
+            .sort({ createdAt: -1 });
 
         res.json(tickets);
     } catch (err) {
         console.error("Get All Tickets Error:", err);
         res.status(500).json({ error: err.message });
+    }
+};
+
+// Get a single ticket by ID for admin
+export const getAdminTicketById = async (req, res) => {
+    try {
+        const ticket = await Ticket.findById(req.params.id)
+            .populate('user', 'name email')
+            .populate('assignedTo', 'name email'); // Populate assignedTo if it's a User reference
+
+        if (!ticket) {
+            return res.status(404).json({ error: 'Ticket not found' });
+        }
+        return res.json(ticket);
+    } catch (err) {
+        console.error("Get Admin Ticket By ID Error:", err);
+        return res.status(500).json({ error: err.message });
+    }
+};
+
+// --- MODIFIED: Get users by unit (now expecting unitName as a string) ---
+export const getUsersByUnit = async (req, res) => {
+    try {
+        const { unitName } = req.params; // Changed from unitId to unitName
+        // Now query by the string name of the unit
+        const users = await User.find({ unit: unitName }).select('name email');
+        res.json(users);
+    } catch (error) {
+        console.error("Get Users By Unit Error:", error);
+        res.status(500).json({ message: 'Error fetching users by unit', error: error.message });
+    }
+};
+
+// --- NEW FUNCTION: Reassign a ticket ---
+export const reassignTicket = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { userId } = req.body; // This userId should still be the ObjectId of the User being assigned
+
+        const ticket = await Ticket.findById(id);
+        if (!ticket) {
+            return res.status(404).json({ message: 'Ticket not found.' });
+        }
+
+        ticket.assignedTo = userId || null; // This userId should still be the ObjectId of the User being assigned
+
+        ticket.updatedAt = Date.now();
+        await ticket.save();
+
+        const updatedTicket = await Ticket.findById(id)
+            .populate('user', 'name email')
+            .populate('assignedTo', 'name email'); // Still populate assignedTo as it's a User reference
+
+        res.json({ success: true, message: 'Ticket reassigned successfully.', ticket: updatedTicket });
+    } catch (error) {
+        console.error("Reassign Ticket Error:", error);
+        res.status(500).json({ message: 'Failed to reassign ticket due to server error.', error: error.message });
     }
 };
 
@@ -25,12 +85,10 @@ export const addAdminReply = async (req, res) => {
         const { content } = req.body;
         let attachments = [];
 
-        // Ensure req.user is available from authMiddleware
         if (!req.user || !req.user._id) {
             return res.status(401).json({ error: "Admin not authenticated to add reply." });
         }
 
-        // Handle file uploads (if using multer)
         if (req.files && req.files.length > 0) {
             attachments = req.files.map(f => `/uploads/${f.filename}`);
         }
@@ -38,17 +96,15 @@ export const addAdminReply = async (req, res) => {
         const ticket = await Ticket.findById(id);
         if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
 
-        // Ensure messages is always an array
         if (!Array.isArray(ticket.messages)) ticket.messages = [];
 
         ticket.messages.push({
-            author: req.user._id, // --- FIXED: Use req.user._id for author ---
+            author: req.user._id,
             authorRole: 'admin',
             content,
             attachments
         });
 
-        // If not resolved, set status to in progress
         if (ticket.status !== "resolved") {
             ticket.status = "in progress";
         }
@@ -63,17 +119,11 @@ export const addAdminReply = async (req, res) => {
     }
 };
 
-// --- NEW/MOVED FUNCTION: Delete a message from a ticket ---
+// Delete a message from a ticket
 export const deleteMessage = async (req, res) => {
     try {
         const { ticketId, messageId } = req.params;
-
-        // Optional: Add admin authorization check here if not handled by middleware
-        // if (!req.user || req.user.role !== 'admin') { /* ... */ }
-
-        // Find the ticket by ID
         const ticket = await Ticket.findById(ticketId);
-
         if (!ticket) {
             console.error(`Admin: Ticket not found for ID: ${ticketId}`);
             return res.status(404).json({ success: false, message: 'Ticket not found.' });
@@ -89,23 +139,17 @@ export const deleteMessage = async (req, res) => {
         }
 
         ticket.messages.splice(messageIndex, 1);
-
-        // Update the ticket's updatedAt timestamp
         ticket.updatedAt = Date.now();
-
-        // Save the updated ticket
         await ticket.save();
-
         console.log(`Admin: Message ${messageId} deleted from ticket ${ticketId}`);
         return res.status(200).json({ success: true, message: 'Message deleted successfully.' });
-
     } catch (error) {
         console.error("Admin: Error deleting message:", error);
         return res.status(500).json({ success: false, message: 'Failed to delete message due to server error.' });
     }
 };
 
-// --- NEW FUNCTION: Delete a ticket (Admin only) ---
+// Delete a ticket (Admin only)
 export const deleteTicket = async (req, res) => {
     try {
         const { id } = req.params;
@@ -120,10 +164,8 @@ export const deleteTicket = async (req, res) => {
     }
 };
 
-// --- Existing functions (copy-pasted for completeness, ensure they are here) ---
-
 // Mark ticket as resolved
-export const resolveTicket = async (req, res) => { // Renamed from anonymous to named export
+export const resolveTicket = async (req, res) => {
     try {
         const ticket = await Ticket.findByIdAndUpdate(
             req.params.id,
@@ -138,7 +180,7 @@ export const resolveTicket = async (req, res) => { // Renamed from anonymous to 
 };
 
 // Mark ticket as open
-export const markTicketOpen = async (req, res) => { // Renamed from anonymous to named export
+export const markTicketOpen = async (req, res) => {
     try {
         const ticket = await Ticket.findByIdAndUpdate(
             req.params.id,
@@ -153,7 +195,7 @@ export const markTicketOpen = async (req, res) => { // Renamed from anonymous to
 };
 
 // Mark ticket as in progress
-export const markTicketInProgress = async (req, res) => { // Renamed from anonymous to named export
+export const markTicketInProgress = async (req, res) => {
     try {
         const ticket = await Ticket.findByIdAndUpdate(
             req.params.id,
