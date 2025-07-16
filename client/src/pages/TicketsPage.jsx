@@ -44,7 +44,7 @@ function TicketsPage({ token, filter }) {
               <span>Tickets Received</span>
               {openReceivedCount > 0 && (
                 <span className="ml-1 inline-flex items-center justify-center relative">
-                  <BsBellFill className="text-red-500 animate-pulse" size={16} />
+                  <BsBellFill className="text-red-500 animate-pulse" size={22} />
                   <span className="absolute -top-2 -right-3 bg-red-600 text-white rounded-full px-2 py-0.5 text-xs font-bold shadow" style={{ minWidth: 20, minHeight: 20, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{openReceivedCount}</span>
                   <span className="sr-only">Open tickets notification</span>
                 </span>
