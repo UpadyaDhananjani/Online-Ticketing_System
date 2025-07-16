@@ -1,13 +1,14 @@
 import React, { useState, useContext } from 'react';
 import TicketList from '../components/TicketList';
 import { Tabs, Tab } from 'react-bootstrap';
-import { BsSend, BsInbox } from 'react-icons/bs';
+import { BsSend, BsInbox, BsArrowRepeat, BsBellFill } from 'react-icons/bs';
 import { AppContent } from '../context/AppContext';
 
 function TicketsPage({ token, filter }) {
   const [tabKey, setTabKey] = useState('created');
   const { userData } = useContext(AppContent);
   const userId = userData?.id;
+  const [openReceivedCount, setOpenReceivedCount] = useState(0);
 
   return (
     <div>
@@ -38,17 +39,34 @@ function TicketsPage({ token, filter }) {
         <Tab
           eventKey="received"
           title={
-            <span className="d-flex align-items-center gap-2">
+            <span className="d-flex align-items-center gap-2 relative">
               <BsInbox size={18} />
               <span>Tickets Received</span>
-              <span className="badge bg-info text-dark d-inline-flex align-items-center ms-1" style={{ fontSize: '0.85em' }}>
-                <i className="bi bi-person-badge me-1"></i> Assigned
-              </span>
+              {openReceivedCount > 0 && (
+                <span className="ml-1 inline-flex items-center justify-center relative">
+                  <BsBellFill className="text-red-500 animate-pulse" size={16} />
+                  <span className="absolute -top-2 -right-3 bg-red-600 text-white rounded-full px-2 py-0.5 text-xs font-bold shadow" style={{ minWidth: 20, minHeight: 20, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{openReceivedCount}</span>
+                  <span className="sr-only">Open tickets notification</span>
+                </span>
+              )}
             </span>
           }
         >
           <div className="tab-pane-fade-in">
-            <TicketList mode="received" userId={userId} />
+            <TicketList mode="received" userId={userId} onOpenReceivedCountChange={setOpenReceivedCount} />
+          </div>
+        </Tab>
+        <Tab
+          eventKey="reassigned"
+          title={
+            <span className="d-flex align-items-center gap-2">
+              <BsArrowRepeat size={18} />
+              <span>Reassigned</span>
+            </span>
+          }
+        >
+          <div className="tab-pane-fade-in">
+            {/* No logic or TicketList here, just an empty tab or placeholder */}
           </div>
         </Tab>
       </Tabs>
