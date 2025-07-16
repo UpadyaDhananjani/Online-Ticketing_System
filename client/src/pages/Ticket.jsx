@@ -28,7 +28,7 @@ const Ticket = () => {
   const navigate = useNavigate();
   const { userData } = useContext(AppContent);
   const token = userData?.token;
-  const currentUserId = userData?.user?._id;
+  const currentUserId = userData?.id;
 
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -117,14 +117,14 @@ const Ticket = () => {
   const handleDeleteMessage = async (messageId) => {
     try {
       const res = await deleteUserMessage(id, messageId, token);
-      if (res.success) {
-        toast.success(res.message || "Message deleted successfully.");
+      if (res.data.success) {
+        toast.success(res.data.message || "Message deleted successfully.");
         setTicket(prevTicket => ({
           ...prevTicket,
           messages: prevTicket.messages.filter(msg => msg._id !== messageId)
         }));
       } else {
-        toast.error(res.message || "Failed to delete message.");
+        toast.error(res.data.message || "Failed to delete message.");
       }
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to delete message.");
@@ -155,7 +155,7 @@ const Ticket = () => {
     message: msg.content,
     date: msg.date,
     attachments: msg.attachments,
-    authorId: msg.author
+    authorId: msg.author?.toString ? msg.author.toString() : String(msg.author)
   }));
 
   return (
@@ -266,6 +266,7 @@ const Ticket = () => {
                       description={ticket.description}
                       image={ticket.image}
                       currentUserRole="user"
+                      currentUserId={currentUserId}
                       onAttachmentClick={handleAttachmentClick}
                       onDeleteMessage={(messageId) => {
                         const message = messages.find(m => m._id === messageId);

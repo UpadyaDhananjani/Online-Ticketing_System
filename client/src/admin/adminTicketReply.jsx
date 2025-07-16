@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useContext } from "react";
 import { Editor } from 'primereact/editor';
 import "primereact/resources/themes/lara-light-indigo/theme.css";
 import "primereact/resources/primereact.min.css";
@@ -9,8 +9,10 @@ import { sendTicketReply, resolveTicket, deleteAdminMessage, getAdminTicketById 
 import { Container, Card, Button, Form, Row, Col, Badge } from "react-bootstrap";
 import MessageHistory from "../components/MessageHistory/MessageHistory";
 import { toast } from 'react-toastify';
+import { AppContent } from "../context/AppContext";
 
 function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) {
+  const { userData } = useContext(AppContent);
   const [reply, setReply] = useState("");
   const [imageFiles, setImageFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -103,7 +105,7 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
       const res = await deleteAdminMessage(ticket._id, messageId, token); 
       if (res.data.success) {
         toast.success(res.data.message || "Message deleted successfully.");
-        await fetchTicket();
+        // No need to fetchTicket here; local state is already updated
       } else {
         setMessages(previousMessages);
         toast.error(res.data.message || "Failed to delete message.");
@@ -129,13 +131,17 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
     }
   };
 
+  // Get current admin ID (from token or ticket)
+  const currentUserId = userData?.id;
+
   const messagesForHistory = messages.map(msg => ({
     _id: msg._id,
     sender: msg.authorRole === "admin" ? "Admin" : "User",
     message: msg.content,
     date: msg.date,
     attachments: msg.attachments,
-    pending: msg.pending
+    pending: msg.pending,
+    authorId: msg.author?.toString ? msg.author.toString() : String(msg.author)
   }));
 
   // Helper to get absolute URL for attachments
@@ -227,6 +233,7 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
                   image={ticket.image}
                   onDeleteMessage={handleDeleteMessage}
                   currentUserRole="admin"
+                  currentUserId={currentUserId}
                 />
               </div>
 
