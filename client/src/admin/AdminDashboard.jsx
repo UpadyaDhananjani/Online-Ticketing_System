@@ -8,9 +8,9 @@ import TicketReply from "./adminTicketReply.jsx";
 
 function AdminDashboard({ token }) {
 
-  const [selectedTicket, setSelectedTicket] = useState(null);
+ const [selectedTicket, setSelectedTicket] = useState(null);
 
-  const [refresh, setRefresh] = useState(false);
+ const [refresh, setRefresh] = useState(false);
 
 
 

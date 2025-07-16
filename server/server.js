@@ -12,6 +12,7 @@ import userRouter from './routes/userRoutes.js';
 import ticketRoutes from './routes/ticketRoutes.js';
 import ticketAdminRoutes from './routes/ticketAdminRoutes.js';
 import uploadRoutes from "./routes/uploadRoutes.js";
+import adminRouter from './routes/adminRoutes.js';
 
 // Import authMiddleware here since you're using it directly in this file
 import authMiddleware from './middleware/authMiddleware.js'; // <--- Ensure this import is present
@@ -50,6 +51,7 @@ app.use('/api/user', userRouter);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/admin/tickets', ticketAdminRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/admin', adminRouter);
 
 // Authentication check endpoint - now correctly protected by authMiddleware
 app.get('/api/auth/is-auth', authMiddleware, (req, res) => {

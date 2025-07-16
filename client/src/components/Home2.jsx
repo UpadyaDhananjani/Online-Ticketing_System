@@ -17,6 +17,7 @@ import {
   BsGearFill,
   BsHeadset
 } from "react-icons/bs";
+import UnitUsersModal from "../admin/UnitUsersModal.jsx";
 
 
 const Home2 = () => {
@@ -31,6 +32,8 @@ const Home2 = () => {
   const [recentIssues, setRecentIssues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showUnitModal, setShowUnitModal] = useState(false);
+  const [selectedUnit, setSelectedUnit] = useState("");
 
   const statusColors = {
     open: "success",
@@ -245,7 +248,7 @@ const Home2 = () => {
         </div>
         <Row className="g-4 justify-content-center mb-5">
           <Col xs={12} sm={6} md={4} lg={4}>
-            <Card className="h-100 shadow-sm border-0 rounded-3 transition-all duration-200 hover:scale-[1.03] hover:shadow-lg bg-white">
+            <Card className="h-100 shadow-sm border-0 rounded-3 transition-all duration-200 hover:scale-[1.03] hover:shadow-lg bg-white" style={{ cursor: 'pointer' }} onClick={() => { setSelectedUnit("Asyhub Unit"); setShowUnitModal(true); }}>
               <Card.Body className="d-flex flex-column align-items-center justify-content-center p-4">
                 <BsPeopleFill size={38} className="mb-3 text-primary" />
                 <Card.Title className="fw-bold mb-2" style={{ fontSize: 20 }}>Asyhub Unit</Card.Title>
@@ -254,7 +257,7 @@ const Home2 = () => {
             </Card>
           </Col>
           <Col xs={12} sm={6} md={4} lg={4}>
-            <Card className="h-100 shadow-sm border-0 rounded-3 transition-all duration-200 hover:scale-[1.03] hover:shadow-lg bg-white">
+            <Card className="h-100 shadow-sm border-0 rounded-3 transition-all duration-200 hover:scale-[1.03] hover:shadow-lg bg-white" style={{ cursor: 'pointer' }} onClick={() => { setSelectedUnit("System & Network Administration Unit"); setShowUnitModal(true); }}>
               <Card.Body className="d-flex flex-column align-items-center justify-content-center p-4">
                 <BsCpuFill size={38} className="mb-3 text-info" />
                 <Card.Title className="fw-bold mb-2" style={{ fontSize: 20 }}>System & Network Administration Unit</Card.Title>
@@ -263,7 +266,7 @@ const Home2 = () => {
             </Card>
           </Col>
           <Col xs={12} sm={6} md={4} lg={4}>
-            <Card className="h-100 shadow-sm border-0 rounded-3 transition-all duration-200 hover:scale-[1.03] hover:shadow-lg bg-white">
+            <Card className="h-100 shadow-sm border-0 rounded-3 transition-all duration-200 hover:scale-[1.03] hover:shadow-lg bg-white" style={{ cursor: 'pointer' }} onClick={() => { setSelectedUnit("Statistics Unit"); setShowUnitModal(true); }}>
               <Card.Body className="d-flex flex-column align-items-center justify-content-center p-4">
                 <BsBarChartFill size={38} className="mb-3 text-success" />
                 <Card.Title className="fw-bold mb-2" style={{ fontSize: 20 }}>Statistics Unit</Card.Title>
@@ -272,7 +275,7 @@ const Home2 = () => {
             </Card>
           </Col>
           <Col xs={12} sm={6} md={4} lg={4}>
-            <Card className="h-100 shadow-sm border-0 rounded-3 transition-all duration-200 hover:scale-[1.03] hover:shadow-lg bg-white">
+            <Card className="h-100 shadow-sm border-0 rounded-3 transition-all duration-200 hover:scale-[1.03] hover:shadow-lg bg-white" style={{ cursor: 'pointer' }} onClick={() => { setSelectedUnit("Audit Unit"); setShowUnitModal(true); }}>
               <Card.Body className="d-flex flex-column align-items-center justify-content-center p-4">
                 <BsClipboardCheck size={38} className="mb-3 text-warning" />
                 <Card.Title className="fw-bold mb-2" style={{ fontSize: 20 }}>Audit Unit</Card.Title>
@@ -281,7 +284,7 @@ const Home2 = () => {
             </Card>
           </Col>
           <Col xs={12} sm={6} md={4} lg={4}>
-            <Card className="h-100 shadow-sm border-0 rounded-3 transition-all duration-200 hover:scale-[1.03] hover:shadow-lg bg-white">
+            <Card className="h-100 shadow-sm border-0 rounded-3 transition-all duration-200 hover:scale-[1.03] hover:shadow-lg bg-white" style={{ cursor: 'pointer' }} onClick={() => { setSelectedUnit("Functional Unit"); setShowUnitModal(true); }}>
               <Card.Body className="d-flex flex-column align-items-center justify-content-center p-4">
                 <BsGearFill size={38} className="mb-3 text-secondary" />
                 <Card.Title className="fw-bold mb-2" style={{ fontSize: 20 }}>Functional Unit</Card.Title>
@@ -290,7 +293,7 @@ const Home2 = () => {
             </Card>
           </Col>
           <Col xs={12} sm={6} md={4} lg={4}>
-            <Card className="h-100 shadow-sm border-0 rounded-3 transition-all duration-200 hover:scale-[1.03] hover:shadow-lg bg-white">
+            <Card className="h-100 shadow-sm border-0 rounded-3 transition-all duration-200 hover:scale-[1.03] hover:shadow-lg bg-white" style={{ cursor: 'pointer' }} onClick={() => { setSelectedUnit("Helpdesk Unit"); setShowUnitModal(true); }}>
               <Card.Body className="d-flex flex-column align-items-center justify-content-center p-4">
                 <BsHeadset size={38} className="mb-3 text-danger" />
                 <Card.Title className="fw-bold mb-2" style={{ fontSize: 20 }}>Helpdesk Unit</Card.Title>
@@ -299,6 +302,7 @@ const Home2 = () => {
             </Card>
           </Col>
         </Row>
+        <UnitUsersModal show={showUnitModal} unit={selectedUnit} onHide={() => setShowUnitModal(false)} token={userData?.token} userData={userData} />
 
         {/* Recent Issues section */}
         <Row className="mt-5">
