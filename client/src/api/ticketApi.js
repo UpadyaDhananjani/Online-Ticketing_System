@@ -107,6 +107,16 @@ export const deleteAdminMessage = async (ticketId, messageId) => {
     }
 };
 
+// Delete an admin ticket
+export const deleteAdminTicket = async (ticketId) => {
+    try {
+        const response = await axiosInstance.delete(`/tickets/admin/${ticketId}`);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
 // --- Reassign specific APIs ---
 
 // Get all public units (for dropdown)
@@ -184,6 +194,15 @@ export const getUserTicketById = async (ticketId) => {
 export const deleteUserMessage = async (ticketId, messageId) => {
     try {
         const response = await axiosInstance.delete(`/tickets/${ticketId}/message/${messageId}`);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
+export const getAllTickets = async () => {
+    try {
+        const response = await axiosInstance.get('/tickets/admin');
         return response.data;
     } catch (error) {
         throw error;

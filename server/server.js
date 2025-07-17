@@ -1,6 +1,7 @@
 // server/server.js (or app.js) - Your main server file
 import express from 'express';
 import dotenv from 'dotenv';
+import path from 'path';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import connectDB from './config/mongodb.js';
@@ -15,10 +16,12 @@ import authMiddleware from './middleware/authMiddleware.js'; // <--- Ensure this
 
 // Initialize environment variables
 dotenv.config();
+
 connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
+app.listen(port, () => console.log(`Server started on PORT:${port}`));
 
 app.use(cors({
     origin: 'http://localhost:3000', // Your frontend URL
