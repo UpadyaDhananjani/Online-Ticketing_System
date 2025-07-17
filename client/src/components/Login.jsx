@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { AppContent } from "../context/AppContext";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { getUnits} from "../api/ticketApi"; // Import the new public units API
+import { getPublicUnits} from "../api/ticketApi"; // Import the new public units API
 
 const Login = () => {
     const navigate = useNavigate();
@@ -33,7 +33,7 @@ const Login = () => {
     useEffect(() => {
         const fetchUnits = async () => {
             try {
-                const { data } = await getUnits(); // Call the new public API
+                const { data } = await getPublicUnits(); // Call the new public API
                 setUnits(data);
             } catch (error) {
                 console.error("Error fetching public units:", error);
