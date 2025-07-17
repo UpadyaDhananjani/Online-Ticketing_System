@@ -1,11 +1,14 @@
-// server/server.js (or app.js) - Your main server file
-import express from 'express';
-import dotenv from 'dotenv';
-import cookieParser from 'cookie-parser';
-import cors from 'cors';
-import connectDB from './config/mongodb.js';
-import userRoutes from './routes/userRoutes.js';
-import authRoutes from './routes/authRoutes.js';
+// server/server.js
+import express from "express";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import dotenv from "dotenv";
+import path from "path";
+import connectDB from "./config/mongodb.js"; // Assuming this connects to your DB
+
+// Route imports
+import authRouter from './routes/authRoutes.js';
+import userRouter from './routes/userRoutes.js';
 import ticketRoutes from './routes/ticketRoutes.js';
 import ticketAdminRoutes from './routes/ticketAdminRoutes.js';
 import uploadRoutes from "./routes/uploadRoutes.js";
@@ -15,22 +18,35 @@ import authMiddleware from './middleware/authMiddleware.js'; // <--- Ensure this
 
 // Initialize environment variables
 dotenv.config();
+
+// Database connection
 connectDB();
 
 const app = express();
-const PORT = process.env.PORT || 4000;
+const port = process.env.PORT || 4000;
 
-app.use(cors({
-    origin: 'http://localhost:3000', // Your frontend URL
-    credentials: true,
-}));
+// --- Middleware ---
+
+// 1. Body Parser Middleware (for JSON)
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// 2. Cookie Parser Middleware - Essential for req.cookies
 app.use(cookieParser());
 
-// Define routes
-app.use('/api/users', userRoutes);
-app.use('/api/auth', authRoutes);
+// 3. CORS Configuration (Crucial for cross-origin requests with cookies)
+app.use(cors({
+    // Only need to specify the frontend origin.
+    // If you add a Vite proxy, the browser treats requests as same-origin,
+    // but CORS is still needed for the initial page load and for general API calls
+    // that aren't proxied or for direct backend tests.
+    origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001'],
+    credentials: true // This must be true for cookies to be sent/received cross-origin
+}));
+
+// --- API Routes ---
+app.get('/', (req, res) => res.send("API working"));
+app.use('/api/auth', authRouter);
+app.use('/api/user', userRouter);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/admin/tickets', ticketAdminRoutes);
 app.use('/api/upload', uploadRoutes);
