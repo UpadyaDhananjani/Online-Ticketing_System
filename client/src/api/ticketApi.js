@@ -42,7 +42,7 @@ axiosInstance.interceptors.response.use(
             url: response.config.url,
             data: response.data,
         });
-        return response; // Return the full response object
+        return response; // Return the full response object for getAdminTickets, or response.data for others.
     },
     error => {
         console.error('API Response Error:', {
@@ -180,7 +180,7 @@ export const deleteUserMessage = async (ticketId, messageId) => {
 export const getAdminTickets = async () => {
     try {
         const response = await axiosInstance.get('/admin/tickets');
-        return response; // <-- THIS IS THE CRUCIAL CHANGE: Return the full response
+        return response; // <-- Returns the full response object
     } catch (error) {
         throw error;
     }
@@ -253,8 +253,13 @@ export const reassignTicket = async (ticketId, userId) => {
 // --- PUBLIC / GENERAL APIs (may or may not require auth) ---
 // =======================================================
 
-// Get all public units (for dropdown)
-export const getPublicUnits = async () => {
+/**
+ * Fetches all public units.
+ * This function returns `response.data` directly.
+ * @returns {Promise<Array>} A promise that resolves to an array of public unit objects.
+ * @throws {Error} If the API call fails.
+ */
+export const getPublicUnits = async () => { // <--- THIS IS THE EXPORTED FUNCTION
     try {
         const response = await axiosInstance.get('/public/units');
         return response.data;

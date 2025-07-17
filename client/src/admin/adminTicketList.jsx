@@ -55,11 +55,15 @@ function TicketList({ onSelect, token, refresh }) {
         console.log("Admin Dashboard: Full API response received:", response); // NEW: Log the whole response object
         const fetchedTickets = response.data ?? []; // Access .data property and use nullish coalescing
         setTickets(fetchedTickets);
+    getAdminTickets()
+      .then(res => {
+        // FIX: Access tickets directly from res.data, not res.data.tickets
+        setTickets(res.data); // This line changed
         setLoading(false);
-        console.log("Admin Dashboard: Fetched tickets (after data extraction and fallback):", fetchedTickets);
-        if (fetchedTickets.length > 0) {
-          console.log("Admin Dashboard: First ticket's user data:", fetchedTickets[0].user);
-          console.log("Admin Dashboard: First ticket's user name:", fetchedTickets[0].user?.name);
+        console.log("Admin Dashboard: Fetched tickets:", res.data); // This line changed
+        if (res.data.length > 0) { // This line changed
+          console.log("Admin Dashboard: First ticket's user data:", res.data[0].user); // This line changed
+          console.log("Admin Dashboard: First ticket's user name:", res.data[0].user?.name); // This line changed
         }
       })
       .catch(err => {
