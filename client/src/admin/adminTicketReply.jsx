@@ -10,7 +10,7 @@ import {
     resolveTicket,
     deleteAdminMessage,
     getAdminTicketById,
-    getPublicUnits,
+    getUnits,
     getUsersByUnit,
     reassignTicket
 } from "../api/ticketApi"; // CORRECTED PATH: From src/admin to src/api is one level up then into api

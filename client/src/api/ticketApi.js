@@ -1,191 +1,86 @@
-// client/src/api/ticketApi.js
-
 import axios from 'axios';
 
-// IMPORTANT: Ensure this matches your backend server URL
-// If running locally, it's usually http://localhost:4000
-// If deployed, change this to your deployed backend URL
-const API_URL = 'http://localhost:4000/api';
+const API_URL = '/api/tickets'; // Base URL for user tickets
+const ADMIN_API_URL = '/api/admin/tickets'; // Base URL for admin tickets
 
-// Create an Axios instance with common configurations
-const axiosInstance = axios.create({
-    baseURL: API_URL,
-    withCredentials: true, // Crucial for sending HTTP-only cookies (like your JWT token)
-});
+// ---------------- USER TICKET ROUTES ---------------- //
 
-// --- User/Auth related APIs (examples, adjust as needed) ---
-// If these are not in ticketApi.js, ensure they are correctly placed elsewhere.
-export const registerUser = async (userData) => {
-    try {
-        const response = await axiosInstance.post('/auth/register', userData);
-        return response.data;
-    } catch (error) {
-        throw error; // Let the caller handle the error
-    }
-};
+// Create a new ticket (user)
+export const createTicket = (data, token) =>
+  axios.post(API_URL, data, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
 
-export const loginUser = async (userData) => {
-    try {
-        const response = await axiosInstance.post('/auth/login', userData);
-        return response.data;
-    } catch (error) {
-        throw error;
-    }
-};
+// Get all tickets (user) - relies on cookies
+export const getTickets = () =>
+  axios.get(API_URL, { withCredentials: true });
 
-export const logoutUser = async () => {
-    try {
-        const response = await axiosInstance.post('/auth/logout');
-        return response.data;
-    } catch (error) {
-        throw error;
-    }
-};
+// Update a ticket (user)
+export const updateTicket = (id, data, token) =>
+  axios.put(`${API_URL}/${id}`, data, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
 
-export const getMe = async () => {
-    try {
-        const response = await axiosInstance.get('/auth/me');
-        return response.data;
-    } catch (error) {
-        throw error;
-    }
-};
+// Close a ticket (user)
+export const closeTicket = (id, token) =>
+  axios.patch(`${API_URL}/${id}/close`, {}, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
 
-// --- Ticket related APIs ---
+// Delete a user message (can only delete their own message)
+export const deleteUserMessage = (ticketId, messageId, token) =>
+  axios.delete(`${API_URL}/${ticketId}/messages/${messageId}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
 
-// Fetch all tickets for admin
-export const getAdminTickets = async () => {
-    try {
-        const response = await axiosInstance.get('/tickets/admin');
-        return response.data;
-    } catch (error) {
-        throw error;
-    }
-};
 
-// Fetch a single ticket by ID for admin
-export const getAdminTicketById = async (ticketId) => {
-    try {
-        const response = await axiosInstance.get(`/tickets/admin/${ticketId}`);
-        return response.data;
-    } catch (error) {
-        throw error;
-    }
-};
+// ---------------- ADMIN TICKET ROUTES ---------------- //
 
-// Send a reply to a ticket (admin side)
-export const sendTicketReply = async (ticketId, formData) => {
-    try {
-        const response = await axiosInstance.post(`/tickets/${ticketId}/reply`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data' // Important for file uploads
-            }
-        });
-        return response.data;
-    } catch (error) {
-        throw error;
-    }
-};
+// Get all tickets (admin)
+export const getAllTickets = (token) =>
+  axios.get(ADMIN_API_URL, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
 
-// Resolve a ticket
-export const resolveTicket = async (ticketId) => {
-    try {
-        const response = await axiosInstance.put(`/tickets/${ticketId}/resolve`);
-        return response.data;
-    } catch (error) {
-        throw error;
-    }
-};
+// Get a single ticket by ID (admin)
+export const getAdminTicketById = (ticketId, token) =>
+  axios.get(`${ADMIN_API_URL}/${ticketId}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
 
-// Delete an admin message
-export const deleteAdminMessage = async (ticketId, messageId) => {
-    try {
-        const response = await axiosInstance.delete(`/tickets/${ticketId}/message/${messageId}`);
-        return response.data;
-    } catch (error) {
-        throw error;
-    }
-};
+// Send a reply to a ticket (admin)
+export const sendTicketReply = (ticketId, data, token) =>
+  axios.post(`${ADMIN_API_URL}/${ticketId}/reply`, data, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
 
-// --- Reassign specific APIs ---
+// Resolve a ticket (admin)
+export const resolveTicket = (ticketId, token) =>
+  axios.patch(`${ADMIN_API_URL}/${ticketId}/resolve`, null, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
 
-// Get all public units (for dropdown)
-export const getPublicUnits = async () => {
-    try {
-        // This endpoint usually doesn't need a token, but 'withCredentials: true'
-        // on axiosInstance will send cookies anyway. If your public route
-        // is *not* behind auth, you might use plain axios.get without axiosInstance.
-        // However, keeping it consistent with axiosInstance is generally fine.
-        const response = await axiosInstance.get('/public/units');
-        return response.data; // Should return an array of unit objects
-    } catch (error) {
-        console.error("Error in getPublicUnits API:", error); // Added specific log
-        throw error;
-    }
-};
+// Delete any message from ticket (admin)
+export const deleteAdminMessage = (ticketId, messageId, token) =>
+  axios.delete(`${ADMIN_API_URL}/${ticketId}/messages/${messageId}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
 
-// Get users by unit name
-export const getUsersByUnit = async (unitName) => {
-    try {
-        // Use encodeURIComponent for unitName to handle spaces or special characters
-        const response = await axiosInstance.get(`/users/by-unit/${encodeURIComponent(unitName)}`);
-        // The backend should return { success: true, users: [...] }
-        return response.data;
-    } catch (error) {
-        console.error("Error in getUsersByUnit API:", error); // Added specific log
-        throw error;
-    }
-};
+// Delete a ticket entirely (admin)
+export const deleteAdminTicket = (ticketId, token) =>
+  axios.delete(`${ADMIN_API_URL}/${ticketId}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
 
-// Reassign a ticket to a specific user (or null to unassign)
-export const reassignTicket = async (ticketId, assignedToId) => {
-    try {
-        const response = await axiosInstance.patch(`/tickets/${ticketId}/reassign`, { assignedTo: assignedToId });
-        return response.data;
-    } catch (error) {
-        console.error("Error in reassignTicket API:", error); // Added specific log
-        throw error;
-    }
-};
+export const reassignTicket = (ticketId, userId, token) =>
+  axios.patch(`/api/admin/tickets/${ticketId}/assign`, { userId }, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
 
-// --- Client/User Ticket APIs (examples, adjust as needed) ---
-// If you have separate user dashboards, these might be in a different API file.
-export const createTicket = async (formData) => {
-    try {
-        const response = await axiosInstance.post('/tickets', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
-        });
-        return response.data;
-    } catch (error) {
-        throw error;
-    }
-};
+export const getUnits = () =>
+  axios.get('/api/public/units');
 
-export const getUserTickets = async () => {
-    try {
-        const response = await axiosInstance.get('/tickets');
-        return response.data;
-    } catch (error) {
-        throw error;
-    }
-};
-
-export const getUserTicketById = async (ticketId) => {
-    try {
-        const response = await axiosInstance.get(`/tickets/${ticketId}`);
-        return response.data;
-    } catch (error) {
-        throw error;
-    }
-};
-
-export const deleteUserMessage = async (ticketId, messageId) => {
-    try {
-        const response = await axiosInstance.delete(`/tickets/${ticketId}/message/${messageId}`);
-        return response.data;
-    } catch (error) {
-        throw error;
-    }
-};
+export const getUsersByUnit = (unitName, token) =>
+  axios.get(`/api/admin/users?unit=${encodeURIComponent(unitName)}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
