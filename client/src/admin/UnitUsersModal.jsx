@@ -28,7 +28,7 @@ const UnitUsersModal = ({ show, unit, onHide, token, userData }) => {
         return res.json();
       })
       .then((data) => {
-        setUsers(data.users || []);
+        setUsers(Array.isArray(data.users) ? data.users : []);
       })
       .catch((err) => {
         setError(err.message || "Failed to fetch users");
@@ -73,7 +73,7 @@ const UnitUsersModal = ({ show, unit, onHide, token, userData }) => {
         )}
         {!loading && !error && users.length > 0 && (
           <ListGroup>
-            {users.map((user) => (
+            {Array.isArray(users) && users.map((user) => (
               <ListGroup.Item key={user._id} className="d-flex justify-content-between align-items-center" style={{ position: 'relative' }}>
                 <div>
                   <div className="fw-bold">{user.name}</div>
