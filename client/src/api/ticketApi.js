@@ -1,5 +1,3 @@
-// client/src/api/ticketApi.js
-
 import axios from 'axios';
 
 // IMPORTANT: Get the API base URL from environment variables for better flexibility.
