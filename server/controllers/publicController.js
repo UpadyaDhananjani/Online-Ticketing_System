@@ -1,4 +1,4 @@
-// server/controllers/publicController.js
+        // server/controllers/publicController.js
 import User from '../models/userModel.js'; // Import User model if you want to derive units from it
 
 // Get all units (publicly accessible)
