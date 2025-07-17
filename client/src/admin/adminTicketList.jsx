@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Table, Container, Spinner, Alert, Badge, Form, Row, Col, Button } from "react-bootstrap";
-import { getAllTickets, deleteAdminTicket } from "../api/ticketApi";
+import { getAdminTickets, deleteAdminTicket } from "../api/ticketApi";
 import { toast } from 'react-toastify';
 
 const statusColors = {
@@ -50,15 +50,15 @@ function TicketList({ onSelect, token, refresh }) {
   useEffect(() => {
     setLoading(true);
     setError("");
-    // FIX: Pass the token to getAllTickets
-    getAllTickets(token) // <--- CRUCIAL FIX HERE
+    getAdminTickets()
       .then(res => {
-        setTickets(res.data);
+        // FIX: Access tickets directly from res.data, not res.data.tickets
+        setTickets(res.data); // This line changed
         setLoading(false);
-        console.log("Admin Dashboard: Fetched tickets:", res.data);
-        if (res.data.length > 0) {
-          console.log("Admin Dashboard: First ticket's user data:", res.data[0].user);
-          console.log("Admin Dashboard: First ticket's user name:", res.data[0].user?.name);
+        console.log("Admin Dashboard: Fetched tickets:", res.data); // This line changed
+        if (res.data.length > 0) { // This line changed
+          console.log("Admin Dashboard: First ticket's user data:", res.data[0].user); // This line changed
+          console.log("Admin Dashboard: First ticket's user name:", res.data[0].user?.name); // This line changed
         }
       })
       .catch(err => {
@@ -67,21 +67,21 @@ function TicketList({ onSelect, token, refresh }) {
         toast.error(err.response?.data?.error || err.message || "Failed to fetch tickets for admin dashboard.");
         setLoading(false);
       });
-  }, [refresh, token]); // FIX: Add token to dependency array
+  }, [refresh]);
 
   const handleDelete = async (ticketId) => {
     if (!window.confirm("Are you sure you want to delete this ticket? This action cannot be undone.")) return;
     try {
-      await deleteAdminTicket(ticketId, token);
+      await deleteAdminTicket(ticketId);
       setTickets(tickets => tickets.filter(t => t._id !== ticketId));
       setSelectedTickets(prev => {
         const newSet = new Set(prev);
         newSet.delete(ticketId);
         return newSet;
       });
-      toast.success("Ticket deleted successfully!"); // Added success toast
+      toast.success("Ticket deleted successfully!");
     } catch (err) {
-      toast.error("Failed to delete ticket: " + (err.response?.data?.message || err.message)); // Used toast
+      toast.error("Failed to delete ticket: " + (err.response?.data?.message || err.message));
     }
   };
 
@@ -116,7 +116,7 @@ function TicketList({ onSelect, token, refresh }) {
 
     try {
       const deletePromises = Array.from(selectedTickets).map(ticketId =>
-        deleteAdminTicket(ticketId, token)
+        deleteAdminTicket(ticketId)
       );
 
       await Promise.all(deletePromises);

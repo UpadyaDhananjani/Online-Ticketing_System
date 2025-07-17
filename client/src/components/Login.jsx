@@ -2,13 +2,17 @@ import React, { useContext, useState, useEffect } from "react";
 import { assets } from "../assets/assets";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AppContent } from "../context/AppContext";
-import axios from "axios";
+// Removed direct axios import here, as all API calls should go through ticketApi.js
+// import axios from "axios";
 import { toast } from "react-toastify";
-import { getUnits} from "../api/ticketApi"; // Import the new public units API
+// CORRECTED IMPORT: Ensure getPublicUnits is imported, along with registerUser and loginUser
+import { getPublicUnits, registerUser, loginUser } from "../api/ticketApi";
 
 const Login = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
+    // Assuming backendUrl is still needed for the admin-login direct axios call,
+    // though ideally all auth calls would also be in ticketApi.js
     const { backendUrl, setIsLoggedin, getUserData } = useContext(AppContent);
 
     const roleFromUrl = searchParams.get("role");
@@ -33,7 +37,8 @@ const Login = () => {
     useEffect(() => {
         const fetchUnits = async () => {
             try {
-                const { data } = await getUnits(); // Call the new public API
+                // CORRECTED CALL: Use getPublicUnits
+                const data = await getPublicUnits(); // getPublicUnits returns data directly
                 setUnits(data);
             } catch (error) {
                 console.error("Error fetching public units:", error);
@@ -70,38 +75,41 @@ const Login = () => {
 
     const onsubmitHandler = async (e) => {
         e.preventDefault();
-        axios.defaults.withCredentials = true;
+        // axios.defaults.withCredentials = true; // This line is not needed if using axiosInstance from ticketApi.js
 
         try {
             let responseData;
 
             if (currentRole === "admin") {
+                // IMPORTANT: For admin login, it's currently using direct axios.post.
+                // Ideally, you would create an `adminLogin` function in ticketApi.js
+                // and use that for consistency.
                 const { data } = await axios.post(`${backendUrl}/api/auth/admin-login`, {
                     email,
                     password,
-                });
+                }, { withCredentials: true }); // Ensure withCredentials is set for this direct call too
                 responseData = data;
             } else if (state === "Sign Up") {
-                const { data } = await axios.post(`${backendUrl}/api/auth/register`, {
+                // Using the registerUser function from ticketApi.js
+                responseData = await registerUser({
                     name,
                     email,
                     password,
-                    unit,
+                    unit, // Ensure your backend expects 'unit' as the unit ID for registration
                 });
-                responseData = data;
-            } else {
-                const { data } = await axios.post(`${backendUrl}/api/auth/login`, {
+            } else { // state === "Login"
+                // Using the loginUser function from ticketApi.js
+                responseData = await loginUser({
                     email,
                     password,
                 });
-                responseData = data;
             }
 
             if (responseData.success) {
                 toast.success(responseData.message || "Operation successful!");
                 setIsLoggedin(true);
-                await getUserData();
-                navigate("/dashboard");
+                await getUserData(); // Fetch updated user data after login/signup
+                navigate("/dashboard"); // Navigate to dashboard on success
             } else {
                 toast.error(responseData.message);
             }
