@@ -62,5 +62,9 @@ app.get('/api/auth/is-auth', authMiddleware, (req, res) => {
 const uploadsDir = path.join(process.cwd(), 'uploads');
 app.use('/uploads', express.static(uploadsDir));
 
+
+const publicRoutes = require('./routes/publicRoutes');
+app.use('/api/public', publicRoutes);
+
 // --- Server initialization ---
 app.listen(port, () => console.log(`Server started on PORT:${port}`));
