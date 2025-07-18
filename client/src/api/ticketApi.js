@@ -79,6 +79,16 @@ export const loginUser = async (userData) => {
     }
 };
 
+// NEW: Admin Login API function
+export const adminLogin = async (userData) => {
+    try {
+        const response = await axiosInstance.post('/auth/admin-login', userData);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
 export const logoutUser = async () => {
     try {
         const response = await axiosInstance.post('/auth/logout');
@@ -271,7 +281,7 @@ export const getPublicUnits = async () => { // <--- THIS IS THE EXPORTED FUNCTIO
 // Get users by unit name (typically admin-only lookup)
 export const getUsersByUnit = async (unitName) => {
     try {
-        const response = await axiosInstance.get(`/admin/users?unit=${encodeURIComponent(unitName)}`);
+        const response = await axiosInstance.get(`/user/by-unit/${encodeURIComponent(unitName)}`);
         return response.data;
     } catch (error) {
         throw error;
