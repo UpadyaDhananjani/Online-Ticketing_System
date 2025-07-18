@@ -1,8 +1,9 @@
-        // server/controllers/publicController.js
+// server/controllers/publicController.js
 import User from '../models/userModel.js'; // Import User model if you want to derive units from it
 
 // Get all units (publicly accessible)
-export const getUnits = async (req, res) => {
+// RENAMED: getUnits -> getPublicUnits to match import in publicRoutes.js
+export const getPublicUnits = async (req, res) => {
     try {
         // This should match the hardcoded list in your User model's enum and admin controller
         const units = [
