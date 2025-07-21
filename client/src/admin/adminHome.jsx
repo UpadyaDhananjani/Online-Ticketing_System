@@ -196,10 +196,7 @@ const adminHome = () => { // Changed component name to PascalCase for convention
                             <p className="lead text-white-50 mb-4" style={{ fontSize: 20 }}>
                                 Get technical assistance for all your IT needs. Submit tickets, track progress, and access resources 24/7.
                             </p>
-                            <div className="d-flex flex-wrap justify-content-center gap-3 mt-2">
-                                <a href="/create-ticket" className="btn btn-light fw-bold px-4 py-2" style={{ fontSize: 18, borderRadius: 8 }}>Submit New Ticket</a>
-                                <a href="/tickets" className="btn btn-outline-light fw-bold px-4 py-2" style={{ fontSize: 18, borderRadius: 8 }}>Track Ticket Status</a>
-                            </div>
+                        
                         </Col>
                     </Row>
                 </Container>

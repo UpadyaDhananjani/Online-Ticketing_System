@@ -3,7 +3,7 @@ import React, { useRef, useState, useEffect } from "react";
 import { Editor } from 'primereact/editor';
 import "primereact/resources/themes/lara-light-indigo/theme.css";
 import "primereact/resources/primereact.min.css";
-import axios from "axios"; // Assuming axios is used within ticketApi.js
+import axios from "axios"; // axios is not directly used here but might be in other parts of your project.
 
 import {
     sendTicketReply,
@@ -11,25 +11,29 @@ import {
     deleteAdminMessage,
     getAdminTicketById,
     getPublicUnits,
-
-    getUsersByUnit, // This now expects unitName
-
+    getAdminUsersByUnit,
     reassignTicket
-} from "../api/ticketApi"; // Adjusted path based on typical project structure
+} from "../api/ticketApi"; // Corrected path based on your file structure
 
 import { Container, Card, Button, Form, Row, Col, Badge, Dropdown } from "react-bootstrap";
-import MessageHistory from "../components/MessageHistory/MessageHistory"; // This path might also be incorrect // Corrected path assuming it's directly in src/MessageHistory // Adjusted path based on typical project structure
+import MessageHistory from "../components/MessageHistory/MessageHistory"; // Corrected path
 import { toast } from 'react-toastify';
 
 function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) {
+    // IMPORTANT: Add a guard clause here if ticket might be null/undefined initially
+    if (!ticket) {
+        console.warn("TicketReply component received null or undefined ticket prop. Displaying loading state.");
+        return <Container className="text-center py-5">Loading ticket details...</Container>;
+    }
+
     const [reply, setReply] = useState("");
     const [imageFiles, setImageFiles] = useState([]);
     const [uploading, setUploading] = useState(false);
     const [localStatus, setLocalStatus] = useState(ticket.status);
-    const [messages, setMessages] = useState(ticket.messages || []);
+    const [messages, setMessages] = useState(ticket.messages || []); // Ensures messages is always an array
     const quillRef = useRef();
 
-    // --- NEW STATE FOR REASSIGN FEATURE ---
+    // --- STATE FOR REASSIGN FEATURE ---
     const [showReassignDropdown, setShowReassignDropdown] = useState(false);
     const [units, setUnits] = useState([]);
     const [selectedUnit, setSelectedUnit] = useState(null);
@@ -37,6 +41,7 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
     // ------------------------------------
 
     useEffect(() => {
+        // This effect ensures messages and status are updated if the parent's ticket prop changes
         setMessages(ticket.messages || []);
         setLocalStatus(ticket.status);
     }, [ticket]);
@@ -69,7 +74,6 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
 
         setUploading(true);
 
-        // Optimistically add message
         const tempId = Date.now().toString();
         const optimisticMessage = {
             _id: tempId,
@@ -90,7 +94,6 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
             await fetchTicket();
             toast.success("Reply sent successfully!");
         } catch (err) {
-            // Remove optimistic message on failure
             setMessages(prev => prev.filter(m => m._id !== tempId));
             console.error("Failed to send reply:", err);
             toast.error(err.response?.data?.message || "Failed to send reply.");
@@ -99,15 +102,15 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
     };
 
     const handleResolve = async () => {
-        setLocalStatus("resolved"); // Optimistic UI update
+        setLocalStatus("resolved");
         try {
             await resolveTicket(ticket._id, token);
             if (onStatusChange) onStatusChange("resolved");
             await fetchTicket();
-            onBack(); // Go back after resolving
+            onBack();
             toast.success("Ticket resolved successfully!");
         } catch (err) {
-            setLocalStatus(ticket.status); // Revert if error
+            setLocalStatus(ticket.status);
             toast.error(err.response?.data?.message || "Failed to resolve ticket.");
         }
     };
@@ -123,11 +126,11 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
                 toast.success(res.data.message || "Message deleted successfully.");
                 await fetchTicket();
             } else {
-                setMessages(previousMessages); // Revert if backend indicates failure
+                setMessages(previousMessages);
                 toast.error(res.data.message || "Failed to delete message.");
             }
         } catch (err) {
-            setMessages(previousMessages); // Revert on network/server error
+            setMessages(previousMessages);
             toast.error(err.response?.data?.message || "Error deleting message.");
         }
     };
@@ -139,7 +142,7 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
                 setLocalStatus(res.data.status);
                 setMessages(res.data.messages || []);
                 if (typeof onTicketUpdate === "function") {
-                    onTicketUpdate(res.data); // Update parent component's ticket state
+                    onTicketUpdate(res.data);
                 }
             }
         } catch (err) {
@@ -147,13 +150,15 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
         }
     };
 
-    // --- NEW HANDLERS FOR REASSIGN FEATURE ---
-    const handleReassignClick = async () => {
-        if (!showReassignDropdown) { // If opening dropdown
+    // --- HANDLERS FOR REASSIGN FEATURE ---
+    const handleReassignClick = async (nextShow, meta) => {
+        console.log("handleReassignClick triggered. nextShow:", nextShow, "meta:", meta);
+        if (nextShow && !showReassignDropdown) { // Only fetch units if the dropdown is about to open and wasn't already open
+            console.log("Fetching units...");
             try {
-                // Call getPublicUnits (this now fetches from the public controller)
-                const { data } = await getPublicUnits();
-                setUnits(data); // data will be an array of { _id (string), name } objects
+                const data = await getPublicUnits(); // getPublicUnits returns data directly (array of { _id, name })
+                console.log("Units fetched:", data);
+                setUnits(data); // Set the units state
                 setUsersInUnit([]); // Clear previous users
                 setSelectedUnit(null); // Clear selected unit
             } catch (error) {
@@ -161,21 +166,17 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
                 toast.error("Failed to load units for reassign.");
             }
         }
-        setShowReassignDropdown(prev => !prev); // Toggle visibility
+        setShowReassignDropdown(nextShow);
     };
 
     const handleUnitSelect = async (unit) => {
         setSelectedUnit(unit);
-        // --- ADDED LOGS HERE ---
         console.log("[Frontend] handleUnitSelect: Unit selected for lookup:", unit);
         console.log("[Frontend] handleUnitSelect: Sending unit.name to API:", unit.name);
-        // --- END ADDED LOGS ---
         try {
-            // CRUCIAL: Pass unit.name (which is also unit._id from publicController.js)
-            const { users } = await getUsersByUnit(unit.name, token); // Destructure 'users' from the response
-            // --- ADDED LOG HERE ---
+            // Use getAdminUsersByUnit for admin
+            const { users } = await getAdminUsersByUnit(unit.name); // Destructure 'users' from the response
             console.log("[Frontend] handleUnitSelect: API response for users in unit:", users);
-            // --- END ADDED LOGS ---
             setUsersInUnit(users || []); // Ensure it's always an array
         } catch (error) {
             console.error("[Frontend] handleUnitSelect: Error fetching users by unit:", error);
@@ -191,8 +192,8 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
 
         try {
             // user._id here is the MongoDB ObjectId of the user, which is correct for assignedTo
-            const { data } = await reassignTicket(ticket._id, user._id, token);
-            toast.success(data.message);
+            const res = await reassignTicket(ticket._id, user._id, token);
+            toast.success(res.message);
             await fetchTicket(); // Refresh ticket data to show new assigned person
         } catch (error) {
             console.error("Error reassigning ticket:", error);
@@ -206,8 +207,8 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
         setUsersInUnit([]);
 
         try {
-            const { data } = await reassignTicket(ticket._id, null, token); // Pass null to unassign
-            toast.success(data.message);
+            const res = await reassignTicket(ticket._id, null, token); // Pass null to unassign
+            toast.success(res.message);
             await fetchTicket();
         } catch (error) {
             console.error("Error unassigning ticket:", error);
@@ -245,6 +246,7 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
                         </Button>
 
                         {/* --- REASSIGN BUTTON MOVED HERE --- */}
+                        {/* Ensure onToggle receives the new 'show' state */}
                         <Dropdown show={showReassignDropdown} onToggle={handleReassignClick} className="position-relative">
                             <Dropdown.Toggle variant="primary" id="dropdown-reassign" className="d-flex align-items-center gap-2">
                                 <i className="bi bi-arrow-right-square-fill"></i> Reassign this ticket
@@ -268,27 +270,6 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
                                         )}
                                     </Dropdown.Menu>
                                 </Dropdown>
-
-                                {/* Users Dropdown (conditional) */}
-                                {selectedUnit && (
-                                    <Dropdown>
-                                        <Dropdown.Toggle variant="outline-secondary" id="dropdown-users" className="w-100">
-                                            Select User
-                                        </Dropdown.Toggle>
-                                        <Dropdown.Menu>
-                                            {usersInUnit.length > 0 ? (
-                                                usersInUnit.map(user => (
-                                                    <Dropdown.Item key={user._id} onClick={() => handleUserReassign(user)}>
-                                                        {user.name} ({user.email})
-                                                    </Dropdown.Item>
-                                                ))
-                                            ) : (
-                                                <Dropdown.Item disabled>No users in this unit</Dropdown.Item>
-                                            )}
-                                        </Dropdown.Menu>
-                                    </Dropdown>
-                                )}
-
                                 {/* Option to Unassign */}
                                 {ticket.assignedTo && (
                                     <>
@@ -298,11 +279,34 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
                                         </Dropdown.Item>
                                     </>
                                 )}
-
                             </Dropdown.Menu>
                         </Dropdown>
                     </div>
                     {/* --- END NEW WRAPPER --- */}
+
+                    {/* Users Dropdown: OUTSIDE the Dropdown.Menu */}
+                    {selectedUnit && (
+                        <Form.Group className="mb-3 mt-2">
+                            <Form.Label>Select User</Form.Label>
+                            <Form.Select
+                                value={""}
+                                onChange={e => {
+                                    const user = usersInUnit.find(u => u._id === e.target.value);
+                                    if (user) handleUserReassign(user);
+                                }}
+                            >
+                                <option value="">Select a user</option>
+                                {usersInUnit.map(user => (
+                                    <option key={user._id} value={user._id}>
+                                        {user.name} ({user.email})
+                                    </option>
+                                ))}
+                            </Form.Select>
+                            {usersInUnit.length === 0 && (
+                                <div className="text-muted mt-2">No users in this unit</div>
+                            )}
+                        </Form.Group>
+                    )}
 
                     <Card
                         className="shadow-lg border-0 rounded-3xl transition-transform duration-200 hover:scale-[1.01] hover:shadow-2xl"
@@ -328,7 +332,7 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
                                     <i className="bi bi-person me-1"></i>
                                     Assigned To: {ticket.assignedTo && typeof ticket.assignedTo === 'object' && ticket.assignedTo.name
                                         ? ticket.assignedTo.name
-                                        : 'Nisu'}
+                                        : 'N/A'}
                                 </Badge>
                                 {/* Status Badge */}
                                 <Badge bg={localStatus === 'resolved' ? 'success' : 'info'} className="ml-2 px-3 py-2 rounded-xl animate-pulse">

@@ -1,9 +1,12 @@
+//MessageHistory.jsx
+
+
 import React from "react";
 import PropTypes from "prop-types";
 import { Card, Row, Col, Badge, Button, Dropdown } from "react-bootstrap";
 import { useState } from "react";
 
-const MessageHistory = ({ msg, description, image, onDeleteMessage, onAttachmentClick, currentUserId }) => {
+const MessageHistory = ({ msg, description, image, onDeleteMessage, onAttachmentClick, currentUserId, currentUserRole }) => {
   const [hoveredIdx, setHoveredIdx] = useState(null);
   return (
     <Card className="shadow-sm mb-4 border-0" style={{ background: "#f8fafd" }}>
@@ -47,100 +50,77 @@ const MessageHistory = ({ msg, description, image, onDeleteMessage, onAttachment
         </h6>
         {msg && msg.length > 0 ? (
           <div>
-            {msg.map((m, i) => (
-              <Row key={i} className="mb-3">
-                <Col
-                  xs={12}
-                  md={{ span: 10, offset: String(m.authorId) === String(currentUserId) ? 2 : 0 }}
-                  className={`d-flex ${
-                    String(m.authorId) === String(currentUserId)
-                      ? "justify-content-end"
-                      : "justify-content-start"
-                  }`}
-                >
-                  <div
-                    className="p-3 border rounded-4 shadow-sm position-relative"
-                    style={{
-                      background: m.sender === "Admin" ? "#e6f0ff" : "#fff",
-                      minWidth: 180,
-                      maxWidth: 420,
-                      borderTopLeftRadius: m.sender === "Admin" ? 16 : 4,
-                      borderTopRightRadius: m.sender === "Admin" ? 4 : 16,
-                      borderBottomLeftRadius: 16,
-                      borderBottomRightRadius: 16,
-                    }}
-                    onMouseEnter={() => setHoveredIdx(i)}
-                    onMouseLeave={() => setHoveredIdx(null)}
+            {msg.map((m, i) => {
+              // Alignment logic:
+              // - Admin view: admin messages right, user messages left
+              // - User view: user messages right, admin messages left
+              const isRight = (currentUserRole === 'admin' && m.sender === 'Admin') || (currentUserRole === 'user' && m.sender === 'User');
+              return (
+                <Row key={i} className="mb-3">
+                  <Col
+                    xs={12}
+                    md={{ span: 10, offset: isRight ? 2 : 0 }}
+                    className={`d-flex ${isRight ? "justify-content-end" : "justify-content-start"}`}
                   >
-                    <div className="mb-1 d-flex align-items-center">
-                      <Badge
-                        bg={m.sender === "Admin" ? "primary" : "secondary"}
-                        className="me-2"
-                        style={{ fontSize: 13, padding: "0.35em 0.7em" }}
-                      >
-                        {m.sender}
-                      </Badge>
-                      <span className="text-muted small">
-                        {new Date(m.date).toLocaleString()}
-                      </span>
-                      {/* Dropdown only on hover, only for own messages */}
-                      {hoveredIdx === i && String(m.authorId) === String(currentUserId) && (
-                        <Dropdown align="end" className="ms-auto">
-                          <Dropdown.Toggle
-                            variant="link"
-                            size="sm"
-                            style={{ boxShadow: "none", color: "#888" }}
-                            id={`dropdown-message-${i}`}
-                          >
-                            <i className="bi bi-three-dots-vertical"></i>
-                          </Dropdown.Toggle>
-                          <Dropdown.Menu>
-                            <Dropdown.Item
-                              onClick={() => onDeleteMessage && onDeleteMessage(m._id)}
-                              className="text-danger"
-                            >
-                              <i className="bi bi-trash me-2"></i>Delete
-                            </Dropdown.Item>
-                          </Dropdown.Menu>
-                        </Dropdown>
-                      )}
-                    </div>
                     <div
-                      style={{ whiteSpace: "pre-wrap", fontSize: 15 }}
-                      dangerouslySetInnerHTML={{ __html: m.message }}
-                    />
-                    {m.attachments && m.attachments.length > 0 && (
-                      <div className="mt-2">
-                        {m.attachments.map((url, idx) => {
-                          const isImage = /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(url);
-                          if (isImage && onAttachmentClick) {
-                            return (
-                              <img
-                                key={idx}
-                                src={url.startsWith('http') ? url : `http://localhost:4000${url}`}
-                                alt={`attachment-${idx}`}
-                                style={{
-                                  maxWidth: 120,
-                                  maxHeight: 120,
-                                  borderRadius: 6,
-                                  border: "1px solid #e3e3e3",
-                                  boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-                                  marginRight: 8,
-                                  cursor: 'zoom-in',
-                                }}
-                                onClick={() => onAttachmentClick(url.startsWith('http') ? url : `http://localhost:4000${url}`)}
-                              />
-                            );
-                          } else {
-                            return (
-                              <a
-                                key={idx}
-                                href={url.startsWith('http') ? url : `http://localhost:4000${url}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="d-inline-block me-2"
+                      className="p-3 border rounded-4 shadow-sm position-relative"
+                      style={{
+                        background: m.sender === "Admin" ? "#e6f0ff" : "#fff",
+                        minWidth: 180,
+                        maxWidth: 420,
+                        borderTopLeftRadius: m.sender === "Admin" ? 16 : 4,
+                        borderTopRightRadius: m.sender === "Admin" ? 4 : 16,
+                        borderBottomLeftRadius: 16,
+                        borderBottomRightRadius: 16,
+                      }}
+                      onMouseEnter={() => setHoveredIdx(i)}
+                      onMouseLeave={() => setHoveredIdx(null)}
+                    >
+                      <div className="mb-1 d-flex align-items-center">
+                        <Badge
+                          bg={m.sender === "Admin" ? "primary" : "secondary"}
+                          className="me-2"
+                          style={{ fontSize: 13, padding: "0.35em 0.7em" }}
+                        >
+                          {m.sender}
+                        </Badge>
+                        <span className="text-muted small">
+                          {new Date(m.date).toLocaleString()}
+                        </span>
+                        {/* Dropdown only on hover, only for own messages */}
+                        {hoveredIdx === i && String(m.authorId) === String(currentUserId) && (
+                          <Dropdown align="end" className="ms-auto">
+                            <Dropdown.Toggle
+                              variant="link"
+                              size="sm"
+                              style={{ boxShadow: "none", color: "#888" }}
+                              id={`dropdown-message-${i}`}
+                            >
+                              <i className="bi bi-three-dots-vertical"></i>
+                            </Dropdown.Toggle>
+                            <Dropdown.Menu>
+                              <Dropdown.Item
+                                onClick={() => onDeleteMessage && onDeleteMessage(m._id)}
+                                className="text-danger"
                               >
+                                <i className="bi bi-trash me-2"></i>Delete
+                              </Dropdown.Item>
+                            </Dropdown.Menu>
+                          </Dropdown>
+                        )}
+                      </div>
+                      <div
+                        style={{ whiteSpace: "pre-wrap", fontSize: 15 }}
+                        dangerouslySetInnerHTML={{ __html: m.message }}
+                      />
+                      {m.attachments && m.attachments.length > 0 && (
+                        <div className="mt-2">
+                          {m.attachments.map((url, idx) => {
+                            const isImage = /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(url);
+                            if (isImage && onAttachmentClick) {
+                              return (
                                 <img
+                                  key={idx}
                                   src={url.startsWith('http') ? url : `http://localhost:4000${url}`}
                                   alt={`attachment-${idx}`}
                                   style={{
@@ -149,19 +129,44 @@ const MessageHistory = ({ msg, description, image, onDeleteMessage, onAttachment
                                     borderRadius: 6,
                                     border: "1px solid #e3e3e3",
                                     boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-                                    marginRight: 8
+                                    marginRight: 8,
+                                    cursor: 'zoom-in',
                                   }}
+                                  onClick={() => onAttachmentClick(url.startsWith('http') ? url : `http://localhost:4000${url}`)}
                                 />
-                              </a>
-                            );
-                          }
-                        })}
-                      </div>
-                    )}
-                  </div>
-                </Col>
-              </Row>
-            ))}
+                              );
+                            } else {
+                              return (
+                                <a
+                                  key={idx}
+                                  href={url.startsWith('http') ? url : `http://localhost:4000${url}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="d-inline-block me-2"
+                                >
+                                  <img
+                                    src={url.startsWith('http') ? url : `http://localhost:4000${url}`}
+                                    alt={`attachment-${idx}`}
+                                    style={{
+                                      maxWidth: 120,
+                                      maxHeight: 120,
+                                      borderRadius: 6,
+                                      border: "1px solid #e3e3e3",
+                                      boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                                      marginRight: 8
+                                    }}
+                                  />
+                                </a>
+                              );
+                            }
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </Col>
+                </Row>
+              );
+            })}
           </div>
         ) : (
           <div className="text-muted text-center py-4">No messages yet.</div>
@@ -177,6 +182,7 @@ MessageHistory.propTypes = {
   image: PropTypes.string,
   onDeleteMessage: PropTypes.func,
   currentUserId: PropTypes.any,
+  currentUserRole: PropTypes.string,
 };
 
 export default MessageHistory;
