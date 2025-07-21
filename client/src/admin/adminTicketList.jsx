@@ -12,6 +12,7 @@ import {
 } from "react-bootstrap";
 import { getAdminTickets, deleteAdminTicket } from "../api/ticketApi";
 import { toast } from "react-toastify";
+import { BsArrowRepeat } from "react-icons/bs";
 
 const statusColors = {
   open: "success",
@@ -170,159 +171,175 @@ function TicketList({ onSelect, token, refresh }) {
 
   return (
     <Container className="mt-4">
-      <h2 className="mb-4 text-primary">
-        <i className="bi bi-list-ul me-2"></i>All Tickets
-      </h2>
+      <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+        <h2 className="mb-4 text-primary">
+          <i className="bi bi-list-ul me-2"></i>All Tickets
+        </h2>
 
-      {selectedTickets.size > 0 && (
+        {selectedTickets.size > 0 && (
+          <Row className="mb-3">
+            <Col>
+              <Alert variant="info" className="d-flex align-items-center justify-content-between">
+                <span>
+                  <i className="bi bi-check-circle me-2"></i>
+                  {selectedTickets.size} ticket(s) selected
+                </span>
+                <Button variant="danger" size="sm" onClick={handleDeleteSelected}>
+                  <i className="bi bi-trash me-1"></i>
+                  Delete Selected ({selectedTickets.size})
+                </Button>
+              </Alert>
+            </Col>
+          </Row>
+        )}
+
         <Row className="mb-3">
-          <Col>
-            <Alert variant="info" className="d-flex align-items-center justify-content-between">
-              <span>
-                <i className="bi bi-check-circle me-2"></i>
-                {selectedTickets.size} ticket(s) selected
-              </span>
-              <Button variant="danger" size="sm" onClick={handleDeleteSelected}>
-                <i className="bi bi-trash me-1"></i>
-                Delete Selected ({selectedTickets.size})
-              </Button>
-            </Alert>
+          <Col xs={12} md={4} lg={3}>
+            <Form.Select
+              value={unitFilter}
+              onChange={(e) => setUnitFilter(e.target.value)}
+              className="mb-2"
+            >
+              <option value="All">All Units</option>
+              {UNIT_OPTIONS.map((unit) => (
+                <option key={unit} value={unit}>
+                  {unit}
+                </option>
+              ))}
+            </Form.Select>
+          </Col>
+          <Col xs={12} md={4} lg={3}>
+            <Form.Select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="mb-2"
+            >
+              {STATUS_OPTIONS.map((status) => (
+                <option key={status} value={status}>
+                  {status === "All"
+                    ? "All Statuses"
+                    : status.charAt(0).toUpperCase() + status.slice(1)}
+                </option>
+              ))}
+            </Form.Select>
+          </Col>
+          <Col xs={12} md={4} lg={3}>
+            <Form.Select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="mb-2"
+            >
+              {TYPE_OPTIONS.map((type) => (
+                <option key={type} value={type}>
+                  {type === "All"
+                    ? "All Types"
+                    : type.charAt(0).toUpperCase() + type.slice(1)}
+                </option>
+              ))}
+            </Form.Select>
           </Col>
         </Row>
-      )}
 
-      <Row className="mb-3">
-        <Col xs={12} md={4} lg={3}>
-          <Form.Select
-            value={unitFilter}
-            onChange={(e) => setUnitFilter(e.target.value)}
-            className="mb-2"
-          >
-            <option value="All">All Units</option>
-            {UNIT_OPTIONS.map((unit) => (
-              <option key={unit} value={unit}>
-                {unit}
-              </option>
-            ))}
-          </Form.Select>
-        </Col>
-        <Col xs={12} md={4} lg={3}>
-          <Form.Select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="mb-2"
-          >
-            {STATUS_OPTIONS.map((status) => (
-              <option key={status} value={status}>
-                {status === "All"
-                  ? "All Statuses"
-                  : status.charAt(0).toUpperCase() + status.slice(1)}
-              </option>
-            ))}
-          </Form.Select>
-        </Col>
-        <Col xs={12} md={4} lg={3}>
-          <Form.Select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="mb-2"
-          >
-            {TYPE_OPTIONS.map((type) => (
-              <option key={type} value={type}>
-                {type === "All"
-                  ? "All Types"
-                  : type.charAt(0).toUpperCase() + type.slice(1)}
-              </option>
-            ))}
-          </Form.Select>
-        </Col>
-      </Row>
+        {loading && <Spinner animation="border" />}
+        {error && <Alert variant="danger">{error}</Alert>}
 
-      {loading && <Spinner animation="border" />}
-      {error && <Alert variant="danger">{error}</Alert>}
-
-      {!loading && !error && (
-        <Table striped bordered hover responsive className="shadow-sm rounded">
-          <thead style={{ background: "#f5f6fa" }}>
-            <tr>
-              <th>
-                <Form.Check
-                  type="checkbox"
-                  checked={isAllSelected}
-                  ref={(input) => {
-                    if (input) input.indeterminate = isIndeterminate;
-                  }}
-                  onChange={(e) => handleSelectAll(e.target.checked)}
-                />
-              </th>
-              <th>Subject</th>
-              <th>Type</th>
-              <th>Assigned Unit</th>
-              <th>Requester</th>
-              <th>Assigned To</th>
-              <th>Status</th>
-              <th>Last Update</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredTickets.map((ticket) => (
-              <tr
-                key={ticket._id}
-                style={{
-                  background: ticket.status === "open" ? "#e6ffe6" : undefined,
-                  cursor: "pointer",
-                }}
-                onClick={() => onSelect(ticket)}
-                onMouseOver={(e) => (e.currentTarget.style.background = "#f0f4ff")}
-                onMouseOut={(e) =>
-                  (e.currentTarget.style.background =
-                    ticket.status === "open" ? "#e6ffe6" : "")
-                }
-              >
-                <td onClick={(e) => e.stopPropagation()}>
+        {!loading && !error && (
+          <Table striped bordered hover responsive className="shadow-sm rounded" style={{ width: '100%' }}>
+            <thead style={{ background: "#f5f6fa" }}>
+              <tr>
+                <th>
                   <Form.Check
                     type="checkbox"
-                    checked={selectedTickets.has(ticket._id)}
-                    onChange={(e) =>
-                      handleSelectTicket(ticket._id, e.target.checked)
-                    }
+                    checked={isAllSelected}
+                    ref={(input) => {
+                      if (input) input.indeterminate = isIndeterminate;
+                    }}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
                   />
-                </td>
-                <td>{ticket.subject}</td>
-                <td>
-                  <Badge bg="info" text="dark" className="text-capitalize">
-                    {ticket.type}
-                  </Badge>
-                </td>
-                <td>
-                  <Badge bg="secondary" className="text-capitalize">
-                    {ticket.assignedUnit || "—"}
-                  </Badge>
-                </td>
-                <td>{ticket.user?.name || "N/A"}</td>
-                <td>
-                  <Badge bg="info" className="text-capitalize">
-                    {ticket.assignedTo?.name || "—"}
-                  </Badge>
-                </td>
-                <td>
-                  <Badge
-                    bg={statusColors[ticket.status] || "secondary"}
-                    className="px-3 py-2 text-capitalize"
-                  >
-                    {ticket.status}
-                  </Badge>
-                </td>
-                <td>
-                  {ticket.updatedAt
-                    ? new Date(ticket.updatedAt).toLocaleString()
-                    : "N/A"}
-                </td>
+                </th>
+                <th>Subject</th>
+                <th>Type</th>
+                <th>Assigned Unit</th>
+                <th>Requester</th>
+                <th>Assigned To</th>
+                <th>Reassigned Unit</th>
+                <th>Reassigned To</th>
+                <th style={{ minWidth: 130, width: 150 }}><i className="bi bi-info-circle me-1"></i>Status</th>
+                <th>Last Update</th>
               </tr>
-            ))}
-          </tbody>
-        </Table>
-      )}
+            </thead>
+            <tbody>
+              {filteredTickets.map((ticket) => (
+                <tr
+                  key={ticket._id}
+                  style={{
+                    background: ticket.status === "open" ? "#e6ffe6" : undefined,
+                    cursor: "pointer",
+                  }}
+                  onClick={() => onSelect(ticket)}
+                  onMouseOver={(e) => (e.currentTarget.style.background = "#f0f4ff")}
+                  onMouseOut={(e) =>
+                    (e.currentTarget.style.background =
+                      ticket.status === "open" ? "#e6ffe6" : "")
+                  }
+                >
+                  <td onClick={(e) => e.stopPropagation()}>
+                    <Form.Check
+                      type="checkbox"
+                      checked={selectedTickets.has(ticket._id)}
+                      onChange={(e) =>
+                        handleSelectTicket(ticket._id, e.target.checked)
+                      }
+                    />
+                  </td>
+                  <td>{ticket.subject}</td>
+                  <td>
+                    <Badge bg="info" text="dark" className="text-capitalize">
+                      {ticket.type}
+                    </Badge>
+                  </td>
+                  <td>
+                    <Badge bg="secondary" className="text-capitalize">
+                      {ticket.assignedUnit || "—"}
+                    </Badge>
+                  </td>
+                  <td>{ticket.user?.name || "N/A"}</td>
+                  <td>
+                    <Badge bg="info" className="text-capitalize">
+                      {ticket.assignedTo?.name || "—"}
+                    </Badge>
+                  </td>
+                  <td>
+                    <Badge bg="secondary" className="text-capitalize">
+                      {ticket.reassigned ? ticket.assignedUnit || "—" : "—"}
+                    </Badge>
+                  </td>
+                  <td>
+                    <Badge bg="info" className="text-capitalize">
+                      {ticket.reassigned ? (ticket.assignedTo?.name || "—") : "—"}
+                    </Badge>
+                  </td>
+                  <td style={{ verticalAlign: 'middle' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <Badge
+                        bg={statusColors[ticket.status] || "secondary"}
+                        className="px-3 py-2 text-capitalize"
+                      >
+                        {ticket.status}
+                      </Badge>
+                    </span>
+                  </td>
+                  <td>
+                    {ticket.updatedAt
+                      ? new Date(ticket.updatedAt).toLocaleString()
+                      : "N/A"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        )}
+      </div>
     </Container>
   );
 }
