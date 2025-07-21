@@ -1,3 +1,6 @@
+//ticketModel.js
+
+
 import mongoose from 'mongoose';
 
 
@@ -39,7 +42,8 @@ const ticketSchema = new mongoose.Schema({
   image: { type: String, required: false }, // Optional image field
   attachments: [{ type: String }], // <-- Add this line
   assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false }, // <-- New field for assigned person
-  messages: [messageSchema]
+  messages: [messageSchema],
+  reassigned: { type: Boolean, default: false } // <-- Add this line
 });
 
 const Ticket = mongoose.model('Ticket', ticketSchema);

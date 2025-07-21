@@ -1,3 +1,5 @@
+//TicketController.js
+
 import mongoose from 'mongoose';
 import Ticket from '../models/ticketModel.js';
 import userModel from '../models/userModel.js';
@@ -75,12 +77,20 @@ export const createTicket = async (req, res) => {
 export const getUserTickets = async (req, res) => {
   try {
     const userId = req.user._id;
-    const tickets = await Ticket.find({
+    const { mode } = req.query;
+    let query = {
       $or: [
         { user: userId },
         { assignedTo: userId }
       ]
-    })
+    };
+    if (mode === 'reassigned') {
+      query = {
+        reassigned: true,
+        assignedTo: userId
+      };
+    }
+    const tickets = await Ticket.find(query)
       .populate('user', 'name email')
       .populate('assignedTo', 'name email')
       .sort({ createdAt: -1 });

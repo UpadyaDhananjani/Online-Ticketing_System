@@ -1,3 +1,6 @@
+//adminController.jsx
+
+
 import userModel from "../models/userModel.js";
 
 export const getAllUsers = async (req, res) => {
@@ -32,4 +35,4 @@ export const deleteUser = async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
-}; 
+};

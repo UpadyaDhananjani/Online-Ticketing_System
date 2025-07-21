@@ -1,3 +1,6 @@
+//TicketList.jsx
+
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Badge, Button } from 'react-bootstrap';
@@ -13,7 +16,7 @@ const statusColors = {
   "in progress": "info"
 };
 
-function TicketList({ filter, mode = 'created', userId, onOpenReceivedCountChange }) { 
+function TicketList({ filter, mode = 'created', userId, onOpenReceivedCountChange, refresh }) { 
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -25,7 +28,11 @@ function TicketList({ filter, mode = 'created', userId, onOpenReceivedCountChang
       setLoading(true);
       setError(null);
       try {
-        const res = await axios.get('/api/tickets', { 
+        let url = '/api/tickets';
+        if (mode === 'reassigned') {
+          url += '?mode=reassigned';
+        }
+        const res = await axios.get(url, { 
           withCredentials: true 
         });
         setTickets(res.data);
@@ -38,7 +45,8 @@ function TicketList({ filter, mode = 'created', userId, onOpenReceivedCountChang
       }
     };
     fetchTickets();
-  }, []);
+    // eslint-disable-next-line
+  }, [mode, refresh]);
 
   // Filtering logic
   let filteredTickets = tickets;
