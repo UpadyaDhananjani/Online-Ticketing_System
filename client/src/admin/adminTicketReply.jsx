@@ -18,6 +18,7 @@ import {
 import { Container, Card, Button, Form, Row, Col, Badge, Dropdown } from "react-bootstrap";
 import MessageHistory from "../components/MessageHistory/MessageHistory"; // Corrected path
 import { toast } from 'react-toastify';
+import { BsArrowRepeat } from "react-icons/bs";
 
 function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) {
     // IMPORTANT: Add a guard clause here if ticket might be null/undefined initially
@@ -319,6 +320,11 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
                                 {/* Subject Badge remains here */}
                                 <Badge bg="light" text="dark" className="ml-2 px-3 py-2 text-base rounded-xl shadow-sm">
                                     {ticket.subject}
+                                    {ticket.reassigned && (
+                                        <span title="Reassigned" style={{ marginLeft: 6 }}>
+                                            <BsArrowRepeat style={{ color: '#0d6efd', verticalAlign: 'middle' }} />
+                                        </span>
+                                    )}
                                 </Badge>
                             </h4>
                             <div className="mt-2 md:mt-0 flex items-center gap-2">
@@ -334,6 +340,21 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
                                         ? ticket.assignedTo.name
                                         : 'N/A'}
                                 </Badge>
+                                {/* Reassigned Unit/To badges */}
+                                {ticket.reassigned && (
+                                    <>
+                                        <Badge bg="secondary" className="text-capitalize px-3 py-2 rounded-xl flex items-center gap-1">
+                                            <BsArrowRepeat className="me-1" />
+                                            Reassigned Unit: {ticket.assignedUnit || '—'}
+                                        </Badge>
+                                        <Badge bg="info" className="text-capitalize px-3 py-2 rounded-xl flex items-center gap-1">
+                                            <BsArrowRepeat className="me-1" />
+                                            Reassigned To: {ticket.assignedTo && typeof ticket.assignedTo === 'object' && ticket.assignedTo.name
+                                                ? ticket.assignedTo.name
+                                                : '—'}
+                                        </Badge>
+                                    </>
+                                )}
                                 {/* Status Badge */}
                                 <Badge bg={localStatus === 'resolved' ? 'success' : 'info'} className="ml-2 px-3 py-2 rounded-xl animate-pulse">
                                     <i className={`bi ${localStatus === 'resolved' ? 'bi-check-circle-fill' : 'bi-hourglass-split'} mr-1`}></i>
