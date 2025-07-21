@@ -1,3 +1,6 @@
+//TicketsPage.jsx
+
+
 import React, { useState, useContext } from 'react';
 import TicketList from '../components/TicketList';
 import { Tabs, Tab } from 'react-bootstrap';
@@ -9,6 +12,7 @@ function TicketsPage({ token, filter }) {
   const { userData } = useContext(AppContent);
   const userId = userData?.id;
   const [openReceivedCount, setOpenReceivedCount] = useState(0);
+  const [refresh, setRefresh] = useState(0);
 
   return (
     <div>
@@ -68,7 +72,7 @@ function TicketsPage({ token, filter }) {
           }
         >
           <div className="tab-pane-fade-in">
-            {/* No logic or TicketList here, just an empty tab or placeholder */}
+            <TicketList mode="reassigned" userId={userId} refresh={refresh} />
           </div>
         </Tab>
       </Tabs>

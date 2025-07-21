@@ -1,3 +1,5 @@
+//ticketAdminRoutes.js
+
 import express from 'express';
 import { 
   getAllTickets, 
@@ -6,7 +8,9 @@ import {
   resolveTicket, // Imported named resolveTicket
   markTicketOpen, // Imported named markTicketOpen
   markTicketInProgress, // Imported named markTicketInProgress
-  deleteTicket // <-- Add this import
+  deleteTicket, // <-- Add this import
+  reassignTicket, // <-- Add this import
+  getAdminTicketById // <-- Add this import
 } from '../controllers/ticketAdminController.js'; // All admin controllers from one file
 
 import authMiddleware from '../middleware/authMiddleware.js'; // Ensure authMiddleware is imported
@@ -41,5 +45,11 @@ router.delete('/:ticketId/messages/:messageId', deleteMessage); // Using named e
 
 // --- NEW ROUTE: Delete a ticket (Admin only) ---
 router.delete('/:id', deleteTicket);
+
+// --- NEW ROUTE: Reassign a ticket (Admin only) ---
+router.patch('/:id/assign', reassignTicket);
+
+// --- NEW ROUTE: Get a single ticket by ID (Admin only) ---
+router.get('/:id', getAdminTicketById);
 
 export default router;
