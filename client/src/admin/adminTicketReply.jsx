@@ -11,13 +11,14 @@ import {
     deleteAdminMessage,
     getAdminTicketById,
     getPublicUnits,
-    getUsersByUnit,
+    getAdminUsersByUnit,
     reassignTicket
 } from "../api/ticketApi"; // Corrected path based on your file structure
 
 import { Container, Card, Button, Form, Row, Col, Badge, Dropdown } from "react-bootstrap";
 import MessageHistory from "../components/MessageHistory/MessageHistory"; // Corrected path
 import { toast } from 'react-toastify';
+import { BsArrowRepeat } from "react-icons/bs";
 
 function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) {
     // IMPORTANT: Add a guard clause here if ticket might be null/undefined initially
@@ -174,9 +175,8 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
         console.log("[Frontend] handleUnitSelect: Unit selected for lookup:", unit);
         console.log("[Frontend] handleUnitSelect: Sending unit.name to API:", unit.name);
         try {
-            // CRUCIAL: Pass unit.name (which is also unit._id from publicController.js)
-            // Ensure token is passed if your getUsersByUnit requires it (it does in ticketApi.js)
-            const { users } = await getUsersByUnit(unit.name, token); // Destructure 'users' from the response
+            // Use getAdminUsersByUnit for admin
+            const { users } = await getAdminUsersByUnit(unit.name); // Destructure 'users' from the response
             console.log("[Frontend] handleUnitSelect: API response for users in unit:", users);
             setUsersInUnit(users || []); // Ensure it's always an array
         } catch (error) {
@@ -193,8 +193,8 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
 
         try {
             // user._id here is the MongoDB ObjectId of the user, which is correct for assignedTo
-            const { data } = await reassignTicket(ticket._id, user._id, token);
-            toast.success(data.message);
+            const res = await reassignTicket(ticket._id, user._id, token);
+            toast.success(res.message);
             await fetchTicket(); // Refresh ticket data to show new assigned person
         } catch (error) {
             console.error("Error reassigning ticket:", error);
@@ -208,8 +208,8 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
         setUsersInUnit([]);
 
         try {
-            const { data } = await reassignTicket(ticket._id, null, token); // Pass null to unassign
-            toast.success(data.message);
+            const res = await reassignTicket(ticket._id, null, token); // Pass null to unassign
+            toast.success(res.message);
             await fetchTicket();
         } catch (error) {
             console.error("Error unassigning ticket:", error);
@@ -255,7 +255,6 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
 
                             <Dropdown.Menu className="shadow-lg p-2 rounded-lg" style={{ minWidth: '200px' }}>
                                 {/* Units Dropdown */}
-                                {/* This Dropdown is nested, which is fine, but ensure its own toggle/show logic is handled if it were independent */}
                                 <Dropdown className="mb-2">
                                     <Dropdown.Toggle variant="outline-secondary" id="dropdown-units" className="w-100">
                                         {selectedUnit ? selectedUnit.name : "Select Unit"}
@@ -272,27 +271,6 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
                                         )}
                                     </Dropdown.Menu>
                                 </Dropdown>
-
-                                {/* Users Dropdown (conditional) */}
-                                {selectedUnit && (
-                                    <Dropdown>
-                                        <Dropdown.Toggle variant="outline-secondary" id="dropdown-users" className="w-100">
-                                            Select User
-                                        </Dropdown.Toggle>
-                                        <Dropdown.Menu>
-                                            {usersInUnit.length > 0 ? (
-                                                usersInUnit.map(user => (
-                                                    <Dropdown.Item key={user._id} onClick={() => handleUserReassign(user)}>
-                                                        {user.name} ({user.email})
-                                                    </Dropdown.Item>
-                                                ))
-                                            ) : (
-                                                <Dropdown.Item disabled>No users in this unit</Dropdown.Item>
-                                            )}
-                                        </Dropdown.Menu>
-                                    </Dropdown>
-                                )}
-
                                 {/* Option to Unassign */}
                                 {ticket.assignedTo && (
                                     <>
@@ -302,11 +280,34 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
                                         </Dropdown.Item>
                                     </>
                                 )}
-
                             </Dropdown.Menu>
                         </Dropdown>
                     </div>
                     {/* --- END NEW WRAPPER --- */}
+
+                    {/* Users Dropdown: OUTSIDE the Dropdown.Menu */}
+                    {selectedUnit && (
+                        <Form.Group className="mb-3 mt-2">
+                            <Form.Label>Select User</Form.Label>
+                            <Form.Select
+                                value={""}
+                                onChange={e => {
+                                    const user = usersInUnit.find(u => u._id === e.target.value);
+                                    if (user) handleUserReassign(user);
+                                }}
+                            >
+                                <option value="">Select a user</option>
+                                {usersInUnit.map(user => (
+                                    <option key={user._id} value={user._id}>
+                                        {user.name} ({user.email})
+                                    </option>
+                                ))}
+                            </Form.Select>
+                            {usersInUnit.length === 0 && (
+                                <div className="text-muted mt-2">No users in this unit</div>
+                            )}
+                        </Form.Group>
+                    )}
 
                     <Card
                         className="shadow-lg border-0 rounded-3xl transition-transform duration-200 hover:scale-[1.01] hover:shadow-2xl"
@@ -319,6 +320,11 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
                                 {/* Subject Badge remains here */}
                                 <Badge bg="light" text="dark" className="ml-2 px-3 py-2 text-base rounded-xl shadow-sm">
                                     {ticket.subject}
+                                    {ticket.reassigned && (
+                                        <span title="Reassigned" style={{ marginLeft: 6 }}>
+                                            <BsArrowRepeat style={{ color: '#0d6efd', verticalAlign: 'middle' }} />
+                                        </span>
+                                    )}
                                 </Badge>
                             </h4>
                             <div className="mt-2 md:mt-0 flex items-center gap-2">
@@ -334,6 +340,21 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
                                         ? ticket.assignedTo.name
                                         : 'N/A'}
                                 </Badge>
+                                {/* Reassigned Unit/To badges */}
+                                {ticket.reassigned && (
+                                    <>
+                                        <Badge bg="secondary" className="text-capitalize px-3 py-2 rounded-xl flex items-center gap-1">
+                                            <BsArrowRepeat className="me-1" />
+                                            Reassigned Unit: {ticket.assignedUnit || '—'}
+                                        </Badge>
+                                        <Badge bg="info" className="text-capitalize px-3 py-2 rounded-xl flex items-center gap-1">
+                                            <BsArrowRepeat className="me-1" />
+                                            Reassigned To: {ticket.assignedTo && typeof ticket.assignedTo === 'object' && ticket.assignedTo.name
+                                                ? ticket.assignedTo.name
+                                                : '—'}
+                                        </Badge>
+                                    </>
+                                )}
                                 {/* Status Badge */}
                                 <Badge bg={localStatus === 'resolved' ? 'success' : 'info'} className="ml-2 px-3 py-2 rounded-xl animate-pulse">
                                     <i className={`bi ${localStatus === 'resolved' ? 'bi-check-circle-fill' : 'bi-hourglass-split'} mr-1`}></i>

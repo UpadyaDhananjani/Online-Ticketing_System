@@ -1,21 +1,39 @@
+//UnitUserModal.jsx
+
+
 import React, { useEffect, useState } from "react";
 import { Modal, Spinner, Alert, ListGroup, Button, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { BsTrash } from "react-icons/bs";
+import { deleteAdminUser } from "../api/ticketApi";
+
 
 const UnitUsersModal = ({ show, unit, onHide, token, userData }) => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
 
   useEffect(() => {
-    if (!show || !unit) return;
+    if (!show || !unit) {
+      setUsers([]);
+      setError("No unit selected.");
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError("");
     setUsers([]);
     let url = "";
     if (userData?.role === "admin") {
-      url = `/api/admin/users?unit=${encodeURIComponent(unit)}`;
+      if (unit) {
+        url = `/api/admin/users?unit=${encodeURIComponent(unit)}`;
+      } else {
+        setError("No unit selected.");
+        setLoading(false);
+        return;
+      }
     } else {
       url = `/api/user/by-unit/${encodeURIComponent(unit)}`;
     }
@@ -36,24 +54,31 @@ const UnitUsersModal = ({ show, unit, onHide, token, userData }) => {
       .finally(() => setLoading(false));
   }, [show, unit, token, userData]);
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) return;
-    setDeletingId(id);
+  const handleDeleteClick = (id) => {
+    setUserToDelete(id);
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!userToDelete) return;
+    setDeletingId(userToDelete);
     setError("");
     try {
-      const res = await fetch(`/api/admin/users/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to delete user");
-      setUsers((prev) => prev.filter((u) => u._id !== id));
+      const res = await deleteAdminUser(userToDelete);
+      if (!res.success) throw new Error(res.message || "Failed to delete user");
+      setUsers((prev) => prev.filter((u) => u._id !== userToDelete));
+      setShowConfirmModal(false);
+      setUserToDelete(null);
     } catch (err) {
       setError(err.message || "Failed to delete user");
     } finally {
       setDeletingId(null);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setShowConfirmModal(false);
+    setUserToDelete(null);
   };
 
   return (
@@ -73,12 +98,10 @@ const UnitUsersModal = ({ show, unit, onHide, token, userData }) => {
         )}
         {!loading && !error && users.length > 0 && (
           <ListGroup>
-            {Array.isArray(users) && users.map((user) => (
-              <ListGroup.Item key={user._id} className="d-flex justify-content-between align-items-center" style={{ position: 'relative' }}>
-                <div>
-                  <div className="fw-bold">{user.name}</div>
-                  <div className="text-muted" style={{ fontSize: 14 }}>{user.email}</div>
-                </div>
+            {users.map((user) => (
+              <ListGroup.Item key={user._id}>
+                <div className="fw-bold">{user.name}</div>
+                <div className="text-muted" style={{ fontSize: 14 }}>{user.email}</div>
                 {userData?.role === 'admin' && (
                   <OverlayTrigger placement="left" overlay={<Tooltip>Delete user</Tooltip>}>
                     <span>
@@ -87,7 +110,7 @@ const UnitUsersModal = ({ show, unit, onHide, token, userData }) => {
                         size="sm"
                         style={{ opacity: 0.85, marginLeft: 8 }}
                         disabled={deletingId === user._id}
-                        onClick={() => handleDelete(user._id)}
+                        onClick={() => handleDeleteClick(user._id)}
                       >
                         {deletingId === user._id ? <Spinner size="sm" animation="border" /> : <BsTrash />}
                       </Button>
@@ -99,8 +122,24 @@ const UnitUsersModal = ({ show, unit, onHide, token, userData }) => {
           </ListGroup>
         )}
       </Modal.Body>
+      <Modal show={showConfirmModal} onHide={handleCancelDelete} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Delete</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to delete this user? This action cannot be undone.
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCancelDelete} disabled={deletingId !== null}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={handleConfirmDelete} disabled={deletingId !== null}>
+            {deletingId !== null ? <Spinner size="sm" animation="border" /> : "Delete"}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </Modal>
   );
 };
 
-export default UnitUsersModal; 
+export default UnitUsersModal;

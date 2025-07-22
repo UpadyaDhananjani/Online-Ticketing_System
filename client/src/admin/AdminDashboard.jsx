@@ -1,3 +1,6 @@
+//adminDashboard.jsx
+
+
 import React, { useState } from "react";
 
 import TicketList from "./adminTicketList.jsx";
@@ -10,13 +13,19 @@ function AdminDashboard({ token }) {
 
  const [selectedTicket, setSelectedTicket] = useState(null);
 
- const [refresh, setRefresh] = useState(false);
+ const [refresh, setRefresh] = useState(0);
 
 
 
-  // Callback to trigger refresh in TicketList
+  // Handler to update selected ticket and refresh the ticket list
 
-  const handleRefresh = () => setRefresh(r => !r);
+  const handleTicketUpdate = (updatedTicket) => {
+
+    setSelectedTicket(updatedTicket);
+
+    setRefresh((r) => r + 1); // Triggers TicketList to refetch
+
+  };
 
 
 
@@ -36,17 +45,9 @@ function AdminDashboard({ token }) {
 
           ticket={selectedTicket}
 
-          onBack={() => {
+          onBack={() => setSelectedTicket(null)}
 
-            setSelectedTicket(null);
-
-            handleRefresh(); // Refresh the list after closing reply
-
-          }}
-
-          onTicketUpdate={setSelectedTicket}
-
-          onStatusChange={handleRefresh}
+          onTicketUpdate={handleTicketUpdate}
 
         />
 

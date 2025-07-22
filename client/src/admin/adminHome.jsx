@@ -15,7 +15,8 @@ import {
     BsBarChartFill,
     BsClipboardCheck,
     BsGearFill,
-    BsHeadset
+    BsHeadset,
+    BsArrowRepeat
 } from "react-icons/bs";
 import UnitUsersModal from "./UnitUsersModal.jsx";
 
@@ -356,6 +357,11 @@ const adminHome = () => { // Changed component name to PascalCase for convention
                                                         <span className="d-flex align-items-center gap-2">
                                                             <BsCardText className="text-primary" />
                                                             <Link to={`/tickets/${ticket._id}`}>{ticket.subject}</Link>
+                                                            {ticket.reassigned && (
+                                                              <span title="Reassigned" style={{ marginLeft: 4 }}>
+                                                                <BsArrowRepeat style={{ color: '#0d6efd', verticalAlign: 'middle' }} />
+                                                              </span>
+                                                            )}
                                                         </span>
                                                     </td>
                                                     <td>

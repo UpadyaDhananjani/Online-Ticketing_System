@@ -287,3 +287,13 @@ export const getUsersByUnit = async (unitName) => {
         throw error;
     }
 };
+
+export const getAdminUsersByUnit = async (unitName) => {
+    const response = await axiosInstance.get(`/admin/users?unit=${encodeURIComponent(unitName)}`);
+    return response.data;
+};
+
+export const deleteAdminUser = async (userId) => {
+    const response = await axiosInstance.delete(`/admin/users/${userId}`);
+    return response.data;
+};

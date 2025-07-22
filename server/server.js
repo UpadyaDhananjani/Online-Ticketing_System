@@ -13,6 +13,7 @@ import ticketRoutes from './routes/ticketRoutes.js';
 import ticketAdminRoutes from './routes/ticketAdminRoutes.js';
 import uploadRoutes from "./routes/uploadRoutes.js";
 import publicRoutes from './routes/publicRoutes.js';
+import adminRouter from "./routes/adminRoutes.js";
 
 // Import authMiddleware here since you're using it directly in this file
 import authMiddleware from './middleware/authMiddleware.js'; // <--- Ensure this import is present
@@ -63,6 +64,8 @@ app.get('/api/auth/is-auth', authMiddleware, (req, res) => {
 // Static file serving for uploads
 const uploadsDir = path.join(process.cwd(), 'uploads');
 app.use('/uploads', express.static(uploadsDir));
+
+app.use('/api/admin', adminRouter);
 
 // --- Server initialization ---
 app.listen(port, () => console.log(`Server started on PORT:${port}`));
