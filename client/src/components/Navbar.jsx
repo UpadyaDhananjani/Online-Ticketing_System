@@ -12,14 +12,6 @@ const Navbar = () => {
     const { userData, setIsLoggedin, setUserData, backendUrl, isLoggedin } = useContext(AppContent);
     const [showDropdown, setShowDropdown] = useState(false);
 
-    // --- DEBUG LOG START ---
-    console.log("Navbar: userData:", userData);
-    console.log("Navbar: isLoggedin:", isLoggedin);
-    if (userData) {
-        console.log("Navbar: userData.isAccountVerified:", userData.isAccountVerified);
-    }
-    // --- DEBUG LOG END ---
-
     const sendVerificationOtp = async () => {
         if (!userData || !userData.id) {
             toast.error("User not logged in or user ID is missing. Cannot send OTP.");
@@ -81,7 +73,10 @@ const Navbar = () => {
             <img
                 src={assets.logo}
                 alt="logo"
-                className="w-28 sm:w-32 cursor-pointer"
+                // FIX: Changed width classes to set a specific height and auto-adjust width.
+                // This makes the logo larger and prevents distortion.
+                // You can adjust 'h-12' to 'h-16', 'h-20', etc., based on desired size.
+                className="h-12 w-auto cursor-pointer" // Adjusted sizing here
                 onClick={() => navigate('/')}
             />
 

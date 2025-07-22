@@ -2,390 +2,231 @@ import React, { useContext, useState, useEffect } from "react";
 import { assets } from "../assets/assets";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AppContent } from "../context/AppContext";
-// Removed direct axios import here, as all API calls should go through ticketApi.js
-// import axios from "axios"; // This line remains commented out or removed
 import { toast } from "react-toastify";
-// CORRECTED IMPORT: Ensure adminLogin is imported along with others
-import { getPublicUnits, registerUser, loginUser, adminLogin } from "../api/ticketApi";
+import axios from "axios";
 
 const Login = () => {
-    const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
-    // backendUrl is no longer directly used for admin login if using ticketApi.js
-    const { setIsLoggedin, getUserData } = useContext(AppContent);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const roleFromUrl = searchParams.get("role");
+  const stateFromUrl = searchParams.get("state");
 
-    const roleFromUrl = searchParams.get("role");
-    const stateFromUrl = searchParams.get("state");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [selectedUnit, setSelectedUnit] = useState("");
+  const [units, setUnits] = useState([]);
+  const [loadingUnits, setLoadingUnits] = useState(false);
 
-    const [state, setState] = useState(
-        roleFromUrl === "admin"
-            ? "Login"
-            : stateFromUrl === "login"
-                ? "Login"
-                : "Sign Up"
+  const [state, setState] = useState(
+    roleFromUrl === "admin"
+      ? "Login"
+      : stateFromUrl?.toLowerCase() === "login"
+      ? "Login"
+      : "Sign Up"
+  );
+
+  const { setIsLoggedin, setUserData, backend } = useContext(AppContent);
+
+  useEffect(() => {
+    setState(
+      roleFromUrl === "admin"
+        ? "Login"
+        : stateFromUrl?.toLowerCase() === "login"
+        ? "Login"
+        : "Sign Up"
     );
-    const [currentRole, setCurrentRole] = useState(roleFromUrl || "user");
+  }, [roleFromUrl, stateFromUrl]);
 
-    const [name, setName] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [unit, setUnit] = useState("");
-    const [units, setUnits] = useState([]); // State to store fetched units
-
-    // Fetch units when component mounts
-    useEffect(() => {
-        const fetchUnits = async () => {
-            try {
-                const data = await getPublicUnits(); // getPublicUnits returns data directly
-                setUnits(data);
-            } catch (error) {
-                console.error("Error fetching public units:", error);
-                toast.error("Failed to load units for signup.");
-            }
-        };
-        fetchUnits();
-    }, []); // Empty dependency array means this runs once on mount
-
-    useEffect(() => {
-        const newRole = searchParams.get("role");
-        const newStateParam = searchParams.get("state");
-
-        if (newRole && newRole !== currentRole) {
-            setCurrentRole(newRole);
-            setState("Login");
-        } else if (newStateParam === "login" && state !== "Login") {
-            setState("Login");
-            setCurrentRole("user");
-        } else if (!newRole && !newStateParam && currentRole !== "user") {
-            setCurrentRole("user");
-            setState("Sign Up");
-        } else if (!newRole && !newStateParam && state !== "Sign Up") {
-            setCurrentRole("user");
-            setState("Sign Up");
-        }
-
-        // Reset form fields on URL param change
-        setName("");
-        setEmail("");
-        setPassword("");
-        setUnit("");
-    }, [searchParams, currentRole, state]);
-
-    const onsubmitHandler = async (e) => {
-        e.preventDefault();
-
+  useEffect(() => {
+    const fetchUnits = async () => {
+      if (state === "Sign Up") {
+        setLoadingUnits(true);
         try {
-            let responseData;
-
-            if (currentRole === "admin") {
-                // CHANGED: Now using the adminLogin function from ticketApi.js
-                responseData = await adminLogin({
-                    email,
-                    password,
-                });
-            } else if (state === "Sign Up") {
-                // Using the registerUser function from ticketApi.js
-                responseData = await registerUser({
-                    name,
-                    email,
-                    password,
-                    unit,
-                });
-            } else { // state === "Login"
-                // Using the loginUser function from ticketApi.js
-                responseData = await loginUser({
-                    email,
-                    password,
-                });
-            }
-
-            if (responseData.success) {
-                toast.success(responseData.message || "Operation successful!");
-                setIsLoggedin(true);
-                await getUserData(); // Fetch updated user data after login/signup
-                navigate("/dashboard"); // Navigate to dashboard on success
-            } else {
-                toast.error(responseData.message);
-            }
+          const response = await axios.get(`${backend}/api/units`);
+          if (response.data.success) {
+            setUnits(response.data.units);
+          } else {
+            toast.error(response.data.message);
+          }
         } catch (error) {
-            const errorMsg = error.response?.data?.message || error.message || "Something went wrong";
-            toast.error(errorMsg);
+          toast.error("Failed to fetch units.");
+        } finally {
+          setLoadingUnits(false);
         }
+      }
     };
+    fetchUnits();
+  }, [state, backend]);
 
-    return (
-        <div className="flex items-center justify-center min-h-screen px-6 sm:px-0 bg-gradient-to-br from-blue-200 to-purple-400">
-            <img
-                onClick={() => navigate("/")}
-                src={assets.logo}
-                alt="logo"
-                className="absolute left-5 sm:left-20 top-5 w-28 sm:w-32 cursor-pointer"
-            />
+  const onLogin = async (e) => {
+    e.preventDefault();
+    if (!email || !password) return toast.error("All fields are required");
 
-            <div className="bg-slate-900 p-10 rounded-lg shadow-lg w-full sm:w-96 text-indigo-300 text-sm">
-                <h2 className="text-3xl font-semibold text-white text-center mb-3">
-                    {currentRole === "admin"
-                        ? "Admin Login"
-                        : state === "Sign Up"
-                            ? "Create account"
-                            : "Login to your account!"}
-                </h2>
-                <p className="text-center text-sm mb-6">
-                    {currentRole === "admin"
-                        ? "Enter admin credentials."
-                        : state === "Sign Up"
-                            ? "Create your account."
-                            : "Login to your account."}
-                </p>
+    try {
+      const res = await axios.post(`${backend}/api/login`, {
+        email,
+        password,
+        role: roleFromUrl || "customer",
+      });
 
-                <form onSubmit={onsubmitHandler}>
-                    {/* Show name and unit only for user sign up */}
-                    {currentRole !== "admin" && state === "Sign Up" && (
-                        <>
-                            <div className="mb-4 flex items-center gap-3 w-full px-5 py-2.5 rounded-full bg-[#333A5C]">
-                                <img src={assets.person_icon} alt="" />
-                                <input
-                                    onChange={(e) => setName(e.target.value)}
-                                    value={name}
-                                    className="bg-transparent outline-none w-full"
-                                    type="text"
-                                    placeholder="Full Name"
-                                    required
-                                />
-                            </div>
-                            <div className="mb-4 flex items-center gap-3 w-full px-5 py-2.5 rounded-full bg-[#333A5C]">
-                                <select
-                                    value={unit}
-                                    onChange={(e) => setUnit(e.target.value)}
-                                    className="bg-transparent outline-none w-full text-indigo-300"
-                                    required
-                                >
-                                    <option value="" disabled>
-                                        Select your unit
-                                    </option>
-                                    {units.length > 0 ? ( // Use fetched units here
-                                        units.map(u => (
-                                            <option key={u._id} value={u._id}>{u.name}</option>
-                                        ))
-                                    ) : (
-                                        <option value="" disabled>Loading units...</option>
-                                    )}
-                                </select>
-                            </div>
-                        </>
-                    )}
+      if (res.data.success) {
+        toast.success(res.data.message);
+        setIsLoggedin(true);
+        setUserData(res.data.user);
+        localStorage.setItem("token", res.data.token);
+        navigate("/");
+      } else {
+        toast.error(res.data.message);
+      }
+    } catch (err) {
+      toast.error("Login failed");
+    }
+  };
 
-                    <div className="mb-4 flex items-center gap-3 w-full px-5 py-2.5 rounded-full bg-[#333A5C]">
-                        <img src={assets.mail_icon} alt="" />
-                        <input
-                            onChange={(e) => setEmail(e.target.value)}
-                            value={email}
-                            className="bg-transparent outline-none w-full"
-                            type="email"
-                            placeholder="Email"
-                            required
-                        />
-                    </div>
+  const onSignUp = async (e) => {
+    e.preventDefault();
+    if (!name || !email || !password || !selectedUnit)
+      return toast.error("All fields are required");
 
-                    <div className="mb-4 flex items-center gap-3 w-full px-5 py-2.5 rounded-full bg-[#333A5C]">
-                        <img src={assets.lock_icon} alt="" />
-                        <input
-                            onChange={(e) => setPassword(e.target.value)}
-                            value={password}
-                            className="bg-transparent outline-none w-full"
-                            type="password"
-                            placeholder="Password"
-                            required
-                        />
-                    </div>
+    try {
+      const res = await axios.post(`${backend}/api/signup`, {
+        name,
+        email,
+        password,
+        unit: selectedUnit,
+        role: roleFromUrl || "customer",
+      });
 
-                    {/* Show forgot password only if user is logging in */}
-                    {currentRole !== "admin" && state === "Login" && (
-                        <p
-                            onClick={() => navigate("/reset-password")}
-                            className="mb-4 text-indigo-500 cursor-pointer"
-                        >
-                            Forgot password?
-                        </p>
-                    )}
+      if (res.data.success) {
+        toast.success(res.data.message);
+        setIsLoggedin(true);
+        setUserData(res.data.user);
+        localStorage.setItem("token", res.data.token);
+        navigate("/");
+      } else {
+        toast.error(res.data.message);
+      }
+    } catch (err) {
+      toast.error("Sign up failed");
+    }
+  };
 
-                    <button
-                        type="submit"
-                        className="w-full py-2.5 rounded-full bg-gradient-to-r from-indigo-400 to-indigo-900 text-white font-medium"
-                    >
-                        {currentRole === "admin" ? "Login as Admin" : state}
-                    </button>
-                </form>
+  const handleStateChange = (newState) => {
+    setState(newState);
+    navigate(`/login?state=${newState.toLowerCase()}&role=${roleFromUrl || "customer"}`);
+  };
 
-                {/* Toggle links below form */}
-                {currentRole !== "admin" ? (
-                    state === "Sign Up" ? (
-                        <p className="text-gray-400 text-center text-xs mt-4">
-                            Already have an account?{" "}
-                            <span
-                                onClick={() => navigate("/loginselection")}
-                                className="text-blue-400 cursor-pointer underline"
-                            >
-                                Login here
-                            </span>
-                        </p>
-                    ) : (
-                        <p className="text-gray-400 text-center text-xs mt-4">
-                            Don't have an account?{" "}
-                            <span
-                                onClick={() => setState("Sign Up")}
-                                className="text-blue-400 cursor-pointer underline"
-                            >
-                                Sign up here
-                            </span>
-                        </p>
-                    )
-                ) : (
-                    <p className="text-gray-400 text-center text-xs mt-4">
-                        <span
-                            onClick={() => navigate("/loginselection")}
-                            className="text-blue-400 cursor-pointer underline"
-                        >
-                            &larr; Back to Role Selection
-                        </span>
-                    </p>
-                )}
-            </div>
+  return (
+    <div className="w-full h-screen flex items-center justify-center bg-gray-100">
+      <div className="w-full max-w-md bg-white p-8 shadow-xl rounded-xl relative">
+        <img src={assets.logo} alt="Logo" className="w-20 mx-auto mb-4" />
 
-            <style>
-                {`
-                    /* Login component styles */
+        <h2 className="text-2xl font-bold text-center mb-2">
+          {state === "Login" ? "Login" : "Sign Up"}
+        </h2>
 
-                    .login-container {
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        min-height: 100vh;
-                        padding-left: 1.5rem;
-                        padding-right: 1.5rem;
-                        background: linear-gradient(to bottom right, #bfdbfe, #c084fc);
-                    }
+        {roleFromUrl && (
+          <p className="text-sm text-center text-gray-500 mb-4">
+            Logging in as: <span className="font-semibold">{roleFromUrl}</span>
+          </p>
+        )}
 
-                    @media (min-width: 640px) {
-                        .login-container {
-                            padding-left: 0;
-                            padding-right: 0;
-                        }
-                    }
+        <form
+          onSubmit={state === "Login" ? onLogin : onSignUp}
+          className="space-y-4"
+        >
+          {state === "Sign Up" && (
+            <>
+              <input
+                type="text"
+                placeholder="Full Name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded"
+              />
+              <div className="relative">
+                <select
+                  value={selectedUnit}
+                  onChange={(e) => setSelectedUnit(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded appearance-none pr-8"
+                >
+                  <option value="" disabled>
+                    {loadingUnits ? "Loading units..." : "Select your unit"}
+                  </option>
+                  {units.map((unit) => (
+                    <option key={unit.id} value={unit.name}>
+                      {unit.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                  <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 6.757 7.586 5.343 9z"/></svg>
+                </div>
+              </div>
+            </>
+          )}
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded"
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded"
+          />
 
-                    .login-logo {
-                        position: absolute;
-                        left: 1.25rem;
-                        top: 1.25rem;
-                        width: 7rem;
-                        cursor: pointer;
-                    }
+          {/* Forgot Password Link - Only visible on the Login state */}
+          {state === "Login" && (
+            <p className="text-right text-sm -mt-2">
+              <span
+                onClick={() => navigate("/reset-password")} // <--- THIS IS THE CHANGED LINE
+                className="text-blue-500 hover:underline cursor-pointer"
+              >
+                Forgot Password?
+              </span>
+            </p>
+          )}
 
-                    @media (min-width: 640px) {
-                        .login-logo {
-                            left: 5rem;
-                            width: 8rem;
-                        }
-                    }
+          <button
+            type="submit"
+            className="w-full py-2 bg-green-600 text-white font-semibold rounded hover:bg-green-700"
+          >
+            {state === "Login" ? "Login" : "Sign Up"}
+          </button>
+        </form>
 
-                    .login-form-card {
-                        background-color: #1e293b;
-                        padding: 2.5rem;
-                        border-radius: 0.5rem;
-                        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-                            0 4px 6px -2px rgba(0, 0, 0, 0.05);
-                        width: 100%;
-                        max-width: 24rem;
-                        color: #a78b4fa;
-                        font-size: 0.875rem;
-                    }
-
-                    .login-title {
-                        font-size: 1.875rem;
-                        font-weight: 600;
-                        color: #ffffff;
-                        text-align: center;
-                        margin-bottom: 0.75rem;
-                    }
-
-                    .login-subtitle {
-                        text-align: center;
-                        font-size: 0.875rem;
-                        margin-bottom: 1.5rem;
-                    }
-
-                    .login-input-group {
-                        margin-bottom: 1rem;
-                        display: flex;
-                        align-items: center;
-                        gap: 0.75rem;
-                        width: 100%;
-                        padding: 0.625rem 1.25rem;
-                        border-radius: 9999px;
-                        background-color: #333A5C;
-                    }
-
-                    .login-input-group img {
-                        width: 1.25rem;
-                        height: 1.25rem;
-                    }
-
-                    .login-input-field {
-                        background-color: transparent;
-                        outline: none;
-                        width: 100%;
-                        color: #ffffff;
-                    }
-
-                    .login-input-field::placeholder {
-                        color: #a78bfa;
-                        opacity: 0.7;
-                    }
-
-                    .forgot-password-link {
-                        margin-bottom: 1rem;
-                        color: #6366f1;
-                        cursor: pointer;
-                        text-decoration: none;
-                    }
-
-                    .forgot-password-link:hover {
-                        text-decoration: underline;
-                    }
-
-                    .login-submit-button {
-                        width: 100%;
-                        padding-top: 0.625rem;
-                        padding-bottom: 0.625rem;
-                        border-radius: 9999px;
-                        background: linear-gradient(to right, #818cf8, #4f46e5);
-                        color: #ffffff;
-                        font-weight: 500;
-                        border: none;
-                        cursor: pointer;
-                        transition: background 0.3s ease;
-                    }
-
-                    .login-submit-button:hover {
-                        background: linear-gradient(to right, #6366f1, #4338ca);
-                    }
-
-                    .login-toggle-text {
-                        color: #9ca3af;
-                        text-align: center;
-                        font-size: 0.75rem;
-                        margin-top: 1rem;
-                    }
-
-                    .login-toggle-link {
-                        color: #60a5fa;
-                        cursor: pointer;
-                        text-decoration: underline;
-                    }
-                `}
-            </style>
+        <div className="text-center mt-4">
+          {state === "Login" ? (
+            <p>
+              Don't have an account?{" "}
+              <span
+                onClick={() => handleStateChange("Sign Up")}
+                className="text-blue-500 underline cursor-pointer"
+              >
+                Sign up here
+              </span>
+            </p>
+          ) : (
+            <p>
+              Already have an account?{" "}
+              <span
+                onClick={() => handleStateChange("Login")}
+                className="text-blue-500 underline cursor-pointer"
+              >
+                Login here
+              </span>
+            </p>
+          )}
         </div>
-    );
+      </div>
+    </div>
+  );
 };
 
 export default Login;

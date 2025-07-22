@@ -15,7 +15,7 @@ import CreateTicket from './components/CreateTicket';
 import Ticket from './pages/Ticket';
 import AdminDashboard from './admin/AdminDashboard';
 import TicketReply from './admin/adminTicketReply.jsx';
-import AdminHome from './admin/adminHome.jsx'; // <--- ADDED: Import for admin home page
+import AdminHome from './admin/adminHome.jsx';
 
 // Styling
 import { ToastContainer } from 'react-toastify';
@@ -25,11 +25,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import './App.css';
 // Context
 import { AppContextProvider, AppContent } from './context/AppContext';
-// (Optionally) legacy protected route, but will not use for main logic
-// import ProtectedRoute from './components/ProtectedRoute';
 
-
-// ---- AppRoutes handles all route structure, context aware ----
 const AppRoutes = () => {
     const location = useLocation();
     const { isLoggedin, userData, loading } = useContext(AppContent);
@@ -40,7 +36,7 @@ const AppRoutes = () => {
         '/loginselection',
         '/reset-password',
         '/email-verify',
-        '/register'
+         // This is correctly included
     ].includes(location.pathname);
 
     // PrivateRoute: Guards any routes needing authentication
@@ -59,12 +55,13 @@ const AppRoutes = () => {
     }
 
     // Fallback for any not-found page, redirect base on login
+    // This part should be carefully ordered within <Routes>
     const FallbackRoute = () =>
         isLoggedin
             ? <Navigate to="/" replace />
             : <Navigate to="/loginselection" replace />;
 
-    // Make sure Home2 is given a key for first render at "/"
+
     const isDashboard = location.pathname === '/';
 
     return (
@@ -75,11 +72,13 @@ const AppRoutes = () => {
                 <div className="flex-grow-1" style={{ flex: 1, padding: '32px 0' }}>
                     <ToastContainer />
                     <Routes>
-                        {/* --- Authentication Routes --- */}
+                        {/* --- Authentication Routes (Accessible without login) --- */}
                         <Route path="/login" element={<Login />} />
                         <Route path="/loginselection" element={<LoginSelection />} />
                         <Route path="/reset-password" element={<ResetPassword />} />
                         <Route path="/email-verify" element={<EmailVerify />} />
+                        {/* This is the key: Ensure /forgot-password is listed here BEFORE any catch-all or default routes */}
+                        
 
                         {/* Root/dashboard logic: DYNAMICALLY RENDER ADMINHOME FOR ADMINS OR HOME2 FOR REGULAR USERS */}
                         <Route
@@ -105,7 +104,6 @@ const AppRoutes = () => {
                                 </PrivateRoute>
                             }
                         >
-                            {/* User dashboard (Note: "/home" is still separate if needed for non-root access) */}
                             <Route path="/home" element={<Home />} />
                             <Route path="/tickets-page" element={<TicketsPage />} />
                             <Route path="/tickets" element={<TicketsPage />} />
@@ -134,7 +132,8 @@ const AppRoutes = () => {
                             <Route path="/tickets/open" element={<TicketsPage filter="open" />} />
                             <Route path="/tickets/resolved" element={<TicketsPage filter="resolved" />} />
                         </Route>
-                        {/* Fallback: Not found */}
+
+                        {/* Fallback: Not found. This should be the last route. */}
                         <Route path="*" element={<FallbackRoute />} />
                     </Routes>
                 </div>
