@@ -101,38 +101,32 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-200 to-purple-400">
-      <img
-        onClick={() => navigate('/')}
-        src={assets.logo}
-        alt="logo"
-        className="absolute left-5 sm:left-20 top-5 w-28 sm:w-32 cursor-pointer"
-      />
-
-      <div className="flex gap-6 bg-transparent p-4 sm:p-10">
+    <div className="auth-page-container">
+      <div className="auth-form-wrapper">
         {/* Step 1: Email Input */}
         {!isEmailSent && (
-          <form
-            onSubmit={onSubmitEmail}
-            className="bg-slate-900 p-8 rounded-lg shadow-lg w-96 text-sm"
-          >
-            <h1 className="text-white text-2xl font-semibold text-center mb-4">Reset password</h1>
-            <p className="text-center mb-6 text-indigo-300">Enter your registered email address</p>
-            <div className="mb-4 flex items-center gap-3 w-full px-5 py-2.5 rounded-full bg-[#333A5C]">
-              <img src={assets.mail_icon} alt="" className="w-4 h-4" />
+          <form onSubmit={onSubmitEmail} className="auth-form-card">
+            {/* Logo moved inside the form */}
+            <img
+              onClick={() => navigate('/')}
+              src={assets.logo}
+              alt="logo"
+              className="auth-form-logo" // Removed the inline comment here
+            />
+            <h1 className="auth-form-title">Reset Password</h1>
+            <p className="auth-form-subtitle">Enter your registered email address</p>
+            <div className="auth-input-group">
+              <img src={assets.mail_icon} alt="" className="auth-icon" />
               <input
                 type="email"
                 placeholder="Email id"
-                className="bg-transparent outline-none text-white w-full"
+                className="auth-input-field"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
-            <button
-              type="submit"
-              className="w-full py-2.5 bg-gradient-to-r from-indigo-500 to-indigo-400 text-white rounded-full mt-3"
-            >
+            <button type="submit" className="auth-submit-button">
               Submit
             </button>
           </form>
@@ -140,15 +134,19 @@ const ResetPassword = () => {
 
         {/* Step 2: OTP Input */}
         {isEmailSent && !isOtpSubmitted && (
-          <form
-            onSubmit={onSubmitOTP}
-            className="bg-slate-900 p-8 rounded-lg shadow-lg w-96 text-sm"
-          >
-            <h1 className="text-white text-2xl font-semibold text-center mb-4">Reset password OTP</h1>
-            <p className="text-center mb-6 text-indigo-300">
+          <form onSubmit={onSubmitOTP} className="auth-form-card">
+            {/* Logo moved inside the form */}
+            <img
+              onClick={() => navigate('/')}
+              src={assets.logo}
+              alt="logo"
+              className="auth-form-logo" // Removed the inline comment here
+            />
+            <h1 className="auth-form-title">Enter OTP</h1>
+            <p className="auth-form-subtitle">
               Enter the 6-digit code sent to your email id.
             </p>
-            <div className="flex justify-between mb-8" onPaste={handlePaste}>
+            <div className="auth-otp-group" onPaste={handlePaste}>
               {Array(6)
                 .fill(0)
                 .map((_, index) => (
@@ -157,17 +155,14 @@ const ResetPassword = () => {
                     type="text"
                     maxLength="1"
                     required
-                    className="w-10 h-10 sm:w-12 sm:h-12 bg-[#333A5C] text-white text-center text-xl rounded-md"
+                    className="auth-otp-input"
                     ref={(el) => (inputRefs.current[index] = el)}
                     onInput={(e) => handleInput(e, index)}
                     onKeyDown={(e) => handleKeyDown(e, index)}
                   />
                 ))}
             </div>
-            <button
-              type="submit"
-              className="w-full py-2.5 bg-gradient-to-r from-indigo-500 to-indigo-400 text-white rounded-full"
-            >
+            <button type="submit" className="auth-submit-button">
               Verify OTP
             </button>
           </form>
@@ -175,34 +170,198 @@ const ResetPassword = () => {
 
         {/* Step 3: New Password */}
         {isEmailSent && isOtpSubmitted && (
-          <form
-            onSubmit={onSubmitNewPassword}
-            className="bg-slate-900 p-8 rounded-lg shadow-lg w-96 text-sm"
-          >
-            <h1 className="text-white text-2xl font-semibold text-center mb-4">New password</h1>
-            <p className="text-center mb-6 text-indigo-300">
+          <form onSubmit={onSubmitNewPassword} className="auth-form-card">
+            {/* Logo moved inside the form */}
+            <img
+              onClick={() => navigate('/')}
+              src={assets.logo}
+              alt="logo"
+              className="auth-form-logo" // Removed the inline comment here
+            />
+            <h1 className="auth-form-title">New Password</h1>
+            <p className="auth-form-subtitle">
               Enter the new password below
             </p>
-            <div className="mb-4 flex items-center gap-3 w-full px-5 py-2.5 rounded-full bg-[#333A5C]">
-              <img src={assets.lock_icon} alt="" className="w-4 h-4" />
+            <div className="auth-input-group">
+              <img src={assets.lock_icon} alt="" className="auth-icon" />
               <input
                 type="password"
-                placeholder="Password"
-                className="bg-transparent outline-none text-white w-full"
+                placeholder="New Password"
+                className="auth-input-field"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 required
               />
             </div>
-            <button
-              type="submit"
-              className="w-full py-2.5 bg-gradient-to-r from-indigo-500 to-indigo-400 text-white rounded-full mt-3"
-            >
+            <button type="submit" className="auth-submit-button">
               Reset Password
             </button>
           </form>
         )}
       </div>
+
+      {/* --- Specific CSS Styles for Authentication Pages (matching Sign Up/Login visual) --- */}
+      <style>
+        {`
+          body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+          }
+
+          a {
+            text-decoration: none !important;
+          }
+
+          .auth-page-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: #e0e7ff; /* Lighter background for consistency with signup page */
+            padding: 20px; /* Add some padding for smaller screens */
+          }
+
+          /* Removed .auth-logo for external positioning */
+
+          .auth-form-wrapper {
+            display: flex;
+            gap: 24px;
+            background: transparent;
+            padding: 16px;
+          }
+
+          .auth-form-card {
+            background-color: #fff;
+            padding: 32px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+          }
+
+          .auth-form-logo { /* New class for logo *inside* the form */
+            width: 80px; /* Adjust logo size */
+            margin: 0 auto 20px; /* Center and add margin below */
+            display: block;
+            cursor: pointer;
+          }
+
+          .auth-form-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+          }
+
+          .auth-form-subtitle {
+            text-align: center;
+            font-size: 15px;
+            margin-bottom: 25px;
+            color: #666;
+          }
+
+          .auth-input-group {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            border-radius: 4px;
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+          }
+
+          .auth-input-group:focus-within {
+              border-color: #007bff;
+              box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+          }
+
+          .auth-icon {
+            width: 18px;
+            height: 18px;
+            margin-right: 10px;
+            color: #666;
+          }
+
+          .auth-input-field {
+            background-color: transparent;
+            outline: none;
+            border: none;
+            width: 100%;
+            color: #333;
+            font-size: 16px;
+          }
+
+          .auth-input-field::placeholder {
+            color: #999;
+          }
+
+          .auth-otp-group {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            gap: 8px;
+          }
+
+          .auth-otp-input {
+            width: 45px;
+            height: 45px;
+            background-color: #f5f5f5;
+            color: #333;
+            text-align: center;
+            font-size: 20px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            outline: none;
+            transition: border-color 0.2s ease;
+          }
+
+          .auth-otp-input:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+          }
+
+          .auth-submit-button {
+            width: 100%;
+            padding: 12px 20px;
+            border-radius: 4px;
+            background-color: #28a745;
+            color: #ffffff;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background-color 0.3s ease;
+          }
+
+          .auth-submit-button:hover {
+            background-color: #218838;
+          }
+
+          .auth-link-text {
+            color: #666;
+            text-align: center;
+            font-size: 14px;
+            margin-top: 20px;
+          }
+
+          .auth-link-text a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
+          }
+
+          .auth-link-text a:hover {
+            text-decoration: underline;
+            color: #0056b3;
+          }
+        `}
+      </style>
     </div>
   );
 };
