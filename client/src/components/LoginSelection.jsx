@@ -1,132 +1,216 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { assets } from '../assets/assets'; // Assuming assets are available and path is correct
+import { assets } from '../assets/assets'; // Import assets for the logo
 
 const LoginSelection = () => {
   const navigate = useNavigate();
 
-  // Function to handle navigation for User Login
   const handleLoginAsUser = () => {
-    // Navigate to the Login page with a 'state=login' query parameter
-    // This will tell Login.jsx to directly show the Login form for a user.
-    navigate('/login?state=login'); // -- CHANGED THIS LINE --
+    navigate('/login?state=login');
   };
 
-  // Function to handle navigation for Admin Login
   const handleAdminLogin = () => {
-    // Navigate to the Login page with a 'role=admin' query parameter.
-    // Login.jsx will then show the admin login form.
     navigate('/login?role=admin');
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-6 sm:px-0 bg-gradient-to-br from-blue-200 to-purple-400">
-      {/* Logo at the top left, clickable to navigate to the homepage */}
-      <img
-        onClick={() => navigate("/")}
-        src={assets.logo}
-        alt="logo"
-        className="absolute left-5 sm:left-20 top-5 w-28 sm:w-32 cursor-pointer"
-      />
+    <div className="auth-page-container"> {/* Uses the common auth page background */}
+      <div className="auth-form-wrapper"> {/* Container for the card */}
+        <div className="auth-form-card"> {/* Card styling */}
+          <img
+            src={assets.logo}
+            alt="Logo"
+            className="auth-form-logo" // Matches logo inside form
+            onClick={() => navigate('/')} // Make logo clickable
+          />
 
-      <div className="bg-slate-900 p-10 rounded-lg shadow-lg w-full sm:w-96 text-indigo-300 text-sm text-center">
-        <h2 className="text-3xl font-semibold text-white mb-6">
-          Login As
-        </h2>
-        {/* Optional descriptive text */}
-        <p className="text-center text-sm mb-4">
-          To continue, please choose your login type.
-        </p>
-        <p className="text-center text-xs text-gray-400 mb-8">
-          This helps us direct you to the appropriate dashboard and features.
-        </p>
+          <h2 className="auth-form-title">
+            Login As
+          </h2>
+          <p className="auth-form-subtitle">
+            To continue, please choose your login type.
+          </p>
+          <p className="auth-link-text mb-8"> {/* Using auth-link-text for similar style */}
+            This helps us direct you to the appropriate dashboard and features.
+          </p>
 
-        <div className="space-y-4">
-          {/* User Login Button */}
-          <button
-            onClick={handleLoginAsUser}
-            className="w-full py-3 rounded-full bg-gradient-to-r from-blue-500 to-blue-700 text-white font-medium shadow-md hover:from-blue-600 hover:to-blue-800 transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center"
-          >
-            <i className="bi bi-person-fill text-xl mr-2"></i> {/* User Icon */}
-            Login as User
-          </button>
+          <div className="space-y-4"> {/* Keep Tailwind's space-y-4 for button spacing */}
+            <button
+              onClick={handleLoginAsUser}
+              className="auth-submit-button" // Use general submit button style
+              style={{backgroundColor: '#007bff'}} // Override for blue color for User Login
+            >
+              <i className="bi bi-person-fill text-xl mr-2"></i> {/* Ensure these icons are available via your setup (e.g., Bootstrap Icons) */}
+              Login as User
+            </button>
 
-          {/* Admin Login Button */}
-          <button
-            onClick={handleAdminLogin}
-            className="w-full py-3 rounded-full bg-gradient-to-r from-purple-500 to-purple-700 text-white font-medium shadow-md hover:from-purple-600 hover:to-purple-800 transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center"
-          >
-            <i className="bi bi-person-workspace text-xl mr-2"></i> {/* Admin Icon */}
-            Login as Admin
-          </button>
+            <button
+              onClick={handleAdminLogin}
+              className="auth-submit-button" // Use general submit button style
+              style={{backgroundColor: '#8a2be2'}} // Override for purple color for Admin Login (example purple)
+            >
+              <i className="bi bi-person-workspace text-xl mr-2"></i>
+              Login as Admin
+            </button>
+          </div>
+
+          <p className="auth-link-text mt-8"> {/* Use auth-link-text and margin-top */}
+            Need assistance? Contact support for help.
+          </p>
         </div>
-
-        {/* Optional footer text */}
-        <p className="text-gray-500 text-center text-xs mt-8">
-          Need assistance? Contact support for help.
-        </p>
       </div>
 
-      {/* --- Inline Styles for TailwindCSS (if not using a separate CSS file or PostCSS) --- */}
+      {/* --- Reusing the common authentication page styles --- */}
       <style>
         {`
-          .flex { display: flex; }
-          .items-center { align-items: center; }
-          .justify-center { justify-content: center; }
-          .min-h-screen { min-height: 100vh; }
-          .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
-          .sm\\:px-0 { /* For small screens, remove horizontal padding */ }
-          .bg-gradient-to-br { background-image: linear-gradient(to bottom right, var(--tw-gradient-stops)); }
-          .from-blue-200 { --tw-gradient-from: #bfdbfe; --tw-gradient-to: #bfdbfe; }
-          .to-purple-400 { --tw-gradient-to: #c084fc; }
-          .absolute { position: absolute; }
-          .left-5 { left: 1.25rem; }
-          .sm\\:left-20 { /* For small screens, adjust left position */ }
-          .top-5 { top: 1.25rem; }
-          .w-28 { width: 7rem; }
-          .sm\\:w-32 { /* For small screens, adjust width */ }
-          .cursor-pointer { cursor: pointer; }
+          body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+          }
 
-          .bg-slate-900 { background-color: #1e293b; }
-          .p-10 { padding: 2.5rem; }
-          .rounded-lg { border-radius: 0.5rem; }
-          .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
-          .w-full { width: 100%; }
-          .sm\\:w-96 { max-width: 24rem; }
-          .text-indigo-300 { color: #a78bfa; }
-          .text-sm { font-size: 0.875rem; }
-          .text-center { text-align: center; }
-          .text-white { color: #ffffff; }
-          .text-3xl { font-size: 1.875rem; }
-          .font-semibold { font-weight: 600; }
-          .mb-6 { margin-bottom: 1.5rem; }
-          .mb-4 { margin-bottom: 1rem; } /* Added for new paragraph spacing */
-          .mb-8 { margin-bottom: 2rem; }
+          a {
+            text-decoration: none !important;
+          }
+
+          .auth-page-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: #e0e7ff; /* Lighter background for consistency */
+            padding: 20px;
+          }
+
+          .auth-form-wrapper {
+            display: flex;
+            gap: 24px;
+            background: transparent;
+            padding: 16px;
+          }
+
+          .auth-form-card {
+            background-color: #fff;
+            padding: 32px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+          }
+
+          .auth-form-logo {
+            width: 80px;
+            margin: 0 auto 20px;
+            display: block;
+            cursor: pointer;
+          }
+
+          .auth-form-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+          }
+
+          .auth-form-subtitle {
+            text-align: center;
+            font-size: 15px;
+            margin-bottom: 25px;
+            color: #666;
+          }
+
+          /* Keeping existing auth-input-group, auth-input-field for consistency,
+             though not used directly in this component's fields, they contribute to the overall style */
+          .auth-input-group {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            border-radius: 4px;
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+          }
+
+          .auth-input-group:focus-within {
+              border-color: #007bff;
+              box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+          }
+
+          .auth-icon {
+            width: 18px;
+            height: 18px;
+            margin-right: 10px;
+            color: #666;
+          }
+
+          .auth-input-field {
+            background-color: transparent;
+            outline: none;
+            border: none;
+            width: 100%;
+            color: #333;
+            font-size: 16px;
+          }
+
+          .auth-input-field::placeholder {
+            color: #999;
+          }
+
+          .auth-submit-button {
+            width: 100%;
+            padding: 12px 20px;
+            border-radius: 4px;
+            background-color: #28a745; /* Default green, can be overridden */
+            color: #ffffff;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background-color 0.3s ease, transform 0.2s ease; /* Added transform */
+            display: flex; /* For icon alignment */
+            align-items: center;
+            justify-content: center;
+          }
+
+          .auth-submit-button:hover {
+            background-color: #218838; /* Darker green default hover */
+            transform: scale(1.02); /* Slight scale on hover */
+          }
+
+          /* Overrides for specific button colors in this component */
+          .auth-submit-button[style*="background-color: rgb(0, 123, 255)"]:hover {
+              background-color: #0056b3 !important; /* Darker blue */
+          }
+          .auth-submit-button[style*="background-color: rgb(138, 43, 226)"]:hover {
+              background-color: #6a0dad !important; /* Darker purple */
+          }
+
+
+          .auth-link-text {
+            color: #666;
+            text-align: center;
+            font-size: 14px;
+            /* margin-top: 20px; removed specific margin-top here as it's handled by individual elements */
+          }
+
+          .auth-link-text a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
+          }
+
+          .auth-link-text a:hover {
+            text-decoration: underline;
+            color: #0056b3;
+          }
+
+          /* Utility class from previous Tailwind structure for consistent spacing */
           .space-y-4 > :not([hidden]) ~ :not([hidden]) { margin-top: 1rem; }
-
-          .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
-          .rounded-full { border-radius: 9999px; }
-          .bg-gradient-to-r { background-image: linear-gradient(to right, var(--tw-gradient-stops)); }
-          .from-blue-500 { --tw-gradient-from: #3b82f6; --tw-gradient-to: #3b82f6; }
-          .to-blue-700 { --tw-gradient-to: #1d4ed8; }
-          .from-purple-500 { --tw-gradient-from: #a855f7; --tw-gradient-to: #a855f7; }
-          .to-purple-700 { --tw-gradient-to: #7e22ce; }
-          .font-medium { font-weight: 500; }
-          .shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
-          .hover\\:from-blue-600:hover { --tw-gradient-from: #2563eb; --tw-gradient-to: #2563eb; }
-          .hover\\:to-blue-800:hover { --tw-gradient-to: #1e40af; }
-          .hover\\:from-purple-600:hover { --tw-gradient-from: #9333ea; --tw-gradient-to: #9333ea; }
-          .hover\\:to-purple-800:hover { --tw-gradient-to: #6b21a8; }
-          .transition { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
-          .duration-300 { transition-duration: 300ms; }
-          .ease-in-out { transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); }
-          .transform { transform: var(--tw-transform); }
-          .hover\\:scale-105:hover { --tw-scale-x: 1.05; --tw-scale-y: 1.05; }
-          .text-xs { font-size: 0.75rem; } /* Added for smaller text */
-          .text-gray-400 { color: #9ca3af; } /* Added for gray text */
-          .text-gray-500 { color: #6b7280; } /* Added for slightly darker gray text */
-          .mr-2 { margin-right: 0.5rem; } /* Margin for icons */
-          .text-xl { font-size: 1.25rem; } /* Icon size */
         `}
       </style>
     </div>
