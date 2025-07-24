@@ -179,7 +179,7 @@ const Home2 = () => {
             <Col xs="auto" className="d-flex align-items-center gap-4">
               <a href="#services" className="text-white fw-medium hover:underline me-3" style={{ fontSize: 17 }}>Services</a>
               <a href="#contact" className="text-white fw-medium hover:underline me-3" style={{ fontSize: 17 }}>Contact</a>
-              <a href="/login" className="btn btn-light fw-bold px-4 py-2" style={{ fontSize: 17, borderRadius: 8 }}>Staff Login</a>
+              <a href="/login" className="btn btn-light fw-bold px-4 py-2" style={{ fontSize: 17, borderRadius: 8 }}> Login</a>
             </Col>
           </Row>
           <Row className="justify-content-center text-center mt-4">
