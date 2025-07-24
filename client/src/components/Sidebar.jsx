@@ -102,9 +102,15 @@ function Sidebar() {
                         </Nav.Link>
                     </>
                 )}
-                <Link to="/reports" className="sidebar-nav-link">
-                    Reports
-                </Link>
+                <Nav.Link
+                    as={NavLink}
+                    to="/reports"
+                    className="sidebar-nav-link"
+                    style={{ padding: linkPadding }}
+                >
+                    <i className="bi bi-bar-chart-fill me-2"></i> {/* Reports icon */}
+                    {!isCollapsed && "Reports"}
+                </Nav.Link>
             </Nav>
 
             <style>{`

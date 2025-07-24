@@ -21,6 +21,10 @@ import TicketReply from './admin/adminTicketReply.jsx';
 // AdminHome is no longer needed if Home2 is the main home for all logged-in users
 // import AdminHome from './admin/adminHome.jsx'; // <--- Ensure this is commented out or removed
 
+// Report Components
+import ReportPage from './report/ReportPage.jsx';
+import AnalyticsPage from './report/AnalyticsPage.jsx';
+
 // Styling
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -137,6 +141,10 @@ const AppRoutes = () => {
                                 {/* Filtered ticket lists */}
                                 <Route path="/tickets/open" element={<TicketsPage filter="open" />} />
                                 <Route path="/tickets/resolved" element={<TicketsPage filter="resolved" />} />
+                                
+                                {/* Report Routes */}
+                                <Route path="/reports" element={<ReportPage />} />
+                                <Route path="/analytics" element={<AnalyticsPage />} />
                             </Route>
 
                             {/* Fallback: Not found. This should be the last route. */}
