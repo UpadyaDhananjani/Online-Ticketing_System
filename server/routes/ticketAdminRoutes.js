@@ -4,33 +4,51 @@ import express from 'express';
 import { 
   getAllTickets, 
   addAdminReply, 
-  deleteMessage, // --- IMPORTED: New deleteMessage function ---
-  resolveTicket, // Imported named resolveTicket
-  markTicketOpen, // Imported named markTicketOpen
-  markTicketInProgress, // Imported named markTicketInProgress
-  deleteTicket, // <-- Add this import
-  reassignTicket, // <-- Add this import
-  getAdminTicketById, // <-- Add this import
-} from '../controllers/ticketAdminController.js'; // All admin controllers from one file
+  deleteMessage,
+  resolveTicket,
+  markTicketOpen,
+  markTicketInProgress,
+  deleteTicket,
+  reassignTicket,
+  getAdminTicketById,
+  getAdminTicketsSummary // Add this import
+} from '../controllers/ticketAdminController.js';
 
-import {generateReportChartImage, 
+import { 
+  generateReportChartImage, 
   downloadReportPdf,
   getAssigneePerformance,
   getTicketsByUnit,
   getAvgResolutionTime,
-  getTicketActivityLogs
-} from '../controllers/ReportController.js'; // Import report functions
+  getTicketActivityLogs,
+  getTicketStatusDistribution,  // Add comma here
+  getTicketTypeDistribution     // Add this import
+} from '../controllers/ReportController.js';
 
-import authMiddleware from '../middleware/authMiddleware.js'; // Ensure authMiddleware is imported
-import upload from '../middleware/uploadMiddleware.js'; // Assuming this is your multer config for attachments
+import authMiddleware from '../middleware/authMiddleware.js';
+import upload from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
 
 // Apply authMiddleware to all admin routes
-router.use(authMiddleware); // --- FIXED: authMiddleware applied to all routes in this router ---
+router.use(authMiddleware);
 
-// Get all tickets for admin dashboard (now correctly populates user)
+// Get all tickets for admin dashboard
 router.get('/', getAllTickets);
+
+// Get ticket summary for admin dashboard
+router.get('/summary', getAdminTicketsSummary); // Add this route
+// --- REPORT ROUTES ---
+router.get('/reports/chart-image', generateReportChartImage);
+router.get('/reports/pdf', downloadReportPdf);
+router.get('/assignee-performance', getAssigneePerformance);
+router.get('/tickets-by-unit', getTicketsByUnit);
+router.get('/avg-resolution-time', getAvgResolutionTime);
+router.get('/activity-logs', getTicketActivityLogs);
+// Add this route with the other report routes
+router.get('/status-distribution', getTicketStatusDistribution);
+router.get('/type-distribution', getTicketTypeDistribution);      // Add this route
+
 
 // Add reply with optional attachments
 router.post(
@@ -60,12 +78,5 @@ router.patch('/:id/assign', reassignTicket);
 // --- NEW ROUTE: Get a single ticket by ID (Admin only) ---
 router.get('/:id', getAdminTicketById);
 
-// --- REPORT ROUTES ---
-router.get('/reports/chart-image', generateReportChartImage);
-router.get('/reports/pdf', downloadReportPdf);
-router.get('/assignee-performance', getAssigneePerformance);
-router.get('/tickets-by-unit', getTicketsByUnit);
-router.get('/avg-resolution-time', getAvgResolutionTime);
-router.get('/activity-logs', getTicketActivityLogs);
 
 export default router;

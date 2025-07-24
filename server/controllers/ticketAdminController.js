@@ -227,43 +227,21 @@ export const markTicketInProgress = async (req, res) => {
 
 // Generate a chart image (PNG) for ticket status summary
 
-// export const generateReportPdf = async (req, res) => {
-//   try {
-//     // Get ticket summary
-//     const openCount = await Ticket.countDocuments({ status: 'open' });
-//     const inProgressCount = await Ticket.countDocuments({ status: 'in progress' });
-//     const resolvedCount = await Ticket.countDocuments({ status: 'resolved' });
-//     const total = openCount + inProgressCount + resolvedCount;
+// Get admin ticket summary
+export const getAdminTicketsSummary = async (req, res) => {
+  try {
+    console.log("Getting admin ticket summary for user:", req.user);
+    const openCount = await Ticket.countDocuments({ status: 'open' });
+    const inProgressCount = await Ticket.countDocuments({ status: 'in progress' });
+    const resolvedCount = await Ticket.countDocuments({ status: 'resolved' });
 
-//     const docDefinition = {
-//       content: [
-//         { text: 'Ticket Report', style: 'header' },
-//         {
-//           table: {
-//             widths: ['*', '*', '*'],
-//             body: [
-//               ['Status', 'Count', 'Last Updated'],
-//               ['Open', openCount, new Date().toLocaleString()],
-//               ['In Progress', inProgressCount, new Date().toLocaleString()],
-//               ['Resolved', resolvedCount, new Date().toLocaleString()],
-//             ]
-//           }
-//         },
-//         { text: 'Generated on: ' + new Date().toLocaleString(), style: 'footer' }
-//       ],
-//       styles: {
-//         header: { fontSize: 22, bold: true, margin: [0, 0, 0, 10] },
-//         footer: { fontSize: 10, italics: true, alignment: 'right', margin: [0, 30, 0, 0] }
-//       }
-//     };
-
-//     const pdfDocGenerator = pdfMake.createPdf(docDefinition);
-//     pdfDocGenerator.getBuffer((buffer) => {
-//       res.setHeader('Content-Type', 'application/pdf');
-//       res.setHeader('Content-Disposition', 'attachment; filename="ticket_report.pdf"');
-//       res.send(buffer);
-//     });
-//   } catch (err) {
-//     res.status(500).json({ error: 'Failed to generate PDF report.' });
-//   }
-// };
+    return res.json({
+      open: openCount,
+      inProgress: inProgressCount,
+      resolved: resolvedCount,
+    });
+  } catch (err) {
+    console.error("Error fetching admin ticket summary:", err);
+    return res.status(500).json({ error: 'Failed to fetch ticket summary from server.' });
+  }
+};
