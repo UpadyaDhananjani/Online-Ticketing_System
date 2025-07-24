@@ -42,6 +42,9 @@ const ticketSchema = new mongoose.Schema({
   image: { type: String, required: false }, // Optional image field
   attachments: [{ type: String }], // <-- Add this line
   assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false }, // <-- New field for assigned person
+  // Add fields to track previous assignment
+  previousAssignedUnit: { type: String },
+  previousAssignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   messages: [messageSchema],
   reassigned: { type: Boolean, default: false } // <-- Add this line
 });
