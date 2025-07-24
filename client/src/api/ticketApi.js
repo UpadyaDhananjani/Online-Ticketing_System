@@ -337,4 +337,3 @@ export const getActivityLogs = async () => {
     const response = await axiosInstance.get('/admin/activity-logs');
     return response.data;
 };
-

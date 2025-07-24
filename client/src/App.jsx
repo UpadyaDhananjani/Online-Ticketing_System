@@ -2,24 +2,24 @@ import React, { useContext } from 'react';
 import { Routes, Route, useLocation, Navigate, Outlet } from 'react-router-dom';
 
 // Components and Pages
-import Navbar from './components/Navbar.jsx'; // Your Navbar component
+import Navbar from './components/Navbar.jsx';
 import Sidebar from './components/Sidebar.jsx';
-import Home from './components/Home.jsx';
-import Home2 from './components/Home2.jsx';
+import Home2 from './components/Home2.jsx'; // Assuming this is your main logged-in dashboard
 import Login from './components/Login.jsx';
 import LoginSelection from './components/LoginSelection.jsx';
 import ResetPassword from './components/ResetPassword.jsx';
 import EmailVerify from './components/EmailVerify.jsx';
 
-import TicketsPage from './pages/TicketsPage';
-import TicketList from './components/TicketList';
+import TicketsPage from './pages/TicketsPage'; // For regular user tickets
 import CreateTicket from './components/CreateTicket';
 import Ticket from './pages/Ticket';
 
 import AdminDashboard from './admin/AdminDashboard';
 import TicketReply from './admin/adminTicketReply.jsx';
-// AdminHome is no longer needed if Home2 is the main home for all logged-in users
-// import AdminHome from './admin/adminHome.jsx'; // <--- Ensure this is commented out or removed
+
+// Import ONLY the AllTickets component.
+// We will reuse this component for all filtered views.
+import AllTickets from './Data/AllTickets';
 
 // Report Components
 import ReportPage from './report/ReportPage.jsx';
@@ -42,9 +42,9 @@ const AppRoutes = () => {
     const { isLoggedin, userData, loading } = useContext(AppContent);
 
     // Define the height of your fixed Navbar
-    const NAVBAR_HEIGHT = '80px'; // Make sure this matches the height in Navbar.jsx
+    const NAVBAR_HEIGHT = '80px';
 
-    // URLs that are NOT part of the main UI shell (navbar/sidebar)
+    // Determine if the current path is an authentication-related page
     const isAuthPage = [
         '/login',
         '/loginselection',
@@ -52,54 +52,59 @@ const AppRoutes = () => {
         '/email-verify',
     ].includes(location.pathname);
 
-  // Private route wrapper
-  function PrivateRoute({ children }) {
-    if (loading) return <div>Loading user data...</div>;
-    if (!isLoggedin) return <Navigate to="/loginselection" replace />;
-    return children;
-  }
-
-    // AdminRoute: Guards any admin-only routes
-    function AdminRoute({ children }) {
-        if (!isLoggedin || userData?.role !== 'admin') {
-            return <Navigate to="/" replace />; // If not admin, redirect to regular home (now Home2)
+    // PrivateRoute: Component that protects routes requiring user login.
+    function PrivateRoute({ children }) {
+        if (loading) {
+            return <div>Loading user data...</div>; // Show a loading indicator
         }
-        return children;
+        if (!isLoggedin) {
+            return <Navigate to="/loginselection" replace />; // Redirect to login if not logged in
+        }
+        return children; // Render the protected content
     }
 
-    // Fallback for any not-found page, redirect base on login
+    // AdminRoute: Component that protects routes requiring an 'admin' role.
+    function AdminRoute({ children }) {
+        if (loading) {
+            return <div>Loading user data...</div>; // Show a loading indicator
+        }
+        if (!isLoggedin || userData?.role !== 'admin') {
+            return <Navigate to="/" replace />; // Redirect if not logged in or not an admin
+        }
+        return children; // Render the protected content
+    }
+
+    // FallbackRoute: Redirects to appropriate page if no route matches.
     const FallbackRoute = () =>
         isLoggedin
-            ? <Navigate to="/" replace /> // Logged in goes to Home2
-            : <Navigate to="/loginselection" replace />;
-
-
-    const isDashboard = location.pathname === '/'; 
+            ? <Navigate to="/" replace /> // Logged in goes to Home2 (dashboard)
+            : <Navigate to="/loginselection" replace />; // Not logged in goes to login selection
 
     return (
         <div>
-            {/* Navbar is now fixed at the very top */}
-            {!isAuthPage && <Navbar />} 
+            {/* Navbar is rendered globally unless it's an auth page */}
+            {!isAuthPage && <Navbar />}
 
-            {/* This div creates space for the fixed Navbar and holds the Sidebar and main content */}
+            {/* This div accounts for the fixed Navbar's height and contains the Sidebar and main content */}
             <div style={{ paddingTop: isAuthPage ? '0' : NAVBAR_HEIGHT, minHeight: '100vh', background: '#F0F8FF' }}>
-                <div className="d-flex" style={{ minHeight: 'calc(100vh - 80px)' }}> {/* Adjusted minHeight for the d-flex container itself */}
+                <div className="d-flex" style={{ minHeight: 'calc(100vh - 80px)' }}>
+                    {/* Sidebar is rendered globally unless it's an auth page */}
                     {!isAuthPage && <Sidebar />}
-                    <div className="flex-grow-1" style={{ flex: 1, padding: '32px 0' }}>
-                        <ToastContainer />
+                    <div className="flex-grow-1" style={{ flex: 1, padding: '32px 20px' }}>
+                        <ToastContainer /> {/* Toast notifications container */}
                         <Routes>
                             {/* --- Authentication Routes (Accessible without login) --- */}
                             <Route path="/login" element={<Login />} />
                             <Route path="/loginselection" element={<LoginSelection />} />
                             <Route path="/reset-password" element={<ResetPassword />} />
                             <Route path="/email-verify" element={<EmailVerify />} />
-                            
-                            {/* Root/dashboard logic: ALWAYS RENDER HOME2 FOR LOGGED-IN USERS */}
+
+                            {/* Root/dashboard logic: Always render Home2 for logged-in users, otherwise redirect */}
                             <Route
                                 path="/"
                                 element={
                                     isLoggedin ? (
-                                        <Home2 key={isDashboard ? location.key : "home2-static"} />
+                                        <Home2 />
                                     ) : (
                                         <Navigate to="/loginselection" replace />
                                     )
@@ -110,53 +115,53 @@ const AppRoutes = () => {
                             <Route
                                 element={
                                     <PrivateRoute>
-                                        <Outlet />
+                                        <Outlet /> {/* Renders nested routes */}
                                     </PrivateRoute>
                                 }
                             >
-                                <Route path="/home" element={<Home />} />
                                 <Route path="/tickets-page" element={<TicketsPage />} />
                                 <Route path="/tickets" element={<TicketsPage />} />
                                 <Route path="/create-ticket" element={<CreateTicket />} />
                                 <Route path="/tickets/:id" element={<Ticket />} />
 
-                                {/* Admin-only routes (protected by AdminRoute) */}
+                                {/* --- Admin-only routes (protected by AdminRoute) --- */}
                                 <Route
-                                    path="/admin"
                                     element={
                                         <AdminRoute>
-                                            <AdminDashboard />
+                                            <Outlet /> {/* Renders nested admin components */}
                                         </AdminRoute>
                                     }
-                                />
-                                <Route
-                                    path="/admin/tickets/:id/reply"
-                                    element={
-                                        <AdminRoute>
-                                            <TicketReply />
-                                        </AdminRoute>
-                                    }
-                                />
+                                >
+                                    <Route path="/admin" element={<AdminDashboard />} />
+                                    <Route path="/admin/tickets/:id/reply" element={<TicketReply />} />
 
-                                {/* Filtered ticket lists */}
-                                <Route path="/tickets/open" element={<TicketsPage filter="open" />} />
-                                <Route path="/tickets/resolved" element={<TicketsPage filter="resolved" />} />
-                                
-                                {/* Report Routes */}
-                                <Route path="/reports" element={<ReportPage />} />
-                                <Route path="/analytics" element={<AnalyticsPage />} />
+                                    {/* Admin Ticket Views: All use the same AllTickets component,
+                                        but pass a different initialStatusFilter prop. */}
+                                    <Route path="/admin/tickets/all" element={<AllTickets initialStatusFilter="All" />} />
+                                    <Route path="/admin/tickets/open" element={<AllTickets initialStatusFilter="open" />} />
+                                    <Route path="/admin/tickets/in-progress" element={<AllTickets initialStatusFilter="in progress" />} />
+                                    <Route path="/admin/tickets/resolved" element={<AllTickets initialStatusFilter="resolved" />} />
+                                    <Route path="/admin/tickets/closed" element={<AllTickets initialStatusFilter="closed" />} />
+                                    <Route path="/admin/tickets/reopened" element={<AllTickets initialStatusFilter="reopened" />} />
+
+
+                                    {/* Report Routes (assuming these are admin-only or at least protected) */}
+                                    <Route path="/reports" element={<ReportPage />} />
+                                    <Route path="/analytics" element={<AnalyticsPage />} />
+                                </Route>
                             </Route>
 
-                            {/* Fallback: Not found. This should be the last route. */}
+                            {/* Fallback: Not found page. This should be the last route. */}
                             <Route path="*" element={<FallbackRoute />} />
                         </Routes>
                     </div>
                 </div>
             </div>
+            {/* Inline styles for global CSS - consider moving to App.css */}
             <style>
                 {`
                     body {
-                        margin: 0; /* Ensure no default body margin */
+                        margin: 0;
                         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
                             'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
                             sans-serif;
@@ -164,89 +169,89 @@ const AppRoutes = () => {
                         -moz-osx-font-smoothing: grayscale;
                     }
 
-          code {
-              font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-                  monospace;
-          }
+                    code {
+                        font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+                            monospace;
+                    }
 
-          a {
-              text-decoration: none !important;
-          }
+                    a {
+                        text-decoration: none !important;
+                    }
 
-          .flex-grow-1 {
-              padding: 32px 20px !important;
-              width: 100%;
-              box-sizing: border-box;
-          }
+                    .flex-grow-1 {
+                        padding: 32px 20px !important;
+                        width: 100%;
+                        box-sizing: border-box;
+                    }
 
-          .sidebar-nav-link {
-              font-weight: 500;
-              color: #222 !important;
-              font-size: 18px;
-              margin-bottom: 8px;
-              text-decoration: none;
-              transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
-              padding: 8px 12px;
-              border-radius: 4px;
-              display: block;
-          }
+                    .sidebar-nav-link {
+                        font-weight: 500;
+                        color: #222 !important;
+                        font-size: 18px;
+                        margin-bottom: 8px;
+                        text-decoration: none;
+                        transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
+                        padding: 8px 12px;
+                        border-radius: 4px;
+                        display: block;
+                    }
 
-          .sidebar-nav-link:hover {
-              color: #0056b3 !important;
-              background-color: #f0f2f5;
-          }
+                    .sidebar-nav-link:hover {
+                        color: #0056b3 !important;
+                        background-color: #f0f2f5;
+                    }
 
-          .sidebar-nav-link.active {
-              font-weight: 700;
-              color: #007bff !important;
-              background-color: #e9ecef;
-              border-left: 4px solid #007bff;
-              padding-left: 8px;
-          }
+                    .sidebar-nav-link.active {
+                        font-weight: 700;
+                        color: #007bff !important;
+                        background-color: #e9ecef;
+                        border-left: 4px solid #007bff;
+                        padding-left: 8px;
+                    }
 
-          .sidebar-nav-link.active:hover {
-              color: #0056b3 !important;
-              background-color: #e9ecef;
-          }
+                    .sidebar-nav-link.active:hover {
+                        color: #0056b3 !important;
+                        background-color: #e9ecef;
+                    }
 
-          .user-initial-circle {
-              width: 40px;
-              height: 40px;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              border-radius: 50%;
-              background-color: #007bff;
-              color: white;
-              font-weight: bold;
-              font-size: 1.2rem;
-              cursor: pointer;
-              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-              transition: background-color 0.2s ease-in-out;
-          }
+                    .user-initial-circle {
+                        width: 40px;
+                        height: 40px;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        border-radius: 50%;
+                        background-color: #007bff;
+                        color: white;
+                        font-weight: bold;
+                        font-size: 1.2rem;
+                        cursor: pointer;
+                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                        transition: background-color 0.2s ease-in-out;
+                    }
 
-          .user-initial-circle:hover {
-              background-color: #0056b3;
-          }
+                    .user-initial-circle:hover {
+                        background-color: #0056b3;
+                    }
 
-          .user-dropdown-menu {
-              position: absolute;
-              top: 100%;
-              right: 0;
-              background-color: white;
-              border-radius: 8px;
-              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-              min-width: 150px;
-              padding: 8px 0;
-              z-index: 1000;
-              margin-top: 10px;
-          }
+                    .user-dropdown-menu {
+                        position: absolute;
+                        top: 100%;
+                        right: 0;
+                        background-color: white;
+                        border-radius: 8px;
+                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                        min-width: 150px;
+                        padding: 8px 0;
+                        z-index: 1000;
+                        margin-top: 10px;
+                    }
 
-          .user-dropdown-menu ul {
-              list-style: none;
-              margin: 0;
-              padding: 0;
-          }
+                    .user-dropdown-menu ul {
+                        list-style: none;
+                        margin: 0;
+                        padding: 0;
+                    }
 
                     .user-dropdown-menu .dropdown-item {
                         padding: 10px 15px;
@@ -257,28 +262,28 @@ const AppRoutes = () => {
                         text-align: left;
                     }
 
-          .user-dropdown-menu .dropdown-item:hover {
-              background-color: #f0f2f5;
-              color: #007bff;
-          }
+                    .user-dropdown-menu .dropdown-item:hover {
+                        background-color: #f0f2f5;
+                        color: #007bff;
+                    }
 
-          .hover-effect:hover {
-              transform: translateY(-5px);
-              box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-              cursor: pointer;
-          }
-        `}
-      </style>
-    </div>
-  );
+                    .hover-effect:hover {
+                        transform: translateY(-5px);
+                        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+                        cursor: pointer;
+                    }
+                `}
+            </style>
+        </div>
+    );
 };
 
 function App() {
-  return (
-    <AppContextProvider>
-      <AppRoutes />
-    </AppContextProvider>
-  );
+    return (
+        <AppContextProvider>
+            <AppRoutes />
+        </AppContextProvider>
+    );
 }
 
 export default App;
