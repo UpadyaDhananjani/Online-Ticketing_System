@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { Routes, Route, useLocation, Navigate, Outlet } from 'react-router-dom';
 
 // Components and Pages
-import Navbar from './components/Navbar.jsx';
+import Navbar from './components/Navbar.jsx'; // Your Navbar component
 import Sidebar from './components/Sidebar.jsx';
 import Home from './components/Home.jsx';
 import Home2 from './components/Home2.jsx';
@@ -18,13 +18,8 @@ import Ticket from './pages/Ticket';
 
 import AdminDashboard from './admin/AdminDashboard';
 import TicketReply from './admin/adminTicketReply.jsx';
-import AdminHome from './admin/adminHome.jsx'; // dynamically shown for admins
-import AnalyticsPage from './report/AnalyticsPage';
-import ReportPage from './report/ReportPage';
-import AssigneePerformanceTable from './report/AssigneePerformanceTable.jsx';
-import TicketsByUnitChart from './report/TicketsByUnitChart.jsx';
-import AvgResolutionTimeChart from './report/AvgResolutionTimeChart.jsx';
-import ActivityLogsTable from './report/ActivityLogsTable.jsx';
+// AdminHome is no longer needed if Home2 is the main home for all logged-in users
+// import AdminHome from './admin/adminHome.jsx'; // <--- Ensure this is commented out or removed
 
 // Styling
 import { ToastContainer } from 'react-toastify';
@@ -39,16 +34,19 @@ import './App.css';
 import { AppContextProvider, AppContent } from './context/AppContext';
 
 const AppRoutes = () => {
-  const location = useLocation();
-  const { isLoggedin, userData, loading } = useContext(AppContent);
+    const location = useLocation();
+    const { isLoggedin, userData, loading } = useContext(AppContent);
 
-  // Paths that do NOT use Navbar and Sidebar
-  const isAuthPage = [
-    '/login',
-    '/loginselection',
-    '/reset-password',
-    '/email-verify',
-  ].includes(location.pathname);
+    // Define the height of your fixed Navbar
+    const NAVBAR_HEIGHT = '80px'; // Make sure this matches the height in Navbar.jsx
+
+    // URLs that are NOT part of the main UI shell (navbar/sidebar)
+    const isAuthPage = [
+        '/login',
+        '/loginselection',
+        '/reset-password',
+        '/email-verify',
+    ].includes(location.pathname);
 
   // Private route wrapper
   function PrivateRoute({ children }) {
@@ -57,125 +55,106 @@ const AppRoutes = () => {
     return children;
   }
 
-  // Admin route wrapper
-  function AdminRoute({ children }) {
-    if (!isLoggedin || userData?.role !== 'admin') {
-      return <Navigate to="/" replace />;
+    // AdminRoute: Guards any admin-only routes
+    function AdminRoute({ children }) {
+        if (!isLoggedin || userData?.role !== 'admin') {
+            return <Navigate to="/" replace />; // If not admin, redirect to regular home (now Home2)
+        }
+        return children;
     }
-    return children;
-  }
 
-  // Fallback route for 404 or unknown routes
-  const FallbackRoute = () =>
-    isLoggedin ? <Navigate to="/" replace /> : <Navigate to="/loginselection" replace />;
+    // Fallback for any not-found page, redirect base on login
+    const FallbackRoute = () =>
+        isLoggedin
+            ? <Navigate to="/" replace /> // Logged in goes to Home2
+            : <Navigate to="/loginselection" replace />;
 
-  const isDashboard = location.pathname === '/';
 
-  return (
-    <div>
-      {!isAuthPage && <Navbar />}
-      <div className="d-flex" style={{ minHeight: '100vh', background: '#F0F8FF' }}>
-        {!isAuthPage && <Sidebar />}
-        <div className="flex-grow-1" style={{ flex: 1, padding: '32px 0' }}>
-          <ToastContainer />
-          <Routes>
-            {/* --- Authentication Routes (public) --- */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/loginselection" element={<LoginSelection />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/email-verify" element={<EmailVerify />} />
+    const isDashboard = location.pathname === '/'; 
 
-            {/* Analytics page (public or private? Assuming private, move inside PrivateRoute) */}
-            {/* If analytics is private, uncomment and move inside PrivateRoute */}
-            {/* <Route
-              path="/analytics"
-              element={
-                <PrivateRoute>
-                  <AnalyticsPage />
-                </PrivateRoute>
-              }
-            /> */}
+    return (
+        <div>
+            {/* Navbar is now fixed at the very top */}
+            {!isAuthPage && <Navbar />} 
 
-            {/* Root / dashboard - show AdminHome for admins, Home2 for regular users */}
-            <Route
-              path="/"
-              element={
-                isLoggedin ? (
-                  userData?.role === 'admin' ? (
-                    <AdminHome key={isDashboard ? location.key : 'adminhome-static'} />
-                  ) : (
-                    <Home2 key={isDashboard ? location.key : 'home2-static'} />
-                  )
-                ) : (
-                  <Navigate to="/loginselection" replace />
-                )
-              }
-            />
+            {/* This div creates space for the fixed Navbar and holds the Sidebar and main content */}
+            <div style={{ paddingTop: isAuthPage ? '0' : NAVBAR_HEIGHT, minHeight: '100vh', background: '#F0F8FF' }}>
+                <div className="d-flex" style={{ minHeight: 'calc(100vh - 80px)' }}> {/* Adjusted minHeight for the d-flex container itself */}
+                    {!isAuthPage && <Sidebar />}
+                    <div className="flex-grow-1" style={{ flex: 1, padding: '32px 0' }}>
+                        <ToastContainer />
+                        <Routes>
+                            {/* --- Authentication Routes (Accessible without login) --- */}
+                            <Route path="/login" element={<Login />} />
+                            <Route path="/loginselection" element={<LoginSelection />} />
+                            <Route path="/reset-password" element={<ResetPassword />} />
+                            <Route path="/email-verify" element={<EmailVerify />} />
+                            
+                            {/* Root/dashboard logic: ALWAYS RENDER HOME2 FOR LOGGED-IN USERS */}
+                            <Route
+                                path="/"
+                                element={
+                                    isLoggedin ? (
+                                        <Home2 key={isDashboard ? location.key : "home2-static"} />
+                                    ) : (
+                                        <Navigate to="/loginselection" replace />
+                                    )
+                                }
+                            />
 
-            {/* --- Private Routes For Logged-in Users --- */}
-            <Route
-              element={
-                <PrivateRoute>
-                  <Outlet />
-                </PrivateRoute>
-              }
-            >
-              <Route path="/home" element={<Home />} />
-              <Route path="/tickets-page" element={<TicketsPage />} />
-              <Route path="/tickets" element={<TicketsPage />} />
-              <Route path="/create-ticket" element={<CreateTicket />} />
-              <Route path="/tickets/:id" element={<Ticket />} />
+                            {/* --- Private (protected) routes for logged in users only --- */}
+                            <Route
+                                element={
+                                    <PrivateRoute>
+                                        <Outlet />
+                                    </PrivateRoute>
+                                }
+                            >
+                                <Route path="/home" element={<Home />} />
+                                <Route path="/tickets-page" element={<TicketsPage />} />
+                                <Route path="/tickets" element={<TicketsPage />} />
+                                <Route path="/create-ticket" element={<CreateTicket />} />
+                                <Route path="/tickets/:id" element={<Ticket />} />
 
-              {/* Analytics page inside private */}
-              <Route path="/analytics" element={<AnalyticsPage />} />
-              <Route path="/reports" element={<ReportPage />} />
+                                {/* Admin-only routes (protected by AdminRoute) */}
+                                <Route
+                                    path="/admin"
+                                    element={
+                                        <AdminRoute>
+                                            <AdminDashboard />
+                                        </AdminRoute>
+                                    }
+                                />
+                                <Route
+                                    path="/admin/tickets/:id/reply"
+                                    element={
+                                        <AdminRoute>
+                                            <TicketReply />
+                                        </AdminRoute>
+                                    }
+                                />
 
-              {/* Admin-protected routes */}
-              <Route
-                path="/admin"
-                element={
-                  <AdminRoute>
-                    <AdminDashboard />
-                  </AdminRoute>
-                }
-              />
-              <Route
-                path="/admin/tickets/:id/reply"
-                element={
-                  <AdminRoute>
-                    <TicketReply />
-                  </AdminRoute>
-                }
-              />
+                                {/* Filtered ticket lists */}
+                                <Route path="/tickets/open" element={<TicketsPage filter="open" />} />
+                                <Route path="/tickets/resolved" element={<TicketsPage filter="resolved" />} />
+                            </Route>
 
-              {/* Filtered tickets */}
-              <Route path="/tickets/open" element={<TicketsPage filter="open" />} />
-              <Route path="/tickets/resolved" element={<TicketsPage filter="resolved" />} />
-            </Route>
-
-            {/* Fallback for unmatched routes */}
-            <Route path="*" element={<FallbackRoute />} />
-          </Routes>
-
-          {/* Report Components - Assuming these are always shown on the dashboard */}
-          <AssigneePerformanceTable />
-          <TicketsByUnitChart />
-          <AvgResolutionTimeChart />
-          <ActivityLogsTable />
-        </div>
-      </div>
-
-      {/* Global styles */}
-      <style>
-        {`
-          body {
-              margin: 0;
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-                  'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-                  sans-serif;
-              -webkit-font-smoothing: antialiased;
-              -moz-osx-font-smoothing: grayscale;
-          }
+                            {/* Fallback: Not found. This should be the last route. */}
+                            <Route path="*" element={<FallbackRoute />} />
+                        </Routes>
+                    </div>
+                </div>
+            </div>
+            <style>
+                {`
+                    body {
+                        margin: 0; /* Ensure no default body margin */
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                            'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                            sans-serif;
+                        -webkit-font-smoothing: antialiased;
+                        -moz-osx-font-smoothing: grayscale;
+                    }
 
           code {
               font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
@@ -261,13 +240,14 @@ const AppRoutes = () => {
               padding: 0;
           }
 
-          .user-dropdown-menu .dropdown-item {
-              padding: 10px 15px;
-              cursor: pointer;
-              font-size: 0.95rem;
-              color: #333;
-              transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-          }
+                    .user-dropdown-menu .dropdown-item {
+                        padding: 10px 15px;
+                        cursor: pointer;
+                        font-size: 0.95rem;
+                        color: #333;
+                        transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+                        text-align: left;
+                    }
 
           .user-dropdown-menu .dropdown-item:hover {
               background-color: #f0f2f5;
