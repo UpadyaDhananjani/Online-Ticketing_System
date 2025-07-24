@@ -304,7 +304,7 @@ export const getAdminReportPdfUrl = () => `${API_URL}/admin/tickets/reports/pdf`
 
 export const getAdminTicketsSummary = async () => {
     const response = await axiosInstance.get('/admin/tickets/summary');
-    return response.data;
+    return response.data; // This already returns the data object
 };
 
 

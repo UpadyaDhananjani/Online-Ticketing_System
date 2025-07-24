@@ -1,139 +1,89 @@
 import React, { useEffect, useState } from "react";
-import { Container, Row, Col, Card, Button, Spinner, Alert } from "react-bootstrap";
-import { getAdminTicketsSummary } from "../api/ticketApi";
+import { Container, Row, Col, Card, Button } from "react-bootstrap";
+import { getAdminTicketsSummary, getAdminReportChartImageUrl, getAdminReportPdfUrl } from "../api/ticketApi";
 import { Link } from "react-router-dom";
 import ChartAnalytics from "./ChartAnalytics";
 
-const TicketReports = () => {
-  const [reportData, setReportData] = useState({
-    counts: null,
-    loading: true,
-    error: null
-  });
+function TicketReports() {
+  const [summary, setSummary] = useState(null);
 
   useEffect(() => {
-    const fetchReportData = async () => {
+    async function fetchSummary() {
       try {
-        const response = await getAdminTicketsSummary();
-        console.log("API Response:", response);
-
-        if (!response || typeof response !== "object") {
-          throw new Error("Invalid data format received from server");
-        }
-
-        setReportData({
-          counts: {
-            open: response.open ?? 0,
-            inProgress: response.inProgress ?? 0,
-            resolved: response.resolved ?? 0,
-            closed: response.closed ?? 0,
-            reopened: response.reopened ?? 0
-          },
-          loading: false,
-          error: null
-        });
+        const res = await getAdminTicketsSummary();
+        setSummary(res); // Change this line - remove .data
       } catch (error) {
-        console.error("Failed to load report data:", error);
-        setReportData(prev => ({
-          ...prev,
-          loading: false,
-          error: error.message
-        }));
+        console.error("Error fetching ticket summary:", error);
       }
-    };
-
-    fetchReportData();
+    }
+    fetchSummary();
   }, []);
 
-  const prepareChartData = () => {
-    if (!reportData.counts) return [];
-    
-    return [
-      { status: "open", count: reportData.counts.open },
-      { status: "in progress", count: reportData.counts.inProgress },
-      { status: "resolved", count: reportData.counts.resolved },
-      { status: "closed", count: reportData.counts.closed },
-      { status: "reopened", count: reportData.counts.reopened }
-    ].filter(item => item.count > 0); // Only include statuses with counts > 0
+  if (!summary) return <div>Loading reports...</div>;
+
+  // For real-time chart image
+  const chartImageUrl = getAdminReportChartImageUrl();
+  const pdfUrl = getAdminReportPdfUrl();
+  
+  // Format data for ChartAnalytics
+  const chartData = [
+    { status: "Open", count: summary.open },
+    { status: "In Progress", count: summary.inProgress },
+    { status: "Resolved", count: summary.resolved }
+  ];
+
+  const downloadPdf = () => {
+    // Logic to download PDF report
+    window.open(pdfUrl, "_blank");
   };
 
-  if (reportData.loading) {
-    return (
-      <Container className="text-center my-5">
-        <Spinner animation="border" variant="primary" />
-        <p className="mt-2">Loading ticket reports...</p>
-      </Container>
-    );
-  }
-
-  if (reportData.error) {
-    return (
-      <Container className="my-5">
-        <Alert variant="danger">
-          <Alert.Heading>Error Loading Reports</Alert.Heading>
-          <p>{reportData.error}</p>
-          <Button 
-            variant="outline-danger"
-            onClick={() => window.location.reload()}
-          >
-            Retry
-          </Button>
-        </Alert>
-      </Container>
-    );
-  }
-
-  const chartData = prepareChartData();
-
   return (
-    <Container className="py-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1 className="mb-0">Ticket Analytics Dashboard</h1>
-        <div>
-          <Link to="/admin" className="btn btn-outline-secondary me-2">
-            Back to Admin
-          </Link>
-          <Link to="/analytics" className="btn btn-primary">
-            Advanced Analytics
-          </Link>
-        </div>
+    <Container>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <h1>Ticket Reports</h1>
+        <Link to="/analytics">
+          <Button variant="info">Analytics</Button>
+        </Link>
       </div>
-
-      <Row className="g-4 mb-4">
+      <Row>
         <Col md={4}>
-          <Card className="h-100 shadow-sm">
-            <Card.Body className="text-center">
+          <Card>
+            <Card.Body>
               <Card.Title>Open Tickets</Card.Title>
-              <h2 className="text-primary">{reportData.counts?.open || 0}</h2>
+              <h2>{summary.open}</h2>
             </Card.Body>
           </Card>
         </Col>
         <Col md={4}>
-          <Card className="h-100 shadow-sm">
-            <Card.Body className="text-center">
-              <Card.Title>In Progress</Card.Title>
-              <h2 className="text-warning">{reportData.counts?.inProgress || 0}</h2>
+          <Card>
+            <Card.Body>
+              <Card.Title>Resolved Tickets</Card.Title>
+              <h2>{summary.resolved}</h2>
             </Card.Body>
           </Card>
         </Col>
         <Col md={4}>
-          <Card className="h-100 shadow-sm">
-            <Card.Body className="text-center">
-              <Card.Title>Resolved</Card.Title>
-              <h2 className="text-success">{reportData.counts?.resolved || 0}</h2>
+          <Card>
+            <Card.Body>
+              <Card.Title>In Progress Tickets</Card.Title>
+              <h2>{summary.inProgress}</h2>
             </Card.Body>
           </Card>
         </Col>
       </Row>
 
-      <Card className="shadow-sm">
-        <Card.Body>
-          <Card.Title className="text-center mb-4">Ticket Status Distribution</Card.Title>
-          <ChartAnalytics data={chartData} />
-        </Card.Body>
-      </Card>
+      <ChartAnalytics data={chartData} />
+
+      <Button
+        variant="primary"
+        onClick={downloadPdf}
+      >
+        Download PDF Report
+      </Button>
+
+      {/* You can add more charts/tables below */}
     </Container>
   );
-};
+}
 
 export default TicketReports;

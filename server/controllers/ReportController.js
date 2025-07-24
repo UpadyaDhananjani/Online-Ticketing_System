@@ -259,3 +259,47 @@ export const getTicketActivityLogs = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// Status Distribution
+export const getTicketStatusDistribution = async (req, res) => {
+  try {
+    const pipeline = [
+      { $group: {
+        _id: '$status',
+        count: { $sum: 1 }
+      }},
+      { $project: {
+        status: '$_id',
+        count: 1,
+        _id: 0
+      }},
+      { $sort: { count: -1 } }
+    ];
+    const data = await Ticket.aggregate(pipeline);
+    res.json(data);
+  } catch (err) {
+    console.error('Error getting ticket status distribution:', err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Type Distribution
+export const getTicketTypeDistribution = async (req, res) => {
+  try {
+    const pipeline = [
+      { $group: {
+        _id: '$type',
+        count: { $sum: 1 }
+      }},
+      { $project: {
+        type: '$_id',  // Change 'status' to 'type'
+        count: 1,
+        _id: 0
+      }}
+    ];
+    const data = await Ticket.aggregate(pipeline);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
