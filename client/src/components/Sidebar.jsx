@@ -1,6 +1,6 @@
 // client/src/components/Sidebar.jsx
 import React, { useContext } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, Link } from 'react-router-dom';
 import { Nav, Navbar } from 'react-bootstrap';
 import { AppContent } from '../context/AppContext';
 
@@ -65,6 +65,9 @@ function Sidebar() {
                         </Nav.Link>
                     </>
                 )}
+                <Link to="/reports" className="sidebar-nav-link">
+                    Reports
+                </Link>
             </Nav>
             <style>{`
                 .sidebar-nav-link {
