@@ -1,4 +1,5 @@
-import React, { useContext, useState, useEffect } from "react";
+// client/src/components/Login.jsx
+import React, { useState, useContext, useEffect } from "react";
 import { assets } from "../assets/assets";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AppContent } from "../context/AppContext";
@@ -17,6 +18,7 @@ const Login = () => {
   const [selectedUnit, setSelectedUnit] = useState("");
   const [units, setUnits] = useState([]);
   const [loadingUnits, setLoadingUnits] = useState(false);
+  const [loadingButton, setLoadingButton] = useState(false);
 
   const [state, setState] = useState(
     roleFromUrl === "admin"
@@ -26,7 +28,7 @@ const Login = () => {
       : "Sign Up"
   );
 
-  const { setIsLoggedin, setUserData, backend } = useContext(AppContent);
+  const { setIsLoggedin, setUserData, backendUrl } = useContext(AppContent);
 
   useEffect(() => {
     setState(
@@ -43,54 +45,78 @@ const Login = () => {
       if (state === "Sign Up") {
         setLoadingUnits(true);
         try {
-          const response = await axios.get(`${backend}/api/units`);
-          if (response.data.success) {
+          // --- FIX: Changed API endpoint to /api/public/units ---
+          const response = await axios.get(`${backendUrl}/api/public/units`);
+          
+          // Ensure response.data has a 'success' property, as expected by your frontend logic
+          if (response.data.success) { // This now correctly checks the 'success' property
             setUnits(response.data.units);
           } else {
-            toast.error(response.data.message);
+            toast.error(response.data.message || "Failed to fetch units from backend.");
           }
         } catch (error) {
-          toast.error("Failed to fetch units.");
+          console.error("Failed to fetch units:", error);
+          toast.error("Failed to fetch units. Please check backend /api/public/units endpoint.");
         } finally {
           setLoadingUnits(false);
         }
       }
     };
     fetchUnits();
-  }, [state, backend]);
+  }, [state, backendUrl]);
 
   const onLogin = async (e) => {
     e.preventDefault();
-    if (!email || !password) return toast.error("All fields are required");
+    setLoadingButton(true);
+
+    if (!email || !password) {
+      toast.error("All fields are required");
+      setLoadingButton(false);
+      return;
+    }
 
     try {
-      const res = await axios.post(`${backend}/api/login`, {
-        email,
-        password,
-        role: roleFromUrl || "customer",
-      });
+      axios.defaults.withCredentials = true;
+
+      let res;
+      if (roleFromUrl === "admin" && email === "admin@gmail.com" && password === "admin123") {
+        console.log("Attempting Admin Login via /api/auth/admin-login");
+        res = await axios.post(`${backendUrl}/api/auth/admin-login`, { email, password });
+      } else {
+        console.log("Attempting Regular User Login via /api/auth/login");
+        res = await axios.post(`${backendUrl}/api/auth/login`, { email, password });
+      }
 
       if (res.data.success) {
         toast.success(res.data.message);
         setIsLoggedin(true);
-        setUserData(res.data.user);
-        localStorage.setItem("token", res.data.token);
+        setUserData(res.data.userData);
         navigate("/");
       } else {
         toast.error(res.data.message);
       }
     } catch (err) {
-      toast.error("Login failed");
+      console.error("Login failed error:", err.response?.data || err.message);
+      toast.error(err.response?.data?.message || "Login failed due to an unexpected error.");
+    } finally {
+      setLoadingButton(false);
     }
   };
 
   const onSignUp = async (e) => {
     e.preventDefault();
-    if (!name || !email || !password || !selectedUnit)
-      return toast.error("All fields are required");
+    setLoadingButton(true);
+
+    if (!name || !email || !password || !selectedUnit) {
+      toast.error("All fields are required");
+      setLoadingButton(false);
+      return;
+    }
 
     try {
-      const res = await axios.post(`${backend}/api/signup`, {
+      axios.defaults.withCredentials = true;
+
+      const res = await axios.post(`${backendUrl}/api/auth/register`, {
         name,
         email,
         password,
@@ -101,14 +127,16 @@ const Login = () => {
       if (res.data.success) {
         toast.success(res.data.message);
         setIsLoggedin(true);
-        setUserData(res.data.user);
-        localStorage.setItem("token", res.data.token);
+        setUserData(res.data.userData);
         navigate("/");
       } else {
         toast.error(res.data.message);
       }
     } catch (err) {
-      toast.error("Sign up failed");
+      console.error("Sign up failed error:", err.response?.data || err.message);
+      toast.error(err.response?.data?.message || "Sign up failed due to an unexpected error.");
+    } finally {
+      setLoadingButton(false);
     }
   };
 
@@ -118,113 +146,276 @@ const Login = () => {
   };
 
   return (
-    <div className="w-full h-screen flex items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md bg-white p-8 shadow-xl rounded-xl relative">
-        <img src={assets.logo} alt="Logo" className="w-20 mx-auto mb-4" />
-
-        <h2 className="text-2xl font-bold text-center mb-2">
-          {state === "Login" ? "Login" : "Sign Up"}
-        </h2>
-
-        {roleFromUrl && (
-          <p className="text-sm text-center text-gray-500 mb-4">
-            Logging in as: <span className="font-semibold">{roleFromUrl}</span>
-          </p>
-        )}
-
-        <form
-          onSubmit={state === "Login" ? onLogin : onSignUp}
-          className="space-y-4"
-        >
-          {state === "Sign Up" && (
-            <>
-              <input
-                type="text"
-                placeholder="Full Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded"
-              />
-              <div className="relative">
-                <select
-                  value={selectedUnit}
-                  onChange={(e) => setSelectedUnit(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded appearance-none pr-8"
-                >
-                  <option value="" disabled>
-                    {loadingUnits ? "Loading units..." : "Select your unit"}
-                  </option>
-                  {units.map((unit) => (
-                    <option key={unit.id} value={unit.name}>
-                      {unit.name}
-                    </option>
-                  ))}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                  <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 6.757 7.586 5.343 9z"/></svg>
-                </div>
-              </div>
-            </>
-          )}
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded"
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded"
+    <div className="auth-page-container">
+      <div className="auth-form-wrapper">
+        <div className="auth-form-card">
+          <img
+            src={assets.logo}
+            alt="Logo"
+            className="auth-form-logo"
+            onClick={() => navigate('/')}
           />
 
-          {/* Forgot Password Link - Only visible on the Login state */}
-          {state === "Login" && (
-            <p className="text-right text-sm -mt-2">
-              <span
-                onClick={() => navigate("/reset-password")} // <--- THIS IS THE CHANGED LINE
-                className="text-blue-500 hover:underline cursor-pointer"
-              >
-                Forgot Password?
-              </span>
-            </p>
-          )}
-
-          <button
-            type="submit"
-            className="w-full py-2 bg-green-600 text-white font-semibold rounded hover:bg-green-700"
-          >
+          <h2 className="auth-form-title">
             {state === "Login" ? "Login" : "Sign Up"}
-          </button>
-        </form>
+          </h2>
 
-        <div className="text-center mt-4">
-          {state === "Login" ? (
-            <p>
-              Don't have an account?{" "}
-              <span
-                onClick={() => handleStateChange("Sign Up")}
-                className="text-blue-500 underline cursor-pointer"
-              >
-                Sign up here
-              </span>
-            </p>
-          ) : (
-            <p>
-              Already have an account?{" "}
-              <span
-                onClick={() => handleStateChange("Login")}
-                className="text-blue-500 underline cursor-pointer"
-              >
-                Login here
-              </span>
+          {roleFromUrl && (
+            <p className="auth-form-subtitle">
+              Logging in as: <span className="font-semibold">{roleFromUrl}</span>
             </p>
           )}
+
+          <form
+            onSubmit={state === "Login" ? onLogin : onSignUp}
+            className="space-y-4"
+          >
+            {state === "Sign Up" && (
+              <>
+                <div className="auth-input-group">
+                  <img src={assets.user_icon} alt="" className="auth-icon" />
+                  <input
+                    type="text"
+                    placeholder="Full Name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="auth-input-field"
+                    required
+                  />
+                </div>
+                <div className="auth-input-group relative">
+                  <img src={assets.location_icon} alt="" className="auth-icon" />
+                  <select
+                    value={selectedUnit}
+                    onChange={(e) => setSelectedUnit(e.target.value)}
+                    className="auth-input-field appearance-none pr-8"
+                    required
+                  >
+                    <option value="" disabled>
+                      {loadingUnits ? "Loading units..." : "Select your unit"}
+                    </option>
+                    {units.map((unit) => (
+                      <option key={unit.id} value={unit.name}>
+                        {unit.name}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 6.757 7.586 5.343 9z"/></svg>
+                  </div>
+                </div>
+              </>
+            )}
+
+            <div className="auth-input-group">
+              <img src={assets.mail_icon} alt="" className="auth-icon" />
+              <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="auth-input-field"
+                required
+              />
+            </div>
+
+            <div className="auth-input-group">
+              <img src={assets.lock_icon} alt="" className="auth-icon" />
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="auth-input-field"
+                required
+              />
+            </div>
+
+            {state === "Login" && (
+              <p className="auth-link-text text-right -mt-2">
+                <span
+                  onClick={() => navigate("/reset-password")}
+                  className="auth-link"
+                >
+                  Forgot Password?
+                </span>
+              </p>
+            )}
+
+            <button
+              type="submit"
+              className="auth-submit-button"
+              disabled={loadingButton}
+            >
+              {loadingButton ? (state === "Login" ? "Logging in..." : "Signing up...") : (state === "Login" ? "Login" : "Sign Up")}
+            </button>
+          </form>
+
+          <div className="auth-link-text mt-4">
+            {state === "Login" ? (
+              <p>
+                Don't have an account?{" "}
+                <span
+                  onClick={() => handleStateChange("Sign Up")}
+                  className="auth-link"
+                >
+                  Sign up here
+                </span>
+              </p>
+            ) : (
+              <p>
+                Already have an account?{" "}
+                <span
+                  onClick={() => handleStateChange("Login")}
+                  className="auth-link"
+                >
+                  Login here
+                </span>
+              </p>
+            )}
+          </div>
         </div>
       </div>
+
+      <style>{`
+        body {
+          margin: 0;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+              'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+              sans-serif;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
+
+        a {
+          text-decoration: none !important;
+        }
+
+        .auth-page-container {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 100vh;
+          background: #e0e7ff;
+          padding: 20px;
+        }
+
+        .auth-form-wrapper {
+          display: flex;
+          gap: 24px;
+          background: transparent;
+          padding: 16px;
+        }
+
+        .auth-form-card {
+          background-color: #fff;
+          padding: 32px;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          width: 100%;
+          max-width: 400px;
+          text-align: center;
+        }
+
+        .auth-form-logo {
+          width: 80px;
+          margin: 0 auto 20px;
+          display: block;
+          cursor: pointer;
+        }
+
+        .auth-form-title {
+          font-size: 28px;
+          font-weight: 600;
+          color: #333;
+          margin-bottom: 20px;
+        }
+
+        .auth-form-subtitle {
+          text-align: center;
+          font-size: 15px;
+          margin-bottom: 25px;
+          color: #666;
+        }
+
+        .auth-input-group {
+          margin-bottom: 20px;
+          display: flex;
+          align-items: center;
+          padding: 12px 20px;
+          border-radius: 4px;
+          background-color: #f5f5f5;
+          border: 1px solid #ddd;
+        }
+
+        .auth-input-group:focus-within {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        .auth-icon {
+          width: 18px;
+          height: 18px;
+          margin-right: 10px;
+          color: #666;
+        }
+
+        .auth-input-field {
+          background-color: transparent;
+          outline: none;
+          border: none;
+          width: 100%;
+          color: #333;
+          font-size: 16px;
+        }
+
+        .auth-input-field::placeholder {
+          color: #999;
+        }
+
+        .auth-submit-button {
+          width: 100%;
+          padding: 12px 20px;
+          border-radius: 4px;
+          background-color: #28a745;
+          color: #ffffff;
+          font-weight: 500;
+          border: none;
+          cursor: pointer;
+          font-size: 18px;
+          transition: background-color 0.3s ease;
+        }
+
+        .auth-submit-button:hover:not(:disabled) {
+          background-color: #218838;
+        }
+        
+        .auth-submit-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .auth-link-text {
+          color: #666;
+          text-align: center;
+          font-size: 14px;
+        }
+
+        .auth-link {
+          color: #007bff;
+          text-decoration: none;
+          font-weight: 500;
+          cursor: pointer;
+          transition: color 0.2s ease;
+        }
+
+        .auth-link:hover {
+          text-decoration: underline;
+          color: #0056b3;
+        }
+
+        .space-y-4 > :not([hidden]) ~ :not([hidden]) { margin-top: 1rem; }
+      `}</style>
     </div>
   );
 };
