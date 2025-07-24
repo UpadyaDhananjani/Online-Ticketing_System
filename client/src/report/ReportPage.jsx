@@ -11,7 +11,7 @@ function TicketReports() {
     async function fetchSummary() {
       try {
         const res = await getAdminTicketsSummary();
-        setSummary(res.data);
+        setSummary(res); // Change this line - remove .data
       } catch (error) {
         console.error("Error fetching ticket summary:", error);
       }
