@@ -1,9 +1,9 @@
-//ticketAdminRoutes.js
+// server/routes/ticketAdminRoutes.js
 
 import express from 'express';
-import { 
-  getAllTickets, 
-  addAdminReply, 
+import {
+  getAllTickets,
+  addAdminReply,
   deleteMessage,
   resolveTicket,
   markTicketOpen,
@@ -11,72 +11,68 @@ import {
   deleteTicket,
   reassignTicket,
   getAdminTicketById,
-  getAdminTicketsSummary // Add this import
+  getAdminTicketsSummary
 } from '../controllers/ticketAdminController.js';
 
-import { 
-  generateReportChartImage, 
+import {
+  generateReportChartImage,
   downloadReportPdf,
   getAssigneePerformance,
   getTicketsByUnit,
   getAvgResolutionTime,
   getTicketActivityLogs,
-  getTicketStatusDistribution,  // Add comma here
-  getTicketTypeDistribution     // Add this import
+  getTicketStatusDistribution,
+  getTicketTypeDistribution
 } from '../controllers/ReportController.js';
 
 import authMiddleware from '../middleware/authMiddleware.js';
+import authorizeRoles from '../middleware/authorizeRoles.js';
 import upload from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
 
-// Apply authMiddleware to all admin routes
+// Apply auth and role-based middleware to all routes
 router.use(authMiddleware);
+router.use(authorizeRoles('admin'));
+
+// -------------------- Admin Ticket Routes --------------------
 
 // Get all tickets for admin dashboard
 router.get('/', getAllTickets);
 
-// Get ticket summary for admin dashboard
-router.get('/summary', getAdminTicketsSummary); // Add this route
-// --- REPORT ROUTES ---
+// Get a single ticket by ID (admin only)
+router.get('/:id', getAdminTicketById);
+
+// Add a reply to a ticket with optional attachments
+router.post('/:id/reply', upload.array('attachments', 5), addAdminReply);
+
+// Mark ticket status updates
+router.patch('/:id/resolve', resolveTicket);
+router.patch('/:id/open', markTicketOpen);
+router.patch('/:id/in-progress', markTicketInProgress);
+
+// Delete a message from a ticket
+router.delete('/:ticketId/messages/:messageId', deleteMessage);
+
+// Delete a ticket
+router.delete('/:id', deleteTicket);
+
+// Reassign a ticket
+router.patch('/:id/assign', reassignTicket);
+
+// -------------------- Admin Summary and Reports --------------------
+
+// Summary widget for dashboard
+router.get('/summary', getAdminTicketsSummary);
+
+// Charts and analytics
 router.get('/reports/chart-image', generateReportChartImage);
 router.get('/reports/pdf', downloadReportPdf);
 router.get('/assignee-performance', getAssigneePerformance);
 router.get('/tickets-by-unit', getTicketsByUnit);
 router.get('/avg-resolution-time', getAvgResolutionTime);
 router.get('/activity-logs', getTicketActivityLogs);
-// Add this route with the other report routes
 router.get('/status-distribution', getTicketStatusDistribution);
-router.get('/type-distribution', getTicketTypeDistribution);      // Add this route
-
-
-// Add reply with optional attachments
-router.post(
-  '/:id/reply',
-  upload.array('attachments', 5), // up to 5 files
-  addAdminReply
-);
-
-// Mark ticket as resolved
-router.patch('/:id/resolve', resolveTicket); // Using named export from controller
-
-// Mark ticket as open
-router.patch('/:id/open', markTicketOpen); // Using named export from controller
-
-// Mark ticket as in progress
-router.patch('/:id/in-progress', markTicketInProgress); // Using named export from controller, changed path to kebab-case
-
-// --- NEW ROUTE: Delete a message from a ticket (Admin only) ---
-router.delete('/:ticketId/messages/:messageId', deleteMessage); // Using named export from controller
-
-// --- NEW ROUTE: Delete a ticket (Admin only) ---
-router.delete('/:id', deleteTicket);
-
-// --- NEW ROUTE: Reassign a ticket (Admin only) ---
-router.patch('/:id/assign', reassignTicket);
-
-// --- NEW ROUTE: Get a single ticket by ID (Admin only) ---
-router.get('/:id', getAdminTicketById);
-
+router.get('/type-distribution', getTicketTypeDistribution);
 
 export default router;
