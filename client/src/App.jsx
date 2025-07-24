@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { Routes, Route, useLocation, Navigate, Outlet } from 'react-router-dom';
 // Components and Pages
-import Navbar from './components/Navbar.jsx';
+import Navbar from './components/Navbar.jsx'; // Your Navbar component
 import Sidebar from './components/Sidebar.jsx';
 import Home from './components/Home.jsx';
 import Home2 from './components/Home2.jsx';
@@ -15,7 +15,8 @@ import CreateTicket from './components/CreateTicket';
 import Ticket from './pages/Ticket';
 import AdminDashboard from './admin/AdminDashboard';
 import TicketReply from './admin/adminTicketReply.jsx';
-import AdminHome from './admin/adminHome.jsx';
+// AdminHome is no longer needed if Home2 is the main home for all logged-in users
+// import AdminHome from './admin/adminHome.jsx'; // <--- Ensure this is commented out or removed
 
 // Styling
 import { ToastContainer } from 'react-toastify';
@@ -30,13 +31,15 @@ const AppRoutes = () => {
     const location = useLocation();
     const { isLoggedin, userData, loading } = useContext(AppContent);
 
+    // Define the height of your fixed Navbar
+    const NAVBAR_HEIGHT = '80px'; // Make sure this matches the height in Navbar.jsx
+
     // URLs that are NOT part of the main UI shell (navbar/sidebar)
     const isAuthPage = [
         '/login',
         '/loginselection',
         '/reset-password',
         '/email-verify',
-         // This is correctly included
     ].includes(location.pathname);
 
     // PrivateRoute: Guards any routes needing authentication
@@ -49,99 +52,97 @@ const AppRoutes = () => {
     // AdminRoute: Guards any admin-only routes
     function AdminRoute({ children }) {
         if (!isLoggedin || userData?.role !== 'admin') {
-            return <Navigate to="/" replace />;
+            return <Navigate to="/" replace />; // If not admin, redirect to regular home (now Home2)
         }
         return children;
     }
 
     // Fallback for any not-found page, redirect base on login
-    // This part should be carefully ordered within <Routes>
     const FallbackRoute = () =>
         isLoggedin
-            ? <Navigate to="/" replace />
+            ? <Navigate to="/" replace /> // Logged in goes to Home2
             : <Navigate to="/loginselection" replace />;
 
 
-    const isDashboard = location.pathname === '/';
+    const isDashboard = location.pathname === '/'; 
 
     return (
         <div>
-            {!isAuthPage && <Navbar />}
-            <div className="d-flex" style={{ minHeight: '100vh', background: '#F0F8FF' }}>
-                {!isAuthPage && <Sidebar />}
-                <div className="flex-grow-1" style={{ flex: 1, padding: '32px 0' }}>
-                    <ToastContainer />
-                    <Routes>
-                        {/* --- Authentication Routes (Accessible without login) --- */}
-                        <Route path="/login" element={<Login />} />
-                        <Route path="/loginselection" element={<LoginSelection />} />
-                        <Route path="/reset-password" element={<ResetPassword />} />
-                        <Route path="/email-verify" element={<EmailVerify />} />
-                        {/* This is the key: Ensure /forgot-password is listed here BEFORE any catch-all or default routes */}
-                        
+            {/* Navbar is now fixed at the very top */}
+            {!isAuthPage && <Navbar />} 
 
-                        {/* Root/dashboard logic: DYNAMICALLY RENDER ADMINHOME FOR ADMINS OR HOME2 FOR REGULAR USERS */}
-                        <Route
-                            path="/"
-                            element={
-                                isLoggedin ? (
-                                    userData?.role === 'admin' ? (
-                                        <AdminHome key={isDashboard ? location.key : "adminhome-static"} />
-                                    ) : (
+            {/* This div creates space for the fixed Navbar and holds the Sidebar and main content */}
+            <div style={{ paddingTop: isAuthPage ? '0' : NAVBAR_HEIGHT, minHeight: '100vh', background: '#F0F8FF' }}>
+                <div className="d-flex" style={{ minHeight: 'calc(100vh - 80px)' }}> {/* Adjusted minHeight for the d-flex container itself */}
+                    {!isAuthPage && <Sidebar />}
+                    <div className="flex-grow-1" style={{ flex: 1, padding: '32px 0' }}>
+                        <ToastContainer />
+                        <Routes>
+                            {/* --- Authentication Routes (Accessible without login) --- */}
+                            <Route path="/login" element={<Login />} />
+                            <Route path="/loginselection" element={<LoginSelection />} />
+                            <Route path="/reset-password" element={<ResetPassword />} />
+                            <Route path="/email-verify" element={<EmailVerify />} />
+                            
+                            {/* Root/dashboard logic: ALWAYS RENDER HOME2 FOR LOGGED-IN USERS */}
+                            <Route
+                                path="/"
+                                element={
+                                    isLoggedin ? (
                                         <Home2 key={isDashboard ? location.key : "home2-static"} />
+                                    ) : (
+                                        <Navigate to="/loginselection" replace />
                                     )
-                                ) : (
-                                    <Navigate to="/loginselection" replace />
-                                )
-                            }
-                        />
-
-                        {/* --- Private (protected) routes for logged in users only --- */}
-                        <Route
-                            element={
-                                <PrivateRoute>
-                                    <Outlet />
-                                </PrivateRoute>
-                            }
-                        >
-                            <Route path="/home" element={<Home />} />
-                            <Route path="/tickets-page" element={<TicketsPage />} />
-                            <Route path="/tickets" element={<TicketsPage />} />
-                            <Route path="/create-ticket" element={<CreateTicket />} />
-                            <Route path="/tickets/:id" element={<Ticket />} />
-
-                            {/* Admin-only routes */}
-                            <Route
-                                path="/admin"
-                                element={
-                                    <AdminRoute>
-                                        <AdminDashboard />
-                                    </AdminRoute>
-                                }
-                            />
-                            <Route
-                                path="/admin/tickets/:id/reply"
-                                element={
-                                    <AdminRoute>
-                                        <TicketReply />
-                                    </AdminRoute>
                                 }
                             />
 
-                            {/* Filtered ticket lists */}
-                            <Route path="/tickets/open" element={<TicketsPage filter="open" />} />
-                            <Route path="/tickets/resolved" element={<TicketsPage filter="resolved" />} />
-                        </Route>
+                            {/* --- Private (protected) routes for logged in users only --- */}
+                            <Route
+                                element={
+                                    <PrivateRoute>
+                                        <Outlet />
+                                    </PrivateRoute>
+                                }
+                            >
+                                <Route path="/home" element={<Home />} />
+                                <Route path="/tickets-page" element={<TicketsPage />} />
+                                <Route path="/tickets" element={<TicketsPage />} />
+                                <Route path="/create-ticket" element={<CreateTicket />} />
+                                <Route path="/tickets/:id" element={<Ticket />} />
 
-                        {/* Fallback: Not found. This should be the last route. */}
-                        <Route path="*" element={<FallbackRoute />} />
-                    </Routes>
+                                {/* Admin-only routes (protected by AdminRoute) */}
+                                <Route
+                                    path="/admin"
+                                    element={
+                                        <AdminRoute>
+                                            <AdminDashboard />
+                                        </AdminRoute>
+                                    }
+                                />
+                                <Route
+                                    path="/admin/tickets/:id/reply"
+                                    element={
+                                        <AdminRoute>
+                                            <TicketReply />
+                                        </AdminRoute>
+                                    }
+                                />
+
+                                {/* Filtered ticket lists */}
+                                <Route path="/tickets/open" element={<TicketsPage filter="open" />} />
+                                <Route path="/tickets/resolved" element={<TicketsPage filter="resolved" />} />
+                            </Route>
+
+                            {/* Fallback: Not found. This should be the last route. */}
+                            <Route path="*" element={<FallbackRoute />} />
+                        </Routes>
+                    </div>
                 </div>
             </div>
             <style>
                 {`
                     body {
-                        margin: 0;
+                        margin: 0; /* Ensure no default body margin */
                         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
                             'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
                             sans-serif;
@@ -239,6 +240,7 @@ const AppRoutes = () => {
                         font-size: 0.95rem;
                         color: #333;
                         transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+                        text-align: left;
                     }
 
                     .user-dropdown-menu .dropdown-item:hover {
