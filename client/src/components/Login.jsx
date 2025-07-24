@@ -6,6 +6,9 @@ import { AppContent } from "../context/AppContext";
 import { toast } from "react-toastify";
 import axios from "axios";
 
+// Add direct import as fallback
+import unitsIcon from '../assets/units.png';
+
 const Login = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -45,11 +48,8 @@ const Login = () => {
       if (state === "Sign Up") {
         setLoadingUnits(true);
         try {
-          // --- FIX: Changed API endpoint to /api/public/units ---
           const response = await axios.get(`${backendUrl}/api/public/units`);
-          
-          // Ensure response.data has a 'success' property, as expected by your frontend logic
-          if (response.data.success) { // This now correctly checks the 'success' property
+          if (response.data.success) {
             setUnits(response.data.units);
           } else {
             toast.error(response.data.message || "Failed to fetch units from backend.");
@@ -80,10 +80,8 @@ const Login = () => {
 
       let res;
       if (roleFromUrl === "admin" && email === "admin@gmail.com" && password === "admin123") {
-        console.log("Attempting Admin Login via /api/auth/admin-login");
         res = await axios.post(`${backendUrl}/api/auth/admin-login`, { email, password });
       } else {
-        console.log("Attempting Regular User Login via /api/auth/login");
         res = await axios.post(`${backendUrl}/api/auth/login`, { email, password });
       }
 
@@ -121,7 +119,7 @@ const Login = () => {
         email,
         password,
         unit: selectedUnit,
-        role: roleFromUrl || "customer",
+        role: roleFromUrl || "User",
       });
 
       if (res.data.success) {
@@ -142,7 +140,7 @@ const Login = () => {
 
   const handleStateChange = (newState) => {
     setState(newState);
-    navigate(`/login?state=${newState.toLowerCase()}&role=${roleFromUrl || "customer"}`);
+    navigate(`/login?state=${newState.toLowerCase()}&role=${roleFromUrl || "User"}`);
   };
 
   return (
@@ -162,7 +160,7 @@ const Login = () => {
 
           {roleFromUrl && (
             <p className="auth-form-subtitle">
-              Logging in as: <span className="font-semibold">{roleFromUrl}</span>
+              Logging as: <span className="font-semibold">{roleFromUrl}</span>
             </p>
           )}
 
@@ -173,7 +171,7 @@ const Login = () => {
             {state === "Sign Up" && (
               <>
                 <div className="auth-input-group">
-                  <img src={assets.user_icon} alt="" className="auth-icon" />
+                  <img src={assets.person_icon} alt="Person icon" className="auth-icon" />
                   <input
                     type="text"
                     placeholder="Full Name"
@@ -184,7 +182,16 @@ const Login = () => {
                   />
                 </div>
                 <div className="auth-input-group relative">
-                  <img src={assets.location_icon} alt="" className="auth-icon" />
+                  <img 
+                    src={assets.units || unitsIcon} 
+                    alt="Units icon" 
+                    className="auth-icon"
+                    style={{ width: '18px', height: '18px' }}
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = unitsIcon;
+                    }}
+                  />
                   <select
                     value={selectedUnit}
                     onChange={(e) => setSelectedUnit(e.target.value)}
@@ -208,7 +215,7 @@ const Login = () => {
             )}
 
             <div className="auth-input-group">
-              <img src={assets.mail_icon} alt="" className="auth-icon" />
+              <img src={assets.mail_icon} alt="Email icon" className="auth-icon" />
               <input
                 type="email"
                 placeholder="Email"
@@ -220,7 +227,7 @@ const Login = () => {
             </div>
 
             <div className="auth-input-group">
-              <img src={assets.lock_icon} alt="" className="auth-icon" />
+              <img src={assets.lock_icon} alt="Lock icon" className="auth-icon" />
               <input
                 type="password"
                 placeholder="Password"
@@ -346,6 +353,7 @@ const Login = () => {
           border-radius: 4px;
           background-color: #f5f5f5;
           border: 1px solid #ddd;
+          position: relative;
         }
 
         .auth-input-group:focus-within {
@@ -358,6 +366,8 @@ const Login = () => {
           height: 18px;
           margin-right: 10px;
           color: #666;
+          display: block;
+          object-fit: contain;
         }
 
         .auth-input-field {
@@ -367,6 +377,7 @@ const Login = () => {
           width: 100%;
           color: #333;
           font-size: 16px;
+          appearance: none;
         }
 
         .auth-input-field::placeholder {
