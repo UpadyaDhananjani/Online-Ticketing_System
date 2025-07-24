@@ -10,8 +10,16 @@ import {
   markTicketInProgress, // Imported named markTicketInProgress
   deleteTicket, // <-- Add this import
   reassignTicket, // <-- Add this import
-  getAdminTicketById // <-- Add this import
+  getAdminTicketById, // <-- Add this import
 } from '../controllers/ticketAdminController.js'; // All admin controllers from one file
+
+import {generateReportChartImage, 
+  downloadReportPdf,
+  getAssigneePerformance,
+  getTicketsByUnit,
+  getAvgResolutionTime,
+  getTicketActivityLogs
+} from '../controllers/ReportController.js'; // Import report functions
 
 import authMiddleware from '../middleware/authMiddleware.js'; // Ensure authMiddleware is imported
 import upload from '../middleware/uploadMiddleware.js'; // Assuming this is your multer config for attachments
@@ -51,5 +59,13 @@ router.patch('/:id/assign', reassignTicket);
 
 // --- NEW ROUTE: Get a single ticket by ID (Admin only) ---
 router.get('/:id', getAdminTicketById);
+
+// --- REPORT ROUTES ---
+router.get('/reports/chart-image', generateReportChartImage);
+router.get('/reports/pdf', downloadReportPdf);
+router.get('/assignee-performance', getAssigneePerformance);
+router.get('/tickets-by-unit', getTicketsByUnit);
+router.get('/avg-resolution-time', getAvgResolutionTime);
+router.get('/activity-logs', getTicketActivityLogs);
 
 export default router;

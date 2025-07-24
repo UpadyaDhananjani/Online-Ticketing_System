@@ -3,15 +3,16 @@ import Ticket from '../models/ticketModel.js';
 import User from '../models/userModel.js'; // Ensure User model is imported
 import path from 'path';
 import fs from 'fs';
+import PDFDocument from 'pdfkit';
+import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
 
 // Get all tickets (admin)
 export const getAllTickets = async (req, res) => {
     try {
         const tickets = await Ticket.find({})
             .populate('user', 'name email')
-            // No need to populate 'assignedTo' with 'name email' if assignedTo is not a User ObjectId
-            // If assignedTo is intended to be a User, it should be an ObjectId in ticketModel.js
-            .populate('assignedTo', 'name email') // Keep this if 'assignedTo' is a User reference
+            .populate('assignedTo', 'name email')
+            .populate('previousAssignedTo', 'name email')
             .sort({ createdAt: -1 });
 
         res.json(tickets);
@@ -26,7 +27,8 @@ export const getAdminTicketById = async (req, res) => {
     try {
         const ticket = await Ticket.findById(req.params.id)
             .populate('user', 'name email')
-            .populate('assignedTo', 'name email'); // Populate assignedTo if it's a User reference
+            .populate('assignedTo', 'name email')
+            .populate('previousAssignedTo', 'name email');
 
         if (!ticket) {
             return res.status(404).json({ error: 'Ticket not found' });
@@ -67,10 +69,14 @@ export const reassignTicket = async (req, res) => {
             if (!user) {
                 return res.status(404).json({ message: 'User not found.' });
             }
+            ticket.previousAssignedUnit = ticket.assignedUnit;
+            ticket.previousAssignedTo = ticket.assignedTo;
             ticket.assignedTo = userId;
             ticket.assignedUnit = user.unit;
             ticket.reassigned = true;
         } else {
+            ticket.previousAssignedUnit = ticket.assignedUnit;
+            ticket.previousAssignedTo = ticket.assignedTo;
             ticket.assignedTo = null;
             ticket.reassigned = false;
         }
@@ -79,7 +85,8 @@ export const reassignTicket = async (req, res) => {
 
         const updatedTicket = await Ticket.findById(id)
             .populate('user', 'name email')
-            .populate('assignedTo', 'name email');
+            .populate('assignedTo', 'name email')
+            .populate('previousAssignedTo', 'name email');
 
         res.json({ success: true, message: 'Ticket reassigned successfully.', ticket: updatedTicket });
     } catch (error) {
@@ -217,3 +224,46 @@ export const markTicketInProgress = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+// Generate a chart image (PNG) for ticket status summary
+
+// export const generateReportPdf = async (req, res) => {
+//   try {
+//     // Get ticket summary
+//     const openCount = await Ticket.countDocuments({ status: 'open' });
+//     const inProgressCount = await Ticket.countDocuments({ status: 'in progress' });
+//     const resolvedCount = await Ticket.countDocuments({ status: 'resolved' });
+//     const total = openCount + inProgressCount + resolvedCount;
+
+//     const docDefinition = {
+//       content: [
+//         { text: 'Ticket Report', style: 'header' },
+//         {
+//           table: {
+//             widths: ['*', '*', '*'],
+//             body: [
+//               ['Status', 'Count', 'Last Updated'],
+//               ['Open', openCount, new Date().toLocaleString()],
+//               ['In Progress', inProgressCount, new Date().toLocaleString()],
+//               ['Resolved', resolvedCount, new Date().toLocaleString()],
+//             ]
+//           }
+//         },
+//         { text: 'Generated on: ' + new Date().toLocaleString(), style: 'footer' }
+//       ],
+//       styles: {
+//         header: { fontSize: 22, bold: true, margin: [0, 0, 0, 10] },
+//         footer: { fontSize: 10, italics: true, alignment: 'right', margin: [0, 30, 0, 0] }
+//       }
+//     };
+
+//     const pdfDocGenerator = pdfMake.createPdf(docDefinition);
+//     pdfDocGenerator.getBuffer((buffer) => {
+//       res.setHeader('Content-Type', 'application/pdf');
+//       res.setHeader('Content-Disposition', 'attachment; filename="ticket_report.pdf"');
+//       res.send(buffer);
+//     });
+//   } catch (err) {
+//     res.status(500).json({ error: 'Failed to generate PDF report.' });
+//   }
+// };
