@@ -15,7 +15,7 @@ import {
     reassignTicket
 } from "../api/ticketApi"; // Corrected path based on your file structure
 
-import { Container, Card, Button, Form, Row, Col, Badge, Dropdown } from "react-bootstrap";
+import { Container, Card, Button, Form, Row, Col, Badge, Dropdown, Modal } from "react-bootstrap";
 import MessageHistory from "../components/MessageHistory/MessageHistory"; // Corrected path
 import { toast } from 'react-toastify';
 import { BsArrowRepeat } from "react-icons/bs";
@@ -39,6 +39,7 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
     const [units, setUnits] = useState([]);
     const [selectedUnit, setSelectedUnit] = useState(null);
     const [usersInUnit, setUsersInUnit] = useState([]);
+    const [showUserModal, setShowUserModal] = useState(false);
     // ------------------------------------
 
     useEffect(() => {
@@ -172,49 +173,34 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
 
     const handleUnitSelect = async (unit) => {
         setSelectedUnit(unit);
-        console.log("[Frontend] handleUnitSelect: Unit selected for lookup:", unit);
-        console.log("[Frontend] handleUnitSelect: Sending unit.name to API:", unit.name);
         try {
-            // Use getAdminUsersByUnit for admin
-            const { users } = await getAdminUsersByUnit(unit.name); // Destructure 'users' from the response
-            console.log("[Frontend] handleUnitSelect: API response for users in unit:", users);
-            setUsersInUnit(users || []); // Ensure it's always an array
+            const { users } = await getAdminUsersByUnit(unit.name);
+            setUsersInUnit(users || []);
+            setShowUserModal(true); // Show modal when users are loaded
         } catch (error) {
-            console.error("[Frontend] handleUnitSelect: Error fetching users by unit:", error);
             toast.error(`Failed to load users for ${unit.name}.`);
             setUsersInUnit([]);
         }
     };
 
     const handleUserReassign = async (user) => {
-        setShowReassignDropdown(false); // Close dropdowns
+        setShowReassignDropdown(false);
         setSelectedUnit(null);
         setUsersInUnit([]);
-
+        setShowUserModal(false); // Close modal after selection
         try {
-            // user._id here is the MongoDB ObjectId of the user, which is correct for assignedTo
             const res = await reassignTicket(ticket._id, user._id, token);
             toast.success(res.message);
-            await fetchTicket(); // Refresh ticket data to show new assigned person
+            await fetchTicket();
         } catch (error) {
-            console.error("Error reassigning ticket:", error);
             toast.error(error.response?.data?.message || "Failed to reassign ticket.");
         }
     };
 
-    const handleUnassign = async () => {
-        setShowReassignDropdown(false);
+    const handleUserModalClose = () => {
+        setShowUserModal(false);
         setSelectedUnit(null);
         setUsersInUnit([]);
-
-        try {
-            const res = await reassignTicket(ticket._id, null, token); // Pass null to unassign
-            toast.success(res.message);
-            await fetchTicket();
-        } catch (error) {
-            console.error("Error unassigning ticket:", error);
-            toast.error(error.response?.data?.message || "Failed to unassign ticket.");
-        }
     };
     // ------------------------------------------
 
@@ -271,43 +257,44 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
                                         )}
                                     </Dropdown.Menu>
                                 </Dropdown>
-                                {/* Option to Unassign */}
-                                {ticket.assignedTo && (
-                                    <>
-                                        <Dropdown.Divider />
-                                        <Dropdown.Item onClick={handleUnassign} className="text-danger">
-                                            <i className="bi bi-person-x-fill me-2"></i> Unassign
-                                        </Dropdown.Item>
-                                    </>
-                                )}
+                                {/* Option to Unassign removed */}
                             </Dropdown.Menu>
                         </Dropdown>
                     </div>
                     {/* --- END NEW WRAPPER --- */}
 
-                    {/* Users Dropdown: OUTSIDE the Dropdown.Menu */}
-                    {selectedUnit && (
-                        <Form.Group className="mb-3 mt-2">
-                            <Form.Label>Select User</Form.Label>
-                            <Form.Select
-                                value={""}
-                                onChange={e => {
-                                    const user = usersInUnit.find(u => u._id === e.target.value);
-                                    if (user) handleUserReassign(user);
-                                }}
-                            >
-                                <option value="">Select a user</option>
-                                {usersInUnit.map(user => (
-                                    <option key={user._id} value={user._id}>
-                                        {user.name} ({user.email})
-                                    </option>
-                                ))}
-                            </Form.Select>
-                            {usersInUnit.length === 0 && (
+                    {/* Users Modal: appears after unit selection */}
+                    <Modal show={showUserModal} onHide={handleUserModalClose} centered>
+                        <Modal.Header closeButton>
+                            <Modal.Title>Select User in {selectedUnit?.name}</Modal.Title>
+                        </Modal.Header>
+                        <Modal.Body>
+                            {usersInUnit.length > 0 ? (
+                                <Form.Group>
+                                    <Form.Label>Choose a user to assign this ticket:</Form.Label>
+                                    <Form.Select
+                                        value={""}
+                                        onChange={e => {
+                                            const user = usersInUnit.find(u => u._id === e.target.value);
+                                            if (user) handleUserReassign(user);
+                                        }}
+                                    >
+                                        <option value="">Select a user</option>
+                                        {usersInUnit.map(user => (
+                                            <option key={user._id} value={user._id}>
+                                                {user.name} ({user.email})
+                                            </option>
+                                        ))}
+                                    </Form.Select>
+                                </Form.Group>
+                            ) : (
                                 <div className="text-muted mt-2">No users in this unit</div>
                             )}
-                        </Form.Group>
-                    )}
+                        </Modal.Body>
+                        <Modal.Footer>
+                            <Button variant="secondary" onClick={handleUserModalClose}>Cancel</Button>
+                        </Modal.Footer>
+                    </Modal>
 
                     <Card
                         className="shadow-lg border-0 rounded-3xl transition-transform duration-200 hover:scale-[1.01] hover:shadow-2xl"
@@ -345,12 +332,12 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
                                     <>
                                         <Badge bg="secondary" className="text-capitalize px-3 py-2 rounded-xl flex items-center gap-1">
                                             <BsArrowRepeat className="me-1" />
-                                            Reassigned Unit: {ticket.assignedUnit || '—'}
+                                            Reassigned Unit: {ticket.previousAssignedUnit || '—'}
                                         </Badge>
                                         <Badge bg="info" className="text-capitalize px-3 py-2 rounded-xl flex items-center gap-1">
                                             <BsArrowRepeat className="me-1" />
-                                            Reassigned To: {ticket.assignedTo && typeof ticket.assignedTo === 'object' && ticket.assignedTo.name
-                                                ? ticket.assignedTo.name
+                                            Reassigned To: {ticket.previousAssignedTo && typeof ticket.previousAssignedTo === 'object' && ticket.previousAssignedTo.name
+                                                ? ticket.previousAssignedTo.name
                                                 : '—'}
                                         </Badge>
                                     </>

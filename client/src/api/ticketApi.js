@@ -297,3 +297,44 @@ export const deleteAdminUser = async (userId) => {
     const response = await axiosInstance.delete(`/admin/users/${userId}`);
     return response.data;
 };
+
+// --- ADMIN REPORT APIs ---
+export const getAdminReportChartImageUrl = () => `${API_URL}/admin/tickets/reports/chart-image`;
+export const getAdminReportPdfUrl = () => `${API_URL}/admin/tickets/reports/pdf`;
+
+export const getAdminTicketsSummary = async () => {
+    const response = await axiosInstance.get('/admin/tickets/summary');
+    return response.data;
+};
+
+
+export const getAvgResolutionTime = async () => {
+    const response = await axiosInstance.get('/admin/tickets/avg-resolution-time');
+    return response.data;
+};
+
+export const getAssigneePerformance = async () => {
+    const response = await axiosInstance.get('/admin/tickets/assignee-performance');
+    return response.data;
+};
+
+export const getTicketStatusDistribution = async () => {
+    const response = await axiosInstance.get('/admin/tickets/status-distribution');
+    return response.data;
+};
+
+export const getTicketTypeDistribution = async () => {
+    const response = await axiosInstance.get('/admin/tickets/type-distribution');
+    return response.data;
+};
+
+export const getTicketsByUnit = async (unitName) => {
+    const response = await axiosInstance.get(`/admin/tickets/by-unit/${encodeURIComponent(unitName)}`);
+    return response.data;
+};
+
+export const getActivityLogs = async () => {
+    const response = await axiosInstance.get('/admin/activity-logs');
+    return response.data;
+};
+

@@ -311,12 +311,12 @@ function TicketList({ onSelect, token, refresh }) {
                   </td>
                   <td>
                     <Badge bg="secondary" className="text-capitalize">
-                      {ticket.reassigned ? ticket.assignedUnit || "—" : "—"}
+                      {ticket.reassigned ? (ticket.previousAssignedUnit || "—") : "—"}
                     </Badge>
                   </td>
                   <td>
                     <Badge bg="info" className="text-capitalize">
-                      {ticket.reassigned ? (ticket.assignedTo?.name || "—") : "—"}
+                      {ticket.reassigned ? (ticket.previousAssignedTo?.name || "—") : "—"}
                     </Badge>
                   </td>
                   <td style={{ verticalAlign: 'middle' }}>
