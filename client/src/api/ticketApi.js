@@ -328,8 +328,8 @@ export const getTicketTypeDistribution = async () => {
     return response.data;
 };
 
-export const getTicketsByUnit = async (unitName) => {
-    const response = await axiosInstance.get(`/admin/tickets/by-unit/${encodeURIComponent(unitName)}`);
+export const getTicketsByUnit = async () => {
+    const response = await axiosInstance.get(`/admin/tickets/tickets-by-unit/${encodeURIComponent(unitName)}`);
     return response.data;
 };
 
