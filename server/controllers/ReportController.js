@@ -273,13 +273,11 @@ export const getTicketStatusDistribution = async (req, res) => {
         status: '$_id',
         count: 1,
         _id: 0
-      }},
-      { $sort: { count: -1 } }
+      }}
     ];
     const data = await Ticket.aggregate(pipeline);
     res.json(data);
   } catch (err) {
-    console.error('Error getting ticket status distribution:', err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -293,7 +291,7 @@ export const getTicketTypeDistribution = async (req, res) => {
         count: { $sum: 1 }
       }},
       { $project: {
-        type: '$_id',  // Change 'status' to 'type'
+        status: '$_id',
         count: 1,
         _id: 0
       }}

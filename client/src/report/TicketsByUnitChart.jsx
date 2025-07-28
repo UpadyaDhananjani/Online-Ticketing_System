@@ -6,7 +6,10 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } fro
 function TicketsByUnitChart() {
   const [data, setData] = useState([]);
   useEffect(() => {
-    getTicketsByUnit().then(setData);
+    getTicketsByUnit().then(data => {
+      console.log('Tickets by unit:', data); // <-- Add this line
+      setData(data);
+    });
   }, []);
   return (
     <div>
