@@ -1,9 +1,13 @@
-// client/src/components/admin/adminTicketReply.jsx
-import React, { useRef, useState, useEffect } from "react";
+// client/src/admin/adminTicketReply.jsx
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import { Editor } from 'primereact/editor';
 import "primereact/resources/themes/lara-light-indigo/theme.css";
 import "primereact/resources/primereact.min.css";
-import axios from "axios"; // axios is not directly used here but might be in other parts of your project.
+import { useParams } from "react-router-dom";
+
+// Import Bootstrap CSS and Icons
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 import {
     sendTicketReply,
@@ -13,40 +17,85 @@ import {
     getPublicUnits,
     getAdminUsersByUnit,
     reassignTicket
-} from "../api/ticketApi"; // Corrected path based on your file structure
+} from "../api/ticketApi";
 
-import { Container, Card, Button, Form, Row, Col, Badge, Dropdown, Modal } from "react-bootstrap";
-import MessageHistory from "../components/MessageHistory/MessageHistory"; // Corrected path
+import { Container, Card, Button, Form, Row, Col, Badge, Dropdown, Modal, Spinner } from "react-bootstrap";
+import MessageHistory from "../components/MessageHistory/MessageHistory";
 import { toast } from 'react-toastify';
 import { BsArrowRepeat } from "react-icons/bs";
 
-function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) {
-    // IMPORTANT: Add a guard clause here if ticket might be null/undefined initially
-    if (!ticket) {
-        console.warn("TicketReply component received null or undefined ticket prop. Displaying loading state.");
-        return <Container className="text-center py-5">Loading ticket details...</Container>;
-    }
-
+function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
+    const [ticketDetails, setTicketDetails] = useState(null);
     const [reply, setReply] = useState("");
     const [imageFiles, setImageFiles] = useState([]);
     const [uploading, setUploading] = useState(false);
-    const [localStatus, setLocalStatus] = useState(ticket.status);
-    const [messages, setMessages] = useState(ticket.messages || []); // Ensures messages is always an array
-    const quillRef = useRef();
+    const [localStatus, setLocalStatus] = useState("");
+    const [messages, setMessages] = useState([]);
+    const quillRef = useRef(null);
 
-    // --- STATE FOR REASSIGN FEATURE ---
     const [showReassignDropdown, setShowReassignDropdown] = useState(false);
     const [units, setUnits] = useState([]);
     const [selectedUnit, setSelectedUnit] = useState(null);
     const [usersInUnit, setUsersInUnit] = useState([]);
     const [showUserModal, setShowUserModal] = useState(false);
-    // ------------------------------------
+    const [loadingUnits, setLoadingUnits] = useState(false);
+    const [loadingUsers, setLoadingUsers] = useState(false);
+
+    const { id: urlTicketId } = useParams();
+    const currentTicketId = ticketId || urlTicketId;
 
     useEffect(() => {
-        // This effect ensures messages and status are updated if the parent's ticket prop changes
-        setMessages(ticket.messages || []);
-        setLocalStatus(ticket.status);
-    }, [ticket]);
+        if (!currentTicketId) {
+            console.warn("TicketReply: No ticket ID provided.");
+            return;
+        }
+
+        const fetchTicketDetails = async () => {
+            console.log(`TicketReply: Fetching details for ticket ID: ${currentTicketId}`);
+            try {
+                const res = await getAdminTicketById(currentTicketId);
+                console.log("TicketReply: Raw API Response for getAdminTicketById (full 'res' object):", res);
+                console.log("TicketReply: Content of res.data (should be undefined based on logs):", res.data);
+
+                // --- CRITICAL FIX START ---
+                // Based on your logs, 'res' itself IS the ticket object, not res.data
+                const fetchedTicket = res; // Directly use 'res' as the ticket object
+                
+                if (fetchedTicket && typeof fetchedTicket === 'object' && fetchedTicket._id) {
+                    setTicketDetails(fetchedTicket);
+                    setLocalStatus(fetchedTicket.status);
+                    setMessages(fetchedTicket.messages || []);
+                    console.log("TicketReply: Successfully processed and set ticket details:", fetchedTicket);
+                } else {
+                    console.error("TicketReply: API response data structure unexpected or actual ticket object missing for ID:", currentTicketId, "Received data:", res);
+                    toast.error("Failed to load ticket details: Invalid data structure.");
+                    setTicketDetails(null);
+                }
+                // --- CRITICAL FIX END ---
+            } catch (err) {
+                console.error("Error fetching ticket details:", err);
+                toast.error(
+                    err.response?.data?.message ||
+                    err.message ||
+                    "Failed to fetch ticket details."
+                );
+                setTicketDetails(null);
+            }
+        };
+
+        fetchTicketDetails();
+    }, [currentTicketId]);
+
+    if (!ticketDetails) {
+        return (
+            <Container className="text-center py-5">
+                <p>Loading ticket details, please wait...</p>
+                <Spinner animation="border" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                </Spinner>
+            </Container>
+        );
+    }
 
     const modules = {
         toolbar: {
@@ -61,11 +110,16 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
     };
 
     const handleImageChange = (e) => {
-        setImageFiles(e.target.files);
+        setImageFiles(Array.from(e.target.files));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!reply || !reply.trim()) {
+            toast.warn("Reply content cannot be empty.");
+            return;
+        }
+
         const formData = new FormData();
         formData.append("content", reply);
         if (imageFiles && imageFiles.length > 0) {
@@ -82,90 +136,132 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
             authorRole: "admin",
             content: reply,
             date: new Date().toISOString(),
-            attachments: [],
+            attachments: imageFiles.map(file => ({ fileName: file.name, url: URL.createObjectURL(file), pending: true })),
             pending: true
         };
-        setMessages([...messages, optimisticMessage]);
+        setMessages(prevMessages => [...prevMessages, optimisticMessage]);
 
         try {
-            await sendTicketReply(ticket._id, formData, token);
+            await sendTicketReply(ticketDetails._id, formData);
             setReply("");
             setImageFiles([]);
+            if (quillRef.current && quillRef.current.getEditor()) {
+                quillRef.current.getEditor().setText('');
+            }
+
             setLocalStatus("in progress");
             if (onStatusChange) onStatusChange("in progress");
-            await fetchTicket();
+            const res = await getAdminTicketById(ticketDetails._id);
+            if (res) { // Just check if res exists
+                const updatedTicket = res; // Directly use 'res' as the updated ticket object
+                if (updatedTicket && typeof updatedTicket === 'object' && updatedTicket._id) {
+                    setTicketDetails(updatedTicket);
+                    setMessages(updatedTicket.messages || []);
+                    setLocalStatus(updatedTicket.status);
+                    if (typeof onTicketUpdate === "function") {
+                        onTicketUpdate(updatedTicket);
+                    }
+                } else {
+                    console.warn("TicketReply: Update fetch returned unexpected data structure after reply.", res);
+                }
+            }
             toast.success("Reply sent successfully!");
         } catch (err) {
-            setMessages(prev => prev.filter(m => m._id !== tempId));
+            setMessages(prevMessages => prevMessages.filter(m => m._id !== tempId));
             console.error("Failed to send reply:", err);
             toast.error(err.response?.data?.message || "Failed to send reply.");
+        } finally {
+            setUploading(false);
         }
-        setUploading(false);
     };
 
     const handleResolve = async () => {
+        if (localStatus === "resolved") {
+            toast.info("Ticket is already resolved.");
+            return;
+        }
+        const confirmResolve = window.confirm("Are you sure you want to mark this ticket as resolved?");
+        if (!confirmResolve) return;
+
+        const previousStatus = localStatus;
         setLocalStatus("resolved");
         try {
-            await resolveTicket(ticket._id, token);
+            await resolveTicket(ticketDetails._id);
             if (onStatusChange) onStatusChange("resolved");
-            await fetchTicket();
-            onBack();
+            const res = await getAdminTicketById(ticketDetails._id);
+            if (res) { // Just check if res exists
+                const updatedTicket = res; // Directly use 'res'
+                if (updatedTicket && typeof updatedTicket === 'object' && updatedTicket._id) {
+                    setTicketDetails(updatedTicket);
+                    setLocalStatus(updatedTicket.status);
+                    if (typeof onTicketUpdate === "function") {
+                        onTicketUpdate(updatedTicket);
+                    }
+                } else {
+                    console.warn("TicketReply: Update fetch returned unexpected data structure after resolve.", res);
+                }
+            }
             toast.success("Ticket resolved successfully!");
         } catch (err) {
-            setLocalStatus(ticket.status);
+            setLocalStatus(previousStatus);
+            console.error("Error resolving ticket:", err);
             toast.error(err.response?.data?.message || "Failed to resolve ticket.");
         }
     };
 
     const handleDeleteMessage = async (messageId) => {
+        const isConfirmed = window.confirm("Are you sure you want to delete this message? This action cannot be undone.");
+        if (!isConfirmed) return;
+
         const previousMessages = messages;
         setMessages(prev => prev.filter(m => m._id !== messageId));
 
         try {
-            console.log(`Attempting to delete message: ${messageId} from ticket: ${ticket._id}`);
-            const res = await deleteAdminMessage(ticket._id, messageId, token);
-            if (res.data.success) {
+            console.log(`Attempting to delete message: ${messageId} from ticket: ${ticketDetails._id}`);
+            const res = await deleteAdminMessage(ticketDetails._id, messageId);
+            if (res && res.data && res.data.success) {
                 toast.success(res.data.message || "Message deleted successfully.");
-                await fetchTicket();
+                const updatedRes = await getAdminTicketById(ticketDetails._id);
+                if (updatedRes) { // Just check if updatedRes exists
+                    const updatedTicket = updatedRes; // Directly use updatedRes
+                    if (updatedTicket && typeof updatedTicket === 'object' && updatedTicket._id) {
+                        setTicketDetails(updatedTicket);
+                        setMessages(updatedTicket.messages || []);
+                        if (typeof onTicketUpdate === "function") {
+                            onTicketUpdate(updatedTicket);
+                        }
+                    } else {
+                        console.warn("TicketReply: Update fetch returned unexpected data structure after message delete.", updatedRes);
+                    }
+                }
             } else {
                 setMessages(previousMessages);
-                toast.error(res.data.message || "Failed to delete message.");
+                toast.error(res?.data?.message || "Failed to delete message.");
             }
         } catch (err) {
             setMessages(previousMessages);
+            console.error("Error deleting message:", err);
             toast.error(err.response?.data?.message || "Error deleting message.");
         }
     };
 
-    const fetchTicket = async () => {
-        try {
-            const res = await getAdminTicketById(ticket._id, token);
-            if (res.data) {
-                setLocalStatus(res.data.status);
-                setMessages(res.data.messages || []);
-                if (typeof onTicketUpdate === "function") {
-                    onTicketUpdate(res.data);
-                }
-            }
-        } catch (err) {
-            console.error("Error fetching updated ticket:", err);
-        }
-    };
-
-    // --- HANDLERS FOR REASSIGN FEATURE ---
-    const handleReassignClick = async (nextShow, meta) => {
-        console.log("handleReassignClick triggered. nextShow:", nextShow, "meta:", meta);
-        if (nextShow && !showReassignDropdown) { // Only fetch units if the dropdown is about to open and wasn't already open
+    const handleReassignClick = async (nextShow) => {
+        if (nextShow && !showReassignDropdown) {
             console.log("Fetching units...");
+            setLoadingUnits(true);
             try {
-                const data = await getPublicUnits(); // getPublicUnits returns data directly (array of { _id, name })
+                const res = await getPublicUnits();
+                const data = res.data ?? [];
                 console.log("Units fetched:", data);
-                setUnits(data); // Set the units state
-                setUsersInUnit([]); // Clear previous users
-                setSelectedUnit(null); // Clear selected unit
+                setUnits(data || []);
+                setUsersInUnit([]);
+                setSelectedUnit(null);
             } catch (error) {
                 console.error("Error fetching units:", error);
                 toast.error("Failed to load units for reassign.");
+                setUnits([]);
+            } finally {
+                setLoadingUnits(false);
             }
         }
         setShowReassignDropdown(nextShow);
@@ -173,26 +269,52 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
 
     const handleUnitSelect = async (unit) => {
         setSelectedUnit(unit);
+        setShowReassignDropdown(false);
+        setShowUserModal(true);
+
+        setLoadingUsers(true);
         try {
-            const { users } = await getAdminUsersByUnit(unit.name);
-            setUsersInUnit(users || []);
-            setShowUserModal(true); // Show modal when users are loaded
+            const res = await getAdminUsersByUnit(unit.name);
+            const usersArray = res.data ?? [];
+            setUsersInUnit(usersArray || []);
         } catch (error) {
-            toast.error(`Failed to load users for ${unit.name}.`);
-            setUsersInUnit([]);
-        }
-    };
+                console.error("Error loading users for unit:", error);
+                toast.error(`Failed to load users for ${unit.name}.`);
+                setUsersInUnit([]);
+            } finally {
+                setLoadingUsers(false);
+            }
+        };
 
     const handleUserReassign = async (user) => {
+        const isConfirmed = window.confirm(`Are you sure you want to reassign this ticket to ${user.name} (${user.email})?`);
+        if (!isConfirmed) return;
+
+        setShowUserModal(false);
         setShowReassignDropdown(false);
         setSelectedUnit(null);
         setUsersInUnit([]);
-        setShowUserModal(false); // Close modal after selection
+
         try {
-            const res = await reassignTicket(ticket._id, user._id, token);
-            toast.success(res.message);
-            await fetchTicket();
+            const res = await reassignTicket(ticketDetails._id, user._id);
+            if (res && res.data) {
+                toast.success(res.data.message || "Ticket reassigned successfully!");
+                const updatedRes = await getAdminTicketById(ticketDetails._id);
+                if (updatedRes) { // Just check if updatedRes exists
+                    const updatedTicket = updatedRes; // Directly use updatedRes
+                    if (updatedTicket && typeof updatedTicket === 'object' && updatedTicket._id) {
+                        setTicketDetails(updatedTicket);
+                        setLocalStatus(updatedTicket.status);
+                        if (typeof onTicketUpdate === "function") {
+                            onTicketUpdate(updatedTicket);
+                        }
+                    } else {
+                        console.warn("TicketReply: Update fetch returned unexpected data structure after reassign.", updatedRes);
+                    }
+                }
+            }
         } catch (error) {
+            console.error("Error reassigning ticket:", error);
             toast.error(error.response?.data?.message || "Failed to reassign ticket.");
         }
     };
@@ -202,16 +324,25 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
         setSelectedUnit(null);
         setUsersInUnit([]);
     };
-    // ------------------------------------------
 
     const messagesForHistory = messages.map(msg => ({
         _id: msg._id,
         sender: msg.authorRole === "admin" ? "Admin" : "User",
-        message: msg.content,
+        content: msg.content,
         date: msg.date,
         attachments: msg.attachments,
         pending: msg.pending
     }));
+
+    const getStatusBadgeVariant = (status) => {
+        switch (status) {
+            case 'open': return 'danger';
+            case 'in progress': return 'info';
+            case 'resolved': return 'success';
+            case 'closed': return 'secondary';
+            default: return 'primary';
+        }
+    };
 
     return (
         <Container
@@ -220,8 +351,7 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
         >
             <Row className="justify-content-center w-full">
                 <Col md={12} lg={12} className="w-full">
-                    {/* --- NEW WRAPPER FOR TOP BUTTONS --- */}
-                    <div className="d-flex justify-content-between align-items-center mb-4"> {/* Added mb-4 for spacing */}
+                    <div className="d-flex justify-content-between align-items-center mb-4">
                         <Button
                             variant="link"
                             onClick={onBack}
@@ -232,21 +362,20 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
                             Back to Tickets
                         </Button>
 
-                        {/* --- REASSIGN BUTTON MOVED HERE --- */}
-                        {/* Ensure onToggle receives the new 'show' state */}
                         <Dropdown show={showReassignDropdown} onToggle={handleReassignClick} className="position-relative">
-                            <Dropdown.Toggle variant="primary" id="dropdown-reassign" className="d-flex align-items-center gap-2">
-                                <i className="bi bi-arrow-right-square-fill"></i> Reassign this ticket
+                            <Dropdown.Toggle variant="primary" id="dropdown-reassign" className="d-flex align-items-center gap-2" disabled={loadingUnits}>
+                                <i className="bi bi-arrow-right-square-fill"></i> {loadingUnits ? "Loading Units..." : "Reassign this ticket"}
                             </Dropdown.Toggle>
 
                             <Dropdown.Menu className="shadow-lg p-2 rounded-lg" style={{ minWidth: '200px' }}>
-                                {/* Units Dropdown */}
                                 <Dropdown className="mb-2">
-                                    <Dropdown.Toggle variant="outline-secondary" id="dropdown-units" className="w-100">
-                                        {selectedUnit ? selectedUnit.name : "Select Unit"}
+                                    <Dropdown.Toggle variant="outline-secondary" id="dropdown-units" className="w-100" disabled={loadingUnits}>
+                                        {loadingUnits ? "Loading Units..." : (selectedUnit ? selectedUnit.name : "Select Unit")}
                                     </Dropdown.Toggle>
                                     <Dropdown.Menu>
-                                        {units.length > 0 ? (
+                                        {loadingUnits ? (
+                                            <Dropdown.Item disabled>Loading units...</Dropdown.Item>
+                                        ) : units.length > 0 ? (
                                             units.map(unit => (
                                                 <Dropdown.Item key={unit._id} onClick={() => handleUnitSelect(unit)}>
                                                     {unit.name}
@@ -257,19 +386,23 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
                                         )}
                                     </Dropdown.Menu>
                                 </Dropdown>
-                                {/* Option to Unassign removed */}
                             </Dropdown.Menu>
                         </Dropdown>
                     </div>
-                    {/* --- END NEW WRAPPER --- */}
 
-                    {/* Users Modal: appears after unit selection */}
                     <Modal show={showUserModal} onHide={handleUserModalClose} centered>
                         <Modal.Header closeButton>
-                            <Modal.Title>Select User in {selectedUnit?.name}</Modal.Title>
+                            <Modal.Title>Select User in {selectedUnit?.name || 'Unit'}</Modal.Title>
                         </Modal.Header>
                         <Modal.Body>
-                            {usersInUnit.length > 0 ? (
+                            {loadingUsers ? (
+                                <div className="text-center text-primary py-3">
+                                    <div className="spinner-border spinner-border-sm me-2" role="status">
+                                        <span className="visually-hidden">Loading users...</span>
+                                    </div>
+                                    Loading users...
+                                </div>
+                            ) : usersInUnit.length > 0 ? (
                                 <Form.Group>
                                     <Form.Label>Choose a user to assign this ticket:</Form.Label>
                                     <Form.Select
@@ -288,11 +421,11 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
                                     </Form.Select>
                                 </Form.Group>
                             ) : (
-                                <div className="text-muted mt-2">No users in this unit</div>
+                                <div className="text-muted mt-2">No users found in this unit or unit has no assignable users.</div>
                             )}
                         </Modal.Body>
                         <Modal.Footer>
-                            <Button variant="secondary" onClick={handleUserModalClose}>Cancel</Button>
+                            <Button variant="secondary" onClick={handleUserModalClose} disabled={loadingUsers}>Cancel</Button>
                         </Modal.Footer>
                     </Modal>
 
@@ -300,68 +433,61 @@ function TicketReply({ token, ticket, onBack, onStatusChange, onTicketUpdate }) 
                         className="shadow-lg border-0 rounded-3xl transition-transform duration-200 hover:scale-[1.01] hover:shadow-2xl"
                         style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #e0e7ef 100%)', borderRadius: '1.5rem' }}
                     >
-                        <Card.Header className="bg-gradient-to-r from-blue-600 to-blue-400 text-white rounded-t-3xl flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                        <Card.Header className="bg-gradient-to-r from-blue-600 to-blue-400 text-white rounded-t-3xl flex flex-col md:flex-row md:items-center md:justify-between gap-2 p-4">
                             <h4 className="mb-0 flex items-center gap-2">
                                 <i className="bi bi-chat-left-text-fill mr-2 text-2xl"></i>
                                 Reply to:
-                                {/* Subject Badge remains here */}
                                 <Badge bg="light" text="dark" className="ml-2 px-3 py-2 text-base rounded-xl shadow-sm">
-                                    {ticket.subject}
-                                    {ticket.reassigned && (
+                                    {ticketDetails.subject}
+                                    {ticketDetails.reassigned && (
                                         <span title="Reassigned" style={{ marginLeft: 6 }}>
                                             <BsArrowRepeat style={{ color: '#0d6efd', verticalAlign: 'middle' }} />
                                         </span>
                                     )}
                                 </Badge>
                             </h4>
-                            <div className="mt-2 md:mt-0 flex items-center gap-2">
-                                {/* Assigned Unit Badge */}
+                            <div className="mt-2 md:mt-0 flex flex-wrap items-center gap-2">
                                 <Badge bg="secondary" className="text-capitalize px-3 py-2 rounded-xl flex items-center gap-1">
                                     <i className="bi bi-diagram-3 me-1"></i>
-                                    {ticket.assignedUnit || '—'}
+                                    Assigned Unit: {ticketDetails.assignedUnit || '—'}
                                 </Badge>
-                                {/* Assigned To badge - Positioned in original group, includes "Assigned To:" text */}
                                 <Badge bg="info" className="text-capitalize px-3 py-2 rounded-xl flex items-center gap-1">
                                     <i className="bi bi-person me-1"></i>
-                                    Assigned To: {ticket.assignedTo && typeof ticket.assignedTo === 'object' && ticket.assignedTo.name
-                                        ? ticket.assignedTo.name
+                                    Assigned To: {ticketDetails.assignedTo && typeof ticketDetails.assignedTo === 'object' && ticketDetails.assignedTo.name
+                                        ? ticketDetails.assignedTo.name
                                         : 'N/A'}
                                 </Badge>
-                                {/* Reassigned Unit/To badges */}
-                                {ticket.reassigned && (
+                                {ticketDetails.reassigned && (
                                     <>
                                         <Badge bg="secondary" className="text-capitalize px-3 py-2 rounded-xl flex items-center gap-1">
                                             <BsArrowRepeat className="me-1" />
-                                            Reassigned Unit: {ticket.previousAssignedUnit || '—'}
+                                            Reassigned Unit: {ticketDetails.previousAssignedUnit || '—'}
                                         </Badge>
                                         <Badge bg="info" className="text-capitalize px-3 py-2 rounded-xl flex items-center gap-1">
                                             <BsArrowRepeat className="me-1" />
-                                            Reassigned To: {ticket.previousAssignedTo && typeof ticket.previousAssignedTo === 'object' && ticket.previousAssignedTo.name
-                                                ? ticket.previousAssignedTo.name
+                                            Reassigned To: {ticketDetails.previousAssignedTo && typeof ticketDetails.previousAssignedTo === 'object' && ticketDetails.previousAssignedTo.name
+                                                ? ticketDetails.previousAssignedTo.name
                                                 : '—'}
                                         </Badge>
                                     </>
                                 )}
-                                {/* Status Badge */}
-                                <Badge bg={localStatus === 'resolved' ? 'success' : 'info'} className="ml-2 px-3 py-2 rounded-xl animate-pulse">
+                                <Badge bg={getStatusBadgeVariant(localStatus)} className="ml-2 px-3 py-2 rounded-xl animate-pulse">
                                     <i className={`bi ${localStatus === 'resolved' ? 'bi-check-circle-fill' : 'bi-hourglass-split'} mr-1`}></i>
                                     {localStatus.charAt(0).toUpperCase() + localStatus.slice(1)}
                                 </Badge>
                             </div>
                         </Card.Header>
                         <Card.Body className="bg-white rounded-b-3xl p-6 md:p-8">
-                            {/* Message History */}
                             <div className="mb-8">
                                 <MessageHistory
                                     msg={messagesForHistory}
-                                    description={ticket.description}
-                                    image={ticket.image}
+                                    description={ticketDetails.description}
+                                    image={ticketDetails.image}
                                     onDeleteMessage={handleDeleteMessage}
                                     currentUserRole="admin"
                                 />
                             </div>
 
-                            {/* Reply Form */}
                             <Form onSubmit={handleSubmit} className="space-y-6">
                                 <Form.Group className="mb-4 mt-4">
                                     <Form.Label className="font-semibold text-lg">Reply</Form.Label>
