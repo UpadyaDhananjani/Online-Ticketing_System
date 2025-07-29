@@ -2,10 +2,6 @@
 
 import axios from 'axios';
 
-// IMPORTANT: Get the API base URL from environment variables for better flexibility.
-// If VITE_API_BASE_URL is not set in your .env file, it defaults to http://localhost:4000/api.
-// In your client's .env file (e.g., .env.development), you should have:
-// VITE_API_BASE_URL=http://localhost:4000/api
 const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api';
 
 // Create a pre-configured Axios instance for all API calls
@@ -14,8 +10,7 @@ const axiosInstance = axios.create({
     withCredentials: true, // Crucial for sending HTTP-only cookies (like your JWT token)
 });
 
-// --- Axios Interceptors for Debugging (Highly Recommended) ---
-// These will log every request and response, helping you see network activity.
+// --- Axios Interceptors for Debugging ---
 
 // Request Interceptor: Logs outgoing requests
 axiosInstance.interceptors.request.use(
@@ -35,14 +30,16 @@ axiosInstance.interceptors.request.use(
 );
 
 // Response Interceptor: Logs incoming responses
+// IMPORTANT CHANGE HERE: Interceptor now just logs and passes the FULL response object.
+// Individual API functions will then extract .data if needed.
 axiosInstance.interceptors.response.use(
     response => {
         console.log('API Response:', {
             status: response.status,
             url: response.config.url,
-            data: response.data,
+            data: response.data, // Log the data
         });
-        return response; // Return the full response object for getAdminTickets, or response.data for others.
+        return response; // RETURN THE FULL RESPONSE OBJECT
     },
     error => {
         console.error('API Response Error:', {
@@ -64,7 +61,7 @@ axiosInstance.interceptors.response.use(
 export const registerUser = async (userData) => {
     try {
         const response = await axiosInstance.post('/auth/register', userData);
-        return response.data;
+        return response.data; // Explicitly return data
     } catch (error) {
         throw error;
     }
@@ -73,17 +70,16 @@ export const registerUser = async (userData) => {
 export const loginUser = async (userData) => {
     try {
         const response = await axiosInstance.post('/auth/login', userData);
-        return response.data;
+        return response.data; // Explicitly return data
     } catch (error) {
         throw error;
     }
 };
 
-// NEW: Admin Login API function
 export const adminLogin = async (userData) => {
     try {
         const response = await axiosInstance.post('/auth/admin-login', userData);
-        return response.data;
+        return response.data; // Explicitly return data
     } catch (error) {
         throw error;
     }
@@ -92,7 +88,7 @@ export const adminLogin = async (userData) => {
 export const logoutUser = async () => {
     try {
         const response = await axiosInstance.post('/auth/logout');
-        return response.data;
+        return response.data; // Explicitly return data
     } catch (error) {
         throw error;
     }
@@ -101,7 +97,7 @@ export const logoutUser = async () => {
 export const getMe = async () => {
     try {
         const response = await axiosInstance.get('/auth/me');
-        return response.data;
+        return response.data; // Explicitly return data
     } catch (error) {
         throw error;
     }
@@ -112,63 +108,57 @@ export const getMe = async () => {
 // --- USER TICKET APIs (accessible by authenticated users) ---
 // =======================================================
 
-// Create a new ticket (user) - uses formData for attachments
 export const createTicket = async (formData) => {
     try {
         const response = await axiosInstance.post('/tickets', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
-        return response.data;
+        return response.data; // Explicitly return data
     } catch (error) {
         throw error;
     }
 };
 
-// Get all tickets for the authenticated user
 export const getUserTickets = async () => {
     try {
         const response = await axiosInstance.get('/tickets');
-        return response.data;
+        return response.data; // Explicitly return data
     } catch (error) {
         throw error;
     }
 };
 
-// Get a single ticket by ID for the authenticated user
 export const getUserTicketById = async (ticketId) => {
     try {
         const response = await axiosInstance.get(`/tickets/${ticketId}`);
-        return response.data;
+        return response.data; // Explicitly return data
     } catch (error) {
         throw error;
     }
 };
 
-// Update a ticket (user)
 export const updateTicket = async (id, data) => {
     try {
         const response = await axiosInstance.put(`/tickets/${id}`, data);
-        return response.data;
+        return response.data; // Explicitly return data
     } catch (error) {
         throw error;
     }
 };
 
-// Close a ticket (user)
 export const closeTicket = async (id) => {
     try {
         const response = await axiosInstance.patch(`/tickets/${id}/close`);
-        return response.data;
+        return response.data; // Explicitly return data
     } catch (error) {
         throw error;
     }
 };
 
-// Delete a user's own message from a ticket
 export const deleteUserMessage = async (ticketId, messageId) => {
     try {
         const response = await axiosInstance.delete(`/tickets/${ticketId}/messages/${messageId}`);
-        return response.data;
+        return response.data; // Explicitly return data
     } catch (error) {
         throw error;
     }
@@ -181,78 +171,72 @@ export const deleteUserMessage = async (ticketId, messageId) => {
 
 /**
  * Fetches all tickets for the admin dashboard.
- * IMPORTANT: This function returns the full Axios `response` object,
- * not just `response.data`. The calling component (e.g., adminTicketList.jsx)
- * must access `response.data` explicitly.
+ * THIS FUNCTION RETURNS THE FULL Axios `response` object, including headers.
+ * The calling component (e.g., adminTicketList.jsx) must access `response.data` explicitly.
  * @returns {Promise<AxiosResponse>} A promise that resolves to the full Axios response object.
  * @throws {Error} If the API call fails.
  */
 export const getAdminTickets = async () => {
     try {
+        // No special interceptor handling needed anymore, just return the full response
         const response = await axiosInstance.get('/admin/tickets');
-        return response; // <-- Returns the full response object
+        return response; // <--- Return the full response object for headers/pagination
     } catch (error) {
         throw error;
     }
 };
 
-// Get a single ticket by ID for admin
 export const getAdminTicketById = async (ticketId) => {
     try {
         const response = await axiosInstance.get(`/admin/tickets/${ticketId}`);
-        return response.data;
+        return response.data; // Explicitly return data
     } catch (error) {
         throw error;
     }
 };
 
-// Send a reply to a ticket (admin side) - uses formData for attachments
 export const sendTicketReply = async (ticketId, formData) => {
     try {
         const response = await axiosInstance.post(`/admin/tickets/${ticketId}/reply`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
-        return response.data;
+        return response.data; // Explicitly return data
     } catch (error) {
         throw error;
     }
 };
 
-// Resolve a ticket (admin)
 export const resolveTicket = async (ticketId) => {
     try {
         const response = await axiosInstance.patch(`/admin/tickets/${ticketId}/resolve`);
-        return response.data;
+        return response.data; // Explicitly return data
     } catch (error) {
         throw error;
     }
 };
 
-// Delete any message from ticket (admin)
 export const deleteAdminMessage = async (ticketId, messageId) => {
     try {
         const response = await axiosInstance.delete(`/admin/tickets/${ticketId}/messages/${messageId}`);
-        return response.data;
+        return response.data; // Explicitly return data
     } catch (error) {
         throw error;
     }
 };
 
-// Delete a ticket entirely (admin)
 export const deleteAdminTicket = async (ticketId) => {
     try {
         const response = await axiosInstance.delete(`/admin/tickets/${ticketId}`);
-        return response.data;
+        return response.data; // Explicitly return data
     } catch (error) {
         throw error;
     }
 };
 
-// Reassign a ticket to a specific user (admin)
 export const reassignTicket = async (ticketId, userId) => {
     try {
         const response = await axiosInstance.patch(`/admin/tickets/${ticketId}/assign`, { userId });
-        return response.data;
+        return response.data; // Explicitly return data
     } catch (error) {
         throw error;
     }
@@ -260,42 +244,43 @@ export const reassignTicket = async (ticketId, userId) => {
 
 
 // =======================================================
-// --- PUBLIC / GENERAL APIs (may or may not require auth) ---
+// --- PUBLIC / GENERAL APIs ---
 // =======================================================
 
-/**
- * Fetches all public units.
- * This function returns `response.data` directly.
- * @returns {Promise<Array>} A promise that resolves to an array of public unit objects.
- * @throws {Error} If the API call fails.
- */
-export const getPublicUnits = async () => { // <--- THIS IS THE EXPORTED FUNCTION
+export const getPublicUnits = async () => {
     try {
         const response = await axiosInstance.get('/public/units');
-        return response.data;
+        return response.data; // Explicitly return data
     } catch (error) {
         throw error;
     }
 };
 
-// Get users by unit name (typically admin-only lookup)
 export const getUsersByUnit = async (unitName) => {
     try {
         const response = await axiosInstance.get(`/user/by-unit/${encodeURIComponent(unitName)}`);
-        return response.data;
+        return response.data; // Explicitly return data
     } catch (error) {
         throw error;
     }
 };
 
 export const getAdminUsersByUnit = async (unitName) => {
-    const response = await axiosInstance.get(`/admin/users?unit=${encodeURIComponent(unitName)}`);
-    return response.data;
+    try {
+        const response = await axiosInstance.get(`/admin/users?unit=${encodeURIComponent(unitName)}`);
+        return response.data; // Explicitly return data
+    } catch (error) {
+        throw error;
+    }
 };
 
 export const deleteAdminUser = async (userId) => {
-    const response = await axiosInstance.delete(`/admin/users/${userId}`);
-    return response.data;
+    try {
+        const response = await axiosInstance.delete(`/admin/users/${userId}`);
+        return response.data; // Explicitly return data
+    } catch (error) {
+        throw error;
+    }
 };
 
 // --- ADMIN REPORT APIs ---
@@ -303,37 +288,64 @@ export const getAdminReportChartImageUrl = () => `${API_URL}/admin/tickets/repor
 export const getAdminReportPdfUrl = () => `${API_URL}/admin/tickets/reports/pdf`;
 
 export const getAdminTicketsSummary = async () => {
-    const response = await axiosInstance.get('/admin/tickets/summary');
-    return response.data; // This already returns the data object
+    try {
+        const response = await axiosInstance.get('/admin/tickets/summary');
+        return response.data; // Explicitly return data
+    } catch (error) {
+        throw error;
+    }
 };
 
-
 export const getAvgResolutionTime = async () => {
-    const response = await axiosInstance.get('/admin/tickets/avg-resolution-time');
-    return response.data;
+    try {
+        const response = await axiosInstance.get('/admin/tickets/avg-resolution-time');
+        return response.data; // Explicitly return data
+    } catch (error) {
+        throw error;
+    }
 };
 
 export const getAssigneePerformance = async () => {
-    const response = await axiosInstance.get('/admin/tickets/assignee-performance');
-    return response.data;
+    try {
+        const response = await axiosInstance.get('/admin/tickets/assignee-performance');
+        return response.data; // Explicitly return data
+    } catch (error) {
+        throw error;
+    }
 };
 
 export const getTicketStatusDistribution = async () => {
-    const response = await axiosInstance.get('/admin/tickets/status-distribution');
-    return response.data;
+    try {
+        const response = await axiosInstance.get('/admin/tickets/status-distribution');
+        return response.data; // Explicitly return data
+    } catch (error) {
+        throw error;
+    }
 };
 
 export const getTicketTypeDistribution = async () => {
-    const response = await axiosInstance.get('/admin/tickets/type-distribution');
-    return response.data;
+    try {
+        const response = await axiosInstance.get('/admin/tickets/type-distribution');
+        return response.data; // Explicitly return data
+    } catch (error) {
+        throw error;
+    }
 };
 
 export const getTicketsByUnit = async (unitName) => {
-    const response = await axiosInstance.get(`/admin/tickets/by-unit/${encodeURIComponent(unitName)}`);
-    return response.data;
+    try {
+        const response = await axiosInstance.get(`/admin/tickets/by-unit/${encodeURIComponent(unitName)}`);
+        return response.data; // Explicitly return data
+    } catch (error) {
+        throw error;
+    }
 };
 
 export const getActivityLogs = async () => {
-    const response = await axiosInstance.get('/admin/activity-logs');
-    return response.data;
+    try {
+        const response = await axiosInstance.get('/admin/activity-logs');
+        return response.data; // Explicitly return data
+    } catch (error) {
+        throw error;
+    }
 };
