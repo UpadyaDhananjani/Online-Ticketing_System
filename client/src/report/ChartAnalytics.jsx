@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -13,27 +12,19 @@ const statusColors = {
   reopened: "#a569bd"
 };
 
-const ChartAnalytics = ({ data }) => (
-  <ResponsiveContainer width="100%" height={300}>
-    <BarChart data={data} animationDuration={1500}>
-      <CartesianGrid strokeDasharray="3 3" />
-      <XAxis dataKey="status" />
-      <YAxis />
-      <Tooltip />
-      <Legend />
-      <Bar dataKey="count" isAnimationActive>
-        {data.map((entry, index) => (
-          <Cell key={`cell-${index}`} fill={statusColors[entry.status] || "#8884d8"} />
-        ))}
-      </Bar>
-    </BarChart>
-  </ResponsiveContainer>
-);
-
+const ChartAnalytics = ({ data }) => {
   // Check if data is valid
-  const hasValidData = Array.isArray(data) && 
-                     data.length > 0 && 
-                     data.some(item => item?.count > 0);
+  const hasValidData = Array.isArray(data) &&
+    data.length > 0 &&
+    data.some(item => item?.count > 0);
+
+  // Format status text for display
+  const formatStatus = (status) => {
+    if (typeof status !== 'string') return '';
+    return status.split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
 
   if (!hasValidData) {
     return (
@@ -43,14 +34,6 @@ const ChartAnalytics = ({ data }) => (
       </div>
     );
   }
-
-  // Format status text for display
-  const formatStatus = (status) => {
-    if (typeof status !== 'string') return '';
-    return status.split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  };
 
   return (
     <div style={{ height: "400px" }}>
@@ -62,19 +45,19 @@ const ChartAnalytics = ({ data }) => (
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis type="number" />
-          <YAxis 
-            dataKey="status" 
-            type="category" 
+          <YAxis
+            dataKey="status"
+            type="category"
             width={100}
             tickFormatter={formatStatus}
           />
-          <Tooltip 
+          <Tooltip
             formatter={(value) => [`${value} tickets`, "Count"]}
             labelFormatter={(label) => `Status: ${formatStatus(label)}`}
           />
           <Legend />
-          <Bar 
-            dataKey="count" 
+          <Bar
+            dataKey="count"
             name="Ticket Count"
             barSize={30}
             animationDuration={1500}
@@ -82,7 +65,7 @@ const ChartAnalytics = ({ data }) => (
             {data.map((entry, index) => (
               <Cell
                 key={`cell-${index}`}
-                fill={statusColors[entry.status.toLowerCase()] || "#8884d8"}
+                fill={statusColors[entry.status?.toLowerCase()] || "#8884d8"}
               />
             ))}
           </Bar>
@@ -90,7 +73,6 @@ const ChartAnalytics = ({ data }) => (
       </ResponsiveContainer>
     </div>
   );
-
-
+};
 
 export default ChartAnalytics;
