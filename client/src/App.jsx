@@ -1,27 +1,27 @@
+// client/src/App.jsx
 import React, { useContext } from 'react';
+// IMPORTANT: Removed 'BrowserRouter as Router' from this import.
+// We only need Routes, Route, useLocation, Navigate, Outlet here.
 import { Routes, Route, useLocation, Navigate, Outlet } from 'react-router-dom';
 
 // Components and Pages
 import Navbar from './components/Navbar.jsx';
 import Sidebar from './components/Sidebar.jsx';
-import Home2 from './components/Home2.jsx'; // Assuming this is your main logged-in dashboard
+import Home2 from './components/Home2.jsx';
 import Login from './components/Login.jsx';
 import LoginSelection from './components/LoginSelection.jsx';
 import ResetPassword from './components/ResetPassword.jsx';
 import EmailVerify from './components/EmailVerify.jsx';
 
-import TicketsPage from './pages/TicketsPage'; // For regular user tickets
+import TicketsPage from './pages/TicketsPage';
 import CreateTicket from './components/CreateTicket';
 import Ticket from './pages/Ticket';
 
-import AdminDashboard from './admin/AdminDashboard';
+// Paths confirmed from previous steps
+import AdminDashboard from './admin/AdminDashboard.jsx';
 import TicketReply from './admin/adminTicketReply.jsx';
 
-// Import ONLY the AllTickets component.
-// We will reuse this component for all filtered views.
-import AllTickets from './Data/AllTickets';
-
-// Report Components
+// Report Components - Paths confirmed from previous steps
 import ReportPage from './report/ReportPage.jsx';
 import AnalyticsPage from './report/AnalyticsPage.jsx';
 
@@ -41,10 +41,8 @@ const AppRoutes = () => {
     const location = useLocation();
     const { isLoggedin, userData, loading } = useContext(AppContent);
 
-    // Define the height of your fixed Navbar
     const NAVBAR_HEIGHT = '80px';
 
-    // Determine if the current path is an authentication-related page
     const isAuthPage = [
         '/login',
         '/loginselection',
@@ -52,54 +50,46 @@ const AppRoutes = () => {
         '/email-verify',
     ].includes(location.pathname);
 
-    // PrivateRoute: Component that protects routes requiring user login.
     function PrivateRoute({ children }) {
         if (loading) {
-            return <div>Loading user data...</div>; // Show a loading indicator
+            return <div>Loading user data...</div>;
         }
         if (!isLoggedin) {
-            return <Navigate to="/loginselection" replace />; // Redirect to login if not logged in
+            return <Navigate to="/loginselection" replace />;
         }
-        return children; // Render the protected content
+        return children;
     }
 
-    // AdminRoute: Component that protects routes requiring an 'admin' role.
     function AdminRoute({ children }) {
         if (loading) {
-            return <div>Loading user data...</div>; // Show a loading indicator
+            return <div>Loading user data...</div>;
         }
         if (!isLoggedin || userData?.role !== 'admin') {
-            return <Navigate to="/" replace />; // Redirect if not logged in or not an admin
+            return <Navigate to="/" replace />;
         }
-        return children; // Render the protected content
+        return children;
     }
 
-    // FallbackRoute: Redirects to appropriate page if no route matches.
     const FallbackRoute = () =>
         isLoggedin
-            ? <Navigate to="/" replace /> // Logged in goes to Home2 (dashboard)
-            : <Navigate to="/loginselection" replace />; // Not logged in goes to login selection
+            ? <Navigate to="/" replace />
+            : <Navigate to="/loginselection" replace />;
 
     return (
         <div>
-            {/* Navbar is rendered globally unless it's an auth page */}
             {!isAuthPage && <Navbar />}
 
-            {/* This div accounts for the fixed Navbar's height and contains the Sidebar and main content */}
             <div style={{ paddingTop: isAuthPage ? '0' : NAVBAR_HEIGHT, minHeight: '100vh', background: '#F0F8FF' }}>
                 <div className="d-flex" style={{ minHeight: 'calc(100vh - 80px)' }}>
-                    {/* Sidebar is rendered globally unless it's an auth page */}
                     {!isAuthPage && <Sidebar />}
                     <div className="flex-grow-1" style={{ flex: 1, padding: '32px 20px' }}>
-                        <ToastContainer /> {/* Toast notifications container */}
+                        <ToastContainer />
                         <Routes>
-                            {/* --- Authentication Routes (Accessible without login) --- */}
                             <Route path="/login" element={<Login />} />
                             <Route path="/loginselection" element={<LoginSelection />} />
                             <Route path="/reset-password" element={<ResetPassword />} />
                             <Route path="/email-verify" element={<EmailVerify />} />
 
-                            {/* Root/dashboard logic: Always render Home2 for logged-in users, otherwise redirect */}
                             <Route
                                 path="/"
                                 element={
@@ -111,11 +101,10 @@ const AppRoutes = () => {
                                 }
                             />
 
-                            {/* --- Private (protected) routes for logged in users only --- */}
                             <Route
                                 element={
                                     <PrivateRoute>
-                                        <Outlet /> {/* Renders nested routes */}
+                                        <Outlet />
                                     </PrivateRoute>
                                 }
                             >
@@ -124,40 +113,29 @@ const AppRoutes = () => {
                                 <Route path="/create-ticket" element={<CreateTicket />} />
                                 <Route path="/tickets/:id" element={<Ticket />} />
 
-                                {/* --- Admin-only routes (protected by AdminRoute) --- */}
                                 <Route
                                     element={
                                         <AdminRoute>
-                                            <Outlet /> {/* Renders nested admin components */}
+                                            <Outlet />
                                         </AdminRoute>
                                     }
                                 >
-                                    <Route path="/admin" element={<AdminDashboard />} />
+                                    <Route path="/admin" element={<AdminDashboard initialStatusFilter="All" />} />
+                                    <Route path="/admin/tickets" element={<AdminDashboard initialStatusFilter="All" />} />
+                                    <Route path="/admin/tickets/:statusFilter" element={<AdminDashboard />} />
+
                                     <Route path="/admin/tickets/:id/reply" element={<TicketReply />} />
 
-                                    {/* Admin Ticket Views: All use the same AllTickets component,
-                                        but pass a different initialStatusFilter prop. */}
-                                    <Route path="/admin/tickets/all" element={<AllTickets initialStatusFilter="All" />} />
-                                    <Route path="/admin/tickets/open" element={<AllTickets initialStatusFilter="open" />} />
-                                    <Route path="/admin/tickets/in-progress" element={<AllTickets initialStatusFilter="in progress" />} />
-                                    <Route path="/admin/tickets/resolved" element={<AllTickets initialStatusFilter="resolved" />} />
-                                    <Route path="/admin/tickets/closed" element={<AllTickets initialStatusFilter="closed" />} />
-                                    <Route path="/admin/tickets/reopened" element={<AllTickets initialStatusFilter="reopened" />} />
-
-
-                                    {/* Report Routes (assuming these are admin-only or at least protected) */}
                                     <Route path="/reports" element={<ReportPage />} />
                                     <Route path="/analytics" element={<AnalyticsPage />} />
                                 </Route>
                             </Route>
 
-                            {/* Fallback: Not found page. This should be the last route. */}
                             <Route path="*" element={<FallbackRoute />} />
                         </Routes>
                     </div>
                 </div>
             </div>
-            {/* Inline styles for global CSS - consider moving to App.css */}
             <style>
                 {`
                     body {
@@ -281,6 +259,7 @@ const AppRoutes = () => {
 function App() {
     return (
         <AppContextProvider>
+            {/* Removed the <Router> tag here, as it's now in main.jsx */}
             <AppRoutes />
         </AppContextProvider>
     );
