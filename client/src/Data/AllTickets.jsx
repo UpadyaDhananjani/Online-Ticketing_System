@@ -15,6 +15,7 @@ import {
 import { getAdminTickets, deleteAdminTicket } from "../api/ticketApi";
 import { toast } from "react-toastify";
 import { BsArrowRepeat } from "react-icons/bs";
+import { useNavigate } from "react-router-dom";
 
 const statusColors = {
     open: "success",
@@ -73,6 +74,7 @@ function AllTickets({ onSelect, refresh, initialStatusFilter = "all", displaySta
 
     const [typeFilter, setTypeFilter] = useState("All");
     const [selectedTickets, setSelectedTickets] = useState(new Set());
+    const navigate = useNavigate();
 
     // Debugging: Log state changes
     useEffect(() => {
@@ -339,7 +341,7 @@ function AllTickets({ onSelect, refresh, initialStatusFilter = "all", displaySta
                                         background: ticket.status === "open" ? "#e6ffe6" : undefined,
                                         cursor: "pointer",
                                     }}
-                                    onClick={() => onSelect(ticket)}
+                                    onClick={() => navigate(`/admin/tickets/${ticket._id}/reply`)}
                                     onMouseOver={(e) => (e.currentTarget.style.background = "#f0f4ff")}
                                     onMouseOut={(e) =>
                                         (e.currentTarget.style.background =

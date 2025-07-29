@@ -24,7 +24,9 @@ import {
   getRecentTickets,
   getAssigneePerformance
 } from "../api/ticketApi";
-import DarkModeToggle from "../components/DarkModeToggle";
+import { Container, Row, Col } from "react-bootstrap";
+import { BsCheck2Circle } from "react-icons/bs";
+
 import TicketsByUnitChart from "./TicketsByUnitChart";
 
 // Register Chart.js components
@@ -105,6 +107,27 @@ function AdminDashboard() {
     // getAdminTicketsSummary().then(setStats);
   }, []);
 
+  // Real-time stats fetch
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch("/api/tickets/summary");
+        if (!res.ok) return;
+        const data = await res.json();
+        setStats({
+          openTickets: data.open || 0,
+          inProgressTickets: data.inProgress || 0,
+          resolvedToday: data.resolved || 0,
+          avgResponseTime: data.avgResponseTime || 0,
+        });
+      } catch (err) {}
+    };
+
+    fetchStats();
+    const intervalId = setInterval(fetchStats, 30000);
+    return () => clearInterval(intervalId);
+  }, []);
+
   // Ticket Trends Chart (Line chart) - static demo data
   const ticketTrendsData = {
     labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
@@ -157,8 +180,7 @@ function AdminDashboard() {
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900 min-h-screen p-6 transition-colors duration-200">
-      
-      {/* Header - Make it darker */}
+      {/* Header */}
       <header className="bg-gradient-to-r from-blue-900 to-blue-400 dark:from-slate-800 dark:to-slate-700 text-white shadow-lg rounded-lg p-6 mb-8">
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-4">
@@ -173,7 +195,68 @@ function AdminDashboard() {
         </div>
       </header>
 
-      <DarkModeToggle />
+      {/* Main Dashboard Content from adminHome.jsx */}
+      <Container className="py-4">
+        <div className="text-center mb-4">
+          <h2 className="fw-bold mb-1" style={{ color: '#1a2233', fontSize: 32 }}>Current Ticket Status</h2>
+          <div className="text-muted" style={{ fontSize: 18 }}>Real-time overview of helpdesk tickets</div>
+        </div>
+        <Row className="justify-content-center g-4 mb-5">
+          {/* Open Issues Card */}
+          <Col xs={12} md={4}>
+            <div className="h-100 p-4 d-flex flex-row align-items-center justify-content-between rounded-3 shadow-sm"
+              style={{ background: '#fff5f5', borderLeft: '6px solid #f87171', minHeight: 140 }}>
+              <div>
+                <div className="fw-bold" style={{ fontSize: 36, color: '#e11d48' }}>{stats.openTickets}</div>
+                <div className="fw-bold" style={{ fontSize: 20, color: '#1a2233' }}>Open Issues</div>
+                <div className="text-muted" style={{ fontSize: 15 }}>Awaiting assignment</div>
+              </div>
+              <span className="d-inline-block ms-3"
+                style={{
+                  width: 38, height: 38, borderRadius: '50%',
+                  background: 'radial-gradient(circle at 30% 30%, #f87171 60%, #e11d48 100%)',
+                  boxShadow: '0 2px 8px rgba(249, 113, 113, 0.15)'
+                }}></span>
+            </div>
+          </Col>
+          {/* In Progress Issues Card */}
+          <Col xs={12} md={4}>
+            <div className="h-100 p-4 d-flex flex-row align-items-center justify-content-between rounded-3 shadow-sm"
+              style={{ background: '#fffae6', borderLeft: '6px solid #fbbf24', minHeight: 140 }}>
+              <div>
+                <div className="fw-bold" style={{ fontSize: 36, color: '#f59e1b' }}>{stats.inProgressTickets}</div>
+                <div className="fw-bold" style={{ fontSize: 20, color: '#1a2233' }}>In Progress Issues</div>
+                <div className="text-muted" style={{ fontSize: 15 }}>Being worked on</div>
+              </div>
+              <span className="d-inline-block ms-3"
+                style={{
+                  width: 38, height: 38, borderRadius: '50%',
+                  background: 'radial-gradient(circle at 30% 30%, #fde68a 60%, #fbbf24 100%)',
+                  boxShadow: '0 2px 8px rgba(251, 191, 36, 0.13)'
+                }}></span>
+            </div>
+          </Col>
+          {/* Resolved Issues Card */}
+          <Col xs={12} md={4}>
+            <div className="h-100 p-4 d-flex flex-row align-items-center justify-content-between rounded-3 shadow-sm"
+              style={{ background: '#f0fdf4', borderLeft: '6px solid #22c55e', minHeight: 140 }}>
+              <div>
+                <div className="fw-bold" style={{ fontSize: 36, color: '#16a34a' }}>{stats.resolvedToday}</div>
+                <div className="fw-bold" style={{ fontSize: 20, color: '#1a2233' }}>Resolved Issues</div>
+                <div className="text-muted" style={{ fontSize: 15 }}>This month</div>
+              </div>
+              <span className="d-inline-flex align-items-center justify-content-center ms-3"
+                style={{
+                  width: 38, height: 38, borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #bbf7d0 60%, #22c55e 100%)',
+                  boxShadow: '0 2px 8px rgba(34, 197, 94, 0.13)'
+                }}>
+                <BsCheck2Circle size={28} color="#16a34a" />
+              </span>
+            </div>
+          </Col>
+        </Row>
+      </Container>
 
       {/* Stats Cards - Darker theme */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -215,23 +298,24 @@ function AdminDashboard() {
         />
       </div>
 
-      {/* Charts Section - Both cards smaller and side by side */}
+      {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <div className="bg-white dark:bg-slate-700 rounded-lg shadow-md p-4 fade-in transition-colors duration-200 dark:border dark:border-slate-600">
-          <h3 className="text-sm font-semibold text-gray-800 dark:text-slate-200 mb-3">Ticket Trends (Last 7 Days)</h3>
-          <div style={{ height: "200px" }}>
+        <div className="bg-white dark:bg-slate-700 rounded-lg shadow-md p-3 fade-in transition-colors duration-200 dark:border dark:border-slate-600">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-slate-200 mb-2">Ticket Trends (Last 7 Days)</h3>
+          <div style={{ height: "300px" }}>
             <Line data={ticketTrendsData} options={ticketTrendsOptions} />
           </div>
         </div>
-        <div className="bg-white dark:bg-slate-700 rounded-lg shadow-md p-4 fade-in transition-colors duration-200 dark:border dark:border-slate-600">
-          <h3 className="text-sm font-semibold text-gray-800 dark:text-slate-200 mb-3">Tickets by Category</h3>
-          <div style={{ height: "200px" }}>
+        <div className="bg-white dark:bg-slate-700 rounded-lg shadow-md p-3 fade-in transition-colors duration-200 dark:border dark:border-slate-600">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-slate-200 mb-2">Tickets by Category</h3>
+          <div style={{ height: "320px" }}
+            className="flex items-center justify-center">
             <Doughnut data={categoryData} options={categoryOptions} />
           </div>
         </div>
       </div>
 
-      {/* Keep the unit chart and priority distribution in their own row */}
+      {/* Unit chart and priority distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <ChartCard title="Tickets by Unit/Team">
           <TicketsByUnitChart />
@@ -474,8 +558,5 @@ function TeamPerformanceSection({ teamPerformance }) {
     </div>
   );
 }
-
-
-
 
 export default AdminDashboard;

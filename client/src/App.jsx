@@ -25,7 +25,7 @@ import CreateTicket from './components/CreateTicket';
 import Ticket from './pages/Ticket';
 
 // Paths confirmed from previous steps
-import AdminDashboard from './admin/AdminDashboard.jsx';
+import AdminDashboard from './report/AdminDashboard.jsx';
 import TicketReply from './admin/adminTicketReply.jsx';
 
 // Report Components - Paths confirmed from previous steps

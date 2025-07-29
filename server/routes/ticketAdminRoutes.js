@@ -44,11 +44,12 @@ router.get('/summary', getAdminTicketsSummary);
 router.get('/reports/chart-image', generateReportChartImage);
 router.get('/reports/pdf', downloadReportPdf);
 router.get('/assignee-performance', getAssigneePerformance);
-router.get('/tickets-by-unit', getTicketsByUnit);
+router.get('/tickets_by_unit', getTicketsByUnit);
 router.get('/avg-resolution-time', getAvgResolutionTime);
 router.get('/activity-logs', getTicketActivityLogs);
 router.get('/status-distribution', getTicketStatusDistribution);  // Add this route
 router.get('/type-distribution', getTicketTypeDistribution);      // Add this route
+router.get('/recent-tickets', getRecentTickets); // New route for recent tickets
 // Get all tickets for admin dashboard
 router.get('/', getAllTickets);
 
