@@ -40,6 +40,13 @@ import { ToastContainer } from 'react-toastify';
 // Context
 import { AppContextProvider, AppContent } from './context/AppContext';
 
+// Import your ticket page components
+import AllTickets from './Data/AllTickets';
+import OpenTickets from './Data/OpenTickets';
+import InProgressTickets from './Data/InProgressTickets';
+import ResolvedTickets from './Data/ResolvedTickets';
+import ClosedTickets from './Data/ClosedTickets';
+
 const AppRoutes = () => {
     const location = useLocation();
     const { isLoggedin, userData, loading } = useContext(AppContent);
@@ -124,8 +131,11 @@ const AppRoutes = () => {
                                     }
                                 >
                                     <Route path="/admin" element={<AdminDashboard initialStatusFilter="All" />} />
-                                    <Route path="/admin/tickets" element={<AdminDashboard initialStatusFilter="All" />} />
-                                    <Route path="/admin/tickets/:statusFilter" element={<AdminDashboard />} />
+                                    <Route path="/admin/tickets/all" element={<AllTickets />} />
+                                    <Route path="/admin/tickets/open" element={<OpenTickets />} />
+                                    <Route path="/admin/tickets/in-progress" element={<InProgressTickets />} />
+                                    <Route path="/admin/tickets/resolved" element={<ResolvedTickets />} />
+                                    <Route path="/admin/tickets/closed" element={<ClosedTickets />} />
 
                                     <Route path="/admin/tickets/:id/reply" element={<TicketReply />} />
 
