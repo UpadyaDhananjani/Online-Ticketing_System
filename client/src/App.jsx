@@ -3,6 +3,13 @@ import React, { useContext } from 'react';
 // IMPORTANT: Removed 'BrowserRouter as Router' from this import.
 // We only need Routes, Route, useLocation, Navigate, Outlet here.
 import { Routes, Route, useLocation, Navigate, Outlet } from 'react-router-dom';
+import 'react-toastify/dist/ReactToastify.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap-icons/font/bootstrap-icons.css';
+
+import './styles/toastify-overrides.css';
+
+import './App.css';
 
 // Components and Pages
 import Navbar from './components/Navbar.jsx';
@@ -27,12 +34,8 @@ import AnalyticsPage from './report/AnalyticsPage.jsx';
 
 // Styling
 import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap-icons/font/bootstrap-icons.css';
 
-import './App.css';
 
 // Context
 import { AppContextProvider, AppContent } from './context/AppContext';
