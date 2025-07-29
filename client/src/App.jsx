@@ -1,7 +1,5 @@
-// client/src/App.jsx
-import React, { useContext } from 'react';
-// IMPORTANT: Removed 'BrowserRouter as Router' from this import.
-// We only need Routes, Route, useLocation, Navigate, Outlet here.
+// src/App.jsx
+import React, { useContext, useState } from 'react'; // Added useState for potential local state if needed
 import { Routes, Route, useLocation, Navigate, Outlet } from 'react-router-dom';
 import 'react-toastify/dist/ReactToastify.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -11,8 +9,12 @@ import './styles/toastify-overrides.css';
 
 import './App.css';
 
+// Contexts
+import { ThemeProvider } from './context/ThemeContext.jsx'; // <--- IMPORTANT: Ensure this is .jsx now
+import { AppContextProvider, AppContent } from './context/AppContext';
+
 // Components and Pages
-import Navbar from './components/Navbar.jsx';
+import Navbar from './components/Navbar.jsx'; // Navbar should contain ThemeToggle
 import Sidebar from './components/Sidebar.jsx';
 import Home2 from './components/Home2.jsx';
 import Login from './components/Login.jsx';
@@ -28,17 +30,13 @@ import Ticket from './pages/Ticket';
 import AdminDashboard from './report/AdminDashboard.jsx';
 import TicketReply from './admin/adminTicketReply.jsx';
 
-// Report Components - Paths confirmed from previous steps
 import ReportPage from './report/ReportPage.jsx';
 import AnalyticsPage from './report/AnalyticsPage.jsx';
 
-// Styling
+// Styling Libraries (these should still be imported as external CSS files in main.jsx/index.js)
 import { ToastContainer } from 'react-toastify';
 
 
-
-// Context
-import { AppContextProvider, AppContent } from './context/AppContext';
 
 // Import your ticket page components
 import AllTickets from './Data/AllTickets';
@@ -51,8 +49,9 @@ const AppRoutes = () => {
     const location = useLocation();
     const { isLoggedin, userData, loading } = useContext(AppContent);
 
-    const NAVBAR_HEIGHT = '80px';
+    const NAVBAR_HEIGHT = '80px'; // Define Navbar height for padding
 
+    // Determine if the current page is an authentication-related page
     const isAuthPage = [
         '/login',
         '/loginselection',
@@ -60,46 +59,58 @@ const AppRoutes = () => {
         '/email-verify',
     ].includes(location.pathname);
 
+    // PrivateRoute component to protect routes requiring authentication
     function PrivateRoute({ children }) {
         if (loading) {
-            return <div>Loading user data...</div>;
+            return <div>Loading user data...</div>; // Show loading state
         }
         if (!isLoggedin) {
-            return <Navigate to="/loginselection" replace />;
+            return <Navigate to="/loginselection" replace />; // Redirect if not logged in
         }
-        return children;
+        return children; // Render child components if authenticated
     }
 
+    // AdminRoute component to protect routes requiring admin role
     function AdminRoute({ children }) {
         if (loading) {
-            return <div>Loading user data...</div>;
+            return <div>Loading user data...</div>; // Show loading state
         }
         if (!isLoggedin || userData?.role !== 'admin') {
-            return <Navigate to="/" replace />;
+            return <Navigate to="/" replace />; // Redirect if not admin
         }
-        return children;
+        return children; // Render child components if admin
     }
 
+    // FallbackRoute for unmatched paths, redirects based on login status
     const FallbackRoute = () =>
         isLoggedin
-            ? <Navigate to="/" replace />
-            : <Navigate to="/loginselection" replace />;
+            ? <Navigate to="/" replace /> // If logged in, go to home
+            : <Navigate to="/loginselection" replace />; // If not, go to login selection
 
     return (
-        <div>
+        // Outer container for the entire application layout
+        // This div now directly controls its background and text color using theme variables
+        <div className="app-container-outer">
+            {/* Render Navbar only if not on an authentication page */}
             {!isAuthPage && <Navbar />}
 
-            <div style={{ paddingTop: isAuthPage ? '0' : NAVBAR_HEIGHT, minHeight: '100vh', background: '#F0F8FF' }}>
-                <div className="d-flex" style={{ minHeight: 'calc(100vh - 80px)' }}>
+            {/* Content wrapper, applies top padding to account for Navbar */}
+            <div className="content-wrapper" style={{ paddingTop: isAuthPage ? '0' : NAVBAR_HEIGHT }}>
+                {/* Flex container for sidebar and main content area */}
+                <div className="d-flex main-content-area">
+                    {/* Render Sidebar only if not on an authentication page */}
                     {!isAuthPage && <Sidebar />}
-                    <div className="flex-grow-1" style={{ flex: 1, padding: '32px 20px' }}>
-                        <ToastContainer />
+                    {/* Main view content area, takes remaining space */}
+                    <div className="flex-grow-1 main-view-content">
+                        <ToastContainer /> {/* Toast notifications container */}
                         <Routes>
+                            {/* Public Routes */}
                             <Route path="/login" element={<Login />} />
                             <Route path="/loginselection" element={<LoginSelection />} />
                             <Route path="/reset-password" element={<ResetPassword />} />
                             <Route path="/email-verify" element={<EmailVerify />} />
 
+                            {/* Home Route: Redirects if not logged in */}
                             <Route
                                 path="/"
                                 element={
@@ -111,10 +122,11 @@ const AppRoutes = () => {
                                 }
                             />
 
+                            {/* Protected User Routes (requires authentication) */}
                             <Route
                                 element={
                                     <PrivateRoute>
-                                        <Outlet />
+                                        <Outlet /> {/* Renders child routes if authenticated */}
                                     </PrivateRoute>
                                 }
                             >
@@ -123,10 +135,11 @@ const AppRoutes = () => {
                                 <Route path="/create-ticket" element={<CreateTicket />} />
                                 <Route path="/tickets/:id" element={<Ticket />} />
 
+                                {/* Nested Protected Admin Routes (requires admin role) */}
                                 <Route
                                     element={
                                         <AdminRoute>
-                                            <Outlet />
+                                            <Outlet /> {/* Renders child routes if admin */}
                                         </AdminRoute>
                                     }
                                 >
@@ -144,13 +157,16 @@ const AppRoutes = () => {
                                 </Route>
                             </Route>
 
+                            {/* Catch-all route for any unmatched paths */}
                             <Route path="*" element={<FallbackRoute />} />
                         </Routes>
                     </div>
                 </div>
             </div>
+            {/* Inline Style Block for App-specific CSS - ALL STYLES ARE HERE */}
             <style>
                 {`
+                    /* General Body and Root Styles - Note: Global theme variables from themes.css are crucial */
                     body {
                         margin: 0;
                         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -158,6 +174,8 @@ const AppRoutes = () => {
                             sans-serif;
                         -webkit-font-smoothing: antialiased;
                         -moz-osx-font-smoothing: grayscale;
+                        /* Background and text color are managed by the 'body' rules in themes.css,
+                           which inherit from :root or [data-theme="dark"] based on data-theme attribute */
                     }
 
                     code {
@@ -169,42 +187,87 @@ const AppRoutes = () => {
                         text-decoration: none !important;
                     }
 
-                    .flex-grow-1 {
-                        padding: 32px 20px !important;
-                        width: 100%;
-                        box-sizing: border-box;
+                    /* App Container Styles - Ensures the very outermost container also follows the theme */
+                    .app-container-outer {
+                        min-height: 100vh;
+                        display: flex;
+                        flex-direction: column;
+                        background-color: var(--background-color); /* Use theme variable */
+                        color: var(--text-color); /* Use theme variable */
+                        transition: background-color 0.3s ease, color 0.3s ease;
                     }
 
+                    /* Header Styles - Use theme variables */
+                    .app-header {
+                        background-color: var(--primary-color); /* Using theme variable */
+                        color: var(--background-color); /* Text contrasting primary color */
+                        padding: 1rem 2rem;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Add a subtle shadow */
+                        transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+                    }
+
+                    /* Content Wrapper to push content below Navbar */
+                    .content-wrapper {
+                        min-height: calc(100vh - ${NAVBAR_HEIGHT}); /* Dynamic height calculation */
+                        background: var(--background-color); /* Use theme variable for main content background */
+                        transition: background-color 0.3s ease;
+                        flex-grow: 1; /* Allow it to take available space */
+                    }
+
+                    /* Main Content Area (Sidebar + Main View) */
+                    .main-content-area {
+                        min-height: 100%; /* Ensures this section fills remaining height within content-wrapper */
+                        display: flex; /* Assuming it's a flex container for sidebar and main view */
+                        flex-grow: 1;
+                    }
+
+                    /* Flex-grow-1 equivalent for main content area, now using padding from App.css */
+                    .main-view-content {
+                        padding: 32px 20px; /* Consolidate padding here */
+                        width: 100%; /* Ensure it takes full width within flex context */
+                        box-sizing: border-box;
+                        background-color: var(--background-color); /* Ensure this also uses theme variable */
+                        color: var(--text-color); /* Ensure this also uses theme variable */
+                        transition: background-color 0.3s ease, color 0.3s ease;
+                    }
+
+                    /* Sidebar Nav Link Styles - Update with theme variables */
                     .sidebar-nav-link {
                         font-weight: 500;
-                        color: #222 !important;
+                        color: var(--text-color) !important; /* Use theme variable */
                         font-size: 18px;
                         margin-bottom: 8px;
                         text-decoration: none;
-                        transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
-                        padding: 8px 12px;
+                        transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out, padding 0.3s ease;
                         border-radius: 4px;
-                        display: block;
+                        display: flex;
+                        align-items: center;
+                        white-space: nowrap;
+                        overflow: hidden;
                     }
 
                     .sidebar-nav-link:hover {
-                        color: #0056b3 !important;
-                        background-color: #f0f2f5;
+                        color: var(--primary-color-hover) !important; /* Example: hover color from primary */
+                        background-color: var(--card-background-light); /* Lighter background on hover */
                     }
 
                     .sidebar-nav-link.active {
                         font-weight: 700;
-                        color: #007bff !important;
-                        background-color: #e9ecef;
-                        border-left: 4px solid #007bff;
+                        color: var(--primary-color) !important; /* Active link color from primary */
+                        background-color: var(--active-link-background); /* Slightly different background for active */
+                        border-left: 4px solid var(--primary-color); /* Border matches primary */
                         padding-left: 8px;
                     }
 
                     .sidebar-nav-link.active:hover {
-                        color: #0056b3 !important;
-                        background-color: #e9ecef;
+                        color: var(--primary-color-hover) !important;
+                        background-color: var(--active-link-background);
                     }
 
+                    /* User Initial Circle Styles - Update with theme variables */
                     .user-initial-circle {
                         width: 40px;
                         height: 40px;
@@ -212,30 +275,32 @@ const AppRoutes = () => {
                         justify-content: center;
                         align-items: center;
                         border-radius: 50%;
-                        background-color: #007bff;
-                        color: white;
+                        background-color: var(--primary-color); /* Use primary color */
+                        color: var(--background-color); /* Text contrasting primary */
                         font-weight: bold;
                         font-size: 1.2rem;
                         cursor: pointer;
                         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-                        transition: background-color 0.2s ease-in-out;
+                        transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
                     }
 
                     .user-initial-circle:hover {
-                        background-color: #0056b3;
+                        background-color: var(--secondary-color); /* Slightly different color on hover */
                     }
 
+                    /* User Dropdown Menu Styles - Update with theme variables */
                     .user-dropdown-menu {
                         position: absolute;
                         top: 100%;
                         right: 0;
-                        background-color: white;
+                        background-color: var(--card-background); /* Use card background for dropdown */
                         border-radius: 8px;
                         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
                         min-width: 150px;
                         padding: 8px 0;
                         z-index: 1000;
                         margin-top: 10px;
+                        transition: background-color 0.3s ease, box-shadow 0.3s ease;
                     }
 
                     .user-dropdown-menu ul {
@@ -248,14 +313,14 @@ const AppRoutes = () => {
                         padding: 10px 15px;
                         cursor: pointer;
                         font-size: 0.95rem;
-                        color: #333;
+                        color: var(--text-color); /* Use text color */
                         transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
                         text-align: left;
                     }
 
                     .user-dropdown-menu .dropdown-item:hover {
-                        background-color: #f0f2f5;
-                        color: #007bff;
+                        background-color: var(--border-color); /* Slightly lighter background on hover */
+                        color: var(--primary-color); /* Hover color for text */
                     }
 
                     .hover-effect:hover {
@@ -263,18 +328,47 @@ const AppRoutes = () => {
                         box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
                         cursor: pointer;
                     }
+
+                    /* Basic Card Example (from previous Theme explanation) */
+                    .card {
+                      background-color: var(--card-background); /* Use theme variable */
+                      border: 1px solid var(--border-color);
+                      color: var(--text-color);
+                      padding: 15px;
+                      border-radius: 8px;
+                      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                      transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+                    }
+
+                    /* Basic Button Example (from previous Theme explanation) */
+                    .btn-primary {
+                      background-color: var(--primary-color);
+                      color: var(--background-color);
+                      padding: 10px 20px;
+                      border: none;
+                      border-radius: 5px;
+                      cursor: pointer;
+                      font-size: 1rem;
+                      transition: background-color 0.3s ease, color 0.3s ease;
+                    }
+
+                    .btn-primary:hover {
+                      filter: brightness(1.1);
+                    }
                 `}
             </style>
         </div>
     );
 };
 
+// --- Main App Component: Wraps the entire application with ThemeProvider and AppContextProvider ---
 function App() {
     return (
-        <AppContextProvider>
-            {/* Removed the <Router> tag here, as it's now in main.jsx */}
-            <AppRoutes />
-        </AppContextProvider>
+        <ThemeProvider> {/* Provides theme context to all children */}
+            <AppContextProvider> {/* Provides application context to all children */}
+                <AppRoutes /> {/* Renders the main routing and layout */}
+            </AppContextProvider>
+        </ThemeProvider>
     );
 }
 

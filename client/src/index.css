@@ -1,3 +1,4 @@
+/* src/index.css */
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
 
@@ -5,80 +6,229 @@
 @tailwind components;
 @tailwind utilities;
 
+/* --- GLOBAL STYLES & THEME APPLICATION --- */
+
+/* Apply Outfit font globally to all elements */
 * {
   font-family: "outfit", sans-serif;
+  box-sizing: border-box; /* Ensure consistent box model */
 }
 
-
-
-
-/* :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-} */
-
-
-/* a {
-/* a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
+/* CRITICAL: Ensure html and body always reflect the current theme's background and text color */
+/* This overrides any default browser or Bootstrap light mode backgrounds */
+html, body {
+  background-image: none !important; /* Explicitly remove any background image */
+  background-color: var(--background-color) !important; /* Apply themed background from themes.css with !important */
+  color: var(--text-color) !important; /* Apply themed text color from themes.css with !important */
+  transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transitions for theme changes */
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  /* Font smoothing for better text rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+/* Remove default text decoration for links, let components handle hover */
+a {
+  text-decoration: none !important;
 }
 
-button {
+/* --- APP-SPECIFIC GLOBAL CLASSES (moved from App.jsx inline style) --- */
+
+/* App Container Styles - Ensures the very outermost container also follows the theme */
+.app-container-outer {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    /* Background and color are now primarily handled by html/body, and Tailwind classes */
+}
+
+/* Header Styles - Use theme variables */
+.app-header {
+    background-color: var(--primary-color);
+    color: var(--background-color); /* Text contrasting primary color */
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px var(--shadow-color);
+    transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Content Wrapper to push content below Navbar */
+.content-wrapper {
+    min-height: calc(100vh - 80px); /* Dynamic height calculation, adjust 80px if Navbar changes */
+    background: var(--background-color); /* Use theme variable for main content background */
+    transition: background-color 0.3s ease;
+    flex-grow: 1;
+}
+
+/* Main Content Area (Sidebar + Main View) */
+.main-content-area {
+    min-height: 100%;
+    display: flex;
+    flex-grow: 1;
+}
+
+/* Flex-grow-1 equivalent for main content area, now using padding from App.css */
+.main-view-content {
+    padding: 32px 20px;
+    width: 100%;
+    box-sizing: border-box;
+    background-color: var(--background-color); /* Ensure this also uses theme variable */
+    color: var(--text-color); /* Ensure this also uses theme variable */
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Sidebar Nav Link Styles - Update with theme variables */
+.sidebar-nav-link {
+    font-weight: 500;
+    color: var(--text-color) !important;
+    font-size: 18px;
+    margin-bottom: 8px;
+    text-decoration: none;
+    transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out, padding 0.3s ease;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.sidebar-nav-link:hover {
+    color: var(--primary-color-hover) !important;
+    background-color: var(--card-background-light);
+}
+
+.sidebar-nav-link.active {
+    font-weight: 700;
+    color: var(--primary-color) !important;
+    background-color: var(--active-link-background);
+    border-left: 4px solid var(--primary-color);
+    padding-left: 8px;
+}
+
+.sidebar-nav-link.active:hover {
+    color: var(--primary-color-hover) !important;
+    background-color: var(--active-link-background);
+}
+
+/* User Initial Circle Styles - Update with theme variables */
+.user-initial-circle {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: var(--background-color);
+    font-weight: bold;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.user-initial-circle:hover {
+    background-color: var(--secondary-color);
+}
+
+/* User Dropdown Menu Styles - Update with theme variables */
+.user-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: var(--card-background);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 150px;
+    padding: 8px 0;
+    z-index: 1000;
+    margin-top: 10px;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.user-dropdown-menu ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.user-dropdown-menu .dropdown-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: var(--text-color);
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+    text-align: left;
+}
+
+.user-dropdown-menu .dropdown-item:hover {
+    background-color: var(--border-color);
+    color: var(--primary-color);
+}
+
+.hover-effect:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+}
+
+/* Basic Card Example */
+.card {
+  background-color: var(--card-background);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  padding: 15px;
   border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
+  box-shadow: 0 2px 4px var(--shadow-color);
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-} */
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-} 
+/* Basic Button Example */
+.btn-primary {
+  background-color: var(--primary-color);
+  color: var(--background-color);
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+/* --- BOOTSTRAP TABLE OVERRIDES FOR THEMING --- */
+/* These ensure Bootstrap's table components also respect your theme variables */
+.table {
+  --bs-table-bg: var(--card-background); /* Default table background */
+  --bs-table-color: var(--text-color); /* Default table text color */
+  --bs-table-border-color: var(--table-border); /* Table border color */
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) > * {
+  --bs-table-bg-type: var(--table-row-odd-bg); /* Odd row background */
+}
+
+.table-striped > tbody > tr:nth-of-type(even) > * {
+  --bs-table-bg-type: var(--table-row-even-bg); /* Even row background */
+}
+
+.table-striped > tbody > tr > * {
+  background-color: var(--bs-table-bg-type); /* Apply the striped background */
+}
+
+.table thead {
+  background-color: var(--table-header-bg); /* Table header background */
+  color: var(--text-color); /* Table header text color */
+}
+
+.table th, .table td {
+  border-color: var(--table-border); /* Ensure cell borders also theme */
+  color: var(--text-color) !important; /* CRITICAL: Ensure all text in table cells is themed with !important */
+}
