@@ -2,29 +2,29 @@
 
 import express from 'express';
 import {
-    getAllTickets,
-    addAdminReply,
-    deleteMessage,
-    resolveTicket,
-    markTicketOpen,
-    markTicketInProgress,
-    deleteTicket,
-    reassignTicket,
-    getAdminTicketById,
-    getAdminTicketsSummary,
-    getRecentTickets // <-- ADDED THIS IMPORT
-} from '../controllers/ticketAdminController.js'; // Ensure this path is correct
+  getAllTickets,
+  addAdminReply,
+  deleteMessage,
+  resolveTicket,
+  markTicketOpen,
+  markTicketInProgress,
+  deleteTicket,
+  reassignTicket,
+  getAdminTicketById,
+  getAdminTicketsSummary,
+   getRecentTickets
+} from '../controllers/ticketAdminController.js';
 
 import {
-    generateReportChartImage,
-    downloadReportPdf,
-    getAssigneePerformance,
-    getTicketsByUnit,
-    getAvgResolutionTime,
-    getTicketActivityLogs,
-    getTicketStatusDistribution,
-    getTicketTypeDistribution
-} from '../controllers/ReportController.js'; // Ensure this path is correct
+  generateReportChartImage, 
+  downloadReportPdf,
+  getAssigneePerformance,
+  getTicketsByUnit,
+  getAvgResolutionTime,
+  getTicketActivityLogs,
+  getTicketStatusDistribution,  // Add this import
+  getTicketTypeDistribution    // Add this import
+} from '../controllers/ReportController.js';
 
 import authMiddleware from '../middleware/authMiddleware.js';
 import authorizeRoles from '../middleware/authorizeRoles.js';
@@ -37,8 +37,7 @@ router.use(authMiddleware);
 router.use(authorizeRoles('admin'));
 
 // -------------------- Admin Ticket Routes --------------------
-// Summary widget for dashboard
-router.get('/summary', getAdminTicketsSummary);
+
 
 // Charts and analytics
 // --- REPORT ROUTES ---
@@ -48,11 +47,12 @@ router.get('/assignee-performance', getAssigneePerformance);
 router.get('/tickets_by_unit', getTicketsByUnit);
 router.get('/avg-resolution-time', getAvgResolutionTime);
 router.get('/activity-logs', getTicketActivityLogs);
-router.get('/status-distribution', getTicketStatusDistribution);
-router.get('/type-distribution', getTicketTypeDistribution);
+router.get('/status-distribution', getTicketStatusDistribution);  // Add this route
+router.get('/type-distribution', getTicketTypeDistribution);      // Add this route
+router.get('/recent', getRecentTickets); // New route for recent tickets
 
-// New route for recent tickets (now correctly imported)
-router.get('/recent-tickets', getRecentTickets);
+// Summary widget for dashboard
+router.get('/summary', getAdminTicketsSummary);
 
 // Get all tickets for admin dashboard
 router.get('/', getAllTickets);

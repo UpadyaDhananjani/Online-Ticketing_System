@@ -17,12 +17,13 @@ import { toast } from "react-toastify";
 import { BsArrowRepeat } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
 
+// Update the statusColors constant
 const statusColors = {
-    open: "success",
-    closed: "danger",
-    resolved: "primary",
-    reopened: "warning",
-    "in progress": "info",
+  'open': { className: 'bg-danger-subtle text-danger' },
+  'in progress': { className: 'bg-warning-subtle text-warning' },
+  'resolved': { className: 'bg-success-subtle text-success' },
+  'closed': { className: 'bg-secondary-subtle text-secondary' },
+  'reopened': { className: 'bg-danger-subtle text-danger' }
 };
 
 const UNIT_OPTIONS = [
@@ -309,100 +310,96 @@ function AllTickets({ onSelect, refresh, initialStatusFilter = "all", displaySta
                 {error && <Alert variant="danger">{error}</Alert>}
 
                 {!loading && !error && (
-                    <Table striped bordered hover responsive className="shadow-sm rounded" style={{ width: '100%' }}>
-                        <thead style={{ background: "#f5f6fa" }}>
-                            <tr>
-                                <th>
-                                    <Form.Check
-                                        type="checkbox"
-                                        checked={isAllSelected}
-                                        ref={(input) => {
-                                            if (input) input.indeterminate = isIndeterminate;
-                                        }}
-                                        onChange={(e) => handleSelectAll(e.target.checked)}
-                                    />
-                                </th>
-                                <th>Subject</th>
-                                <th>Type</th>
-                                <th>Assigned Unit</th>
-                                <th>Requester</th>
-                                <th>Assigned To</th>
-                                <th>Reassigned Unit</th>
-                                <th>Reassigned To</th>
-                                <th style={{ minWidth: 130, width: 150 }}><i className="bi bi-info-circle me-1"></i>Status</th>
-                                <th>Last Update</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredTickets.map((ticket) => (
-                                <tr
-                                    key={ticket._id}
-                                    style={{
-                                        background: ticket.status === "open" ? "#e6ffe6" : undefined,
-                                        cursor: "pointer",
-                                    }}
-                                    onClick={() => navigate(`/admin/tickets/${ticket._id}/reply`)}
-                                    onMouseOver={(e) => (e.currentTarget.style.background = "#f0f4ff")}
-                                    onMouseOut={(e) =>
-                                        (e.currentTarget.style.background =
-                                            ticket.status === "open" ? "#e6ffe6" : "")
-                                    }
-                                >
-                                    <td onClick={(e) => e.stopPropagation()}>
+                    <>
+                        <style>
+                            {`
+                                .bg-danger-subtle {
+                                    background-color: #fff5f5;
+                                }
+                                .bg-warning-subtle {
+                                    background-color: #fffbeb;
+                                }
+                                .bg-success-subtle {
+                                    background-color: #f0fdf4;
+                                }
+                                .bg-secondary-subtle {
+                                    background-color: #f3f4f6;
+                                }
+                                .rounded-pill {
+                                    border-radius: 9999px;
+                                }
+                                .table td {
+                                    color: #374151;
+                                    font-size: 0.875rem;
+                                }
+                            `}
+                        </style>
+                        <Table striped bordered hover responsive className="shadow-sm rounded" style={{ width: '100%' }}>
+                            <thead style={{ background: "#f5f6fa" }}>
+                                <tr>
+                                    <th>
                                         <Form.Check
                                             type="checkbox"
-                                            checked={selectedTickets.has(ticket._id)}
-                                            onChange={(e) =>
-                                                handleSelectTicket(ticket._id, e.target.checked)
-                                            }
+                                            checked={isAllSelected}
+                                            ref={(input) => {
+                                                if (input) input.indeterminate = isIndeterminate;
+                                            }}
+                                            onChange={(e) => handleSelectAll(e.target.checked)}
                                         />
-                                    </td>
-                                    <td>{ticket.subject}</td>
-                                    <td>
-                                        <Badge bg="info" text="dark" className="text-capitalize">
-                                            {ticket.type}
-                                        </Badge>
-                                    </td>
-                                    <td>
-                                        <Badge bg="secondary" className="text-capitalize">
-                                            {ticket.assignedUnit || "—"}
-                                        </Badge>
-                                    </td>
-                                    <td>{ticket.user?.name || "N/A"}</td>
-                                    <td>
-                                        <Badge bg="info" className="text-capitalize">
-                                            {ticket.assignedTo?.name || "—"}
-                                        </Badge>
-                                    </td>
-                                    <td>
-                                        <Badge bg="secondary" className="text-capitalize">
-                                            {ticket.reassigned ? (ticket.previousAssignedUnit || "—") : "—"}
-                                        </Badge>
-                                    </td>
-                                    <td>
-                                        <Badge bg="info" className="text-capitalize">
-                                            {ticket.reassigned ? (ticket.previousAssignedTo?.name || "—") : "—"}
-                                        </Badge>
-                                    </td>
-                                    <td style={{ verticalAlign: 'middle' }}>
-                                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                                            <Badge
-                                                bg={statusColors[ticket.status] || "secondary"}
-                                                className="px-3 py-2 text-capitalize"
-                                            >
-                                                {ticket.status}
-                                            </Badge>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        {ticket.updatedAt
-                                            ? new Date(ticket.updatedAt).toLocaleString()
-                                            : "N/A"}
-                                    </td>
+                                    </th>
+                                    <th>Subject</th>
+                                    <th>Type</th>
+                                    <th>Assigned Unit</th>
+                                    <th>Requester</th>
+                                    <th>Assigned To</th>
+                                    <th>Reassigned Unit</th>
+                                    <th>Reassigned To</th>
+                                    <th style={{ minWidth: 130, width: 150 }}><i className="bi bi-info-circle me-1"></i>Status</th>
+                                    <th>Last Update</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </Table>
+                            </thead>
+                            <tbody>
+                                {filteredTickets.map((ticket) => (
+                                    <tr
+                                        key={ticket._id}
+                                        style={{
+                                            cursor: "pointer",
+                                        }}
+                                        onClick={() => navigate(`/admin/tickets/${ticket._id}/reply`)}
+                                        onMouseOver={(e) => (e.currentTarget.style.background = "#f0f4ff")}
+                                        onMouseOut={(e) => (e.currentTarget.style.background = "")}
+                                    >
+                                        <td onClick={(e) => e.stopPropagation()}>
+                                            <Form.Check
+                                                type="checkbox"
+                                                checked={selectedTickets.has(ticket._id)}
+                                                onChange={(e) =>
+                                                    handleSelectTicket(ticket._id, e.target.checked)
+                                                }
+                                            />
+                                        </td>
+                                        <td>{ticket.subject}</td>
+                                        <td>{ticket.type}</td>
+                                        <td>{ticket.assignedUnit || "—"}</td>
+                                        <td>{ticket.user?.name || "N/A"}</td>
+                                        <td>{ticket.assignedTo?.name || "—"}</td>
+                                        <td>{ticket.reassigned ? (ticket.previousAssignedUnit || "—") : "—"}</td>
+                                        <td>{ticket.reassigned ? (ticket.previousAssignedTo?.name || "—") : "—"}</td>
+                                        <td style={{ verticalAlign: 'middle' }}>
+                                            <span className={`px-3 py-1 rounded-pill ${statusColors[ticket.status.toLowerCase()]?.className}`}>
+                                                {ticket.status}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {ticket.updatedAt
+                                                ? new Date(ticket.updatedAt).toLocaleString()
+                                                : "N/A"}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </Table>
+                    </>
                 )}
             </div>
         </Container>

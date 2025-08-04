@@ -30,6 +30,7 @@ export const getAllTickets = async (req, res) => {
 // @route   GET /api/admin/tickets/:id
 // @access  Admin
 export const getAdminTicketById = async (req, res) => {
+    console.log("Get Admin Ticket By ID Request:", req.params.id);
     try {
         const ticket = await Ticket.findById(req.params.id)
             .populate('user', 'name email')
@@ -274,32 +275,81 @@ export const getAdminTicketsSummary = async (req, res) => {
         const inProgressTickets = await Ticket.countDocuments({ status: 'in progress' });
         const resolvedTickets = await Ticket.countDocuments({ status: 'resolved' });
 
-        res.status(200).json({
-            openTickets,
-            inProgressTickets,
-            resolvedTickets
-        });
-    } catch (error) {
-        console.error("Error fetching admin ticket summary:", error);
-        res.status(500).json({ message: 'Server error fetching summary.' });
-    }
+    return res.json({
+      open: openCount,
+      inProgress: inProgressCount,
+      resolved: resolvedCount,
+    });
+  } catch (err) {
+    console.error("Error fetching admin ticket summary:", err);
+    return res.status(500).json({ error: 'Failed to fetch ticket summary from server.' });
+  }
 };
 
-// @desc    Get recent tickets (for dashboard table)
-// @route   GET /api/admin/tickets/recent-tickets
-// @access  Admin
+
 export const getRecentTickets = async (req, res) => {
-    try {
-        const limit = parseInt(req.query.limit) || 10; // Default to 10 recent tickets
-        const tickets = await Ticket.find({})
-            .sort({ createdAt: -1 }) // Sort by most recent first
-            .limit(limit)
-            .populate('user', 'name email') // Populate the user who created the ticket
-            .populate('assignedTo', 'name email'); // Populate the assigned user/admin
+  try {
+    const tickets = await Ticket.find().sort({ createdAt: -1 }).limit(10);
 
-        res.status(200).json(tickets);
-    } catch (error) {
-        console.error("Error fetching recent tickets:", error);
-        res.status(500).json({ message: 'Server error fetching recent tickets.' });
-    }
+    console.log("Recent tickets fetched:", tickets.length);
+    res.json(tickets);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
+
+// export const getRecentTickets = async (req, res) => {
+//   try {
+//     // Mock data for recent tickets
+//     const mockTickets = [
+//       {
+//         _id: "ICT-2024-001",
+//         subject: "Printer not working",
+//         user: {
+//           name: "Sarah Johnson",
+//           email: "sarah.j@company.com"
+//         },
+//         type: "Hardware",
+//         priority: "High",
+//         status: "Open",
+//         assignedUnit: "Hardware Support Team",
+//         createdAt: "2024-02-01T09:30:00Z",
+//         updatedAt: "2024-02-01T09:30:00Z"
+//       },
+//       {
+//         _id: "ICT-2024-002",
+//         subject: "Email server down",
+//         user: {
+//           name: "Mike Chen",
+//           email: "mike.c@company.com"
+//         },
+//         type: "Network",
+//         priority: "Critical",
+//         status: "In Progress",
+//         assignedUnit: "System and Network Administration",
+//         createdAt: "2024-02-01T10:15:00Z",
+//         updatedAt: "2024-02-01T10:45:00Z"
+//       },
+//       {
+//         _id: "ICT-2024-003",
+//         subject: "Software installation",
+//         user: {
+//           name: "Lisa Wong",
+//           email: "lisa.w@company.com"
+//         },
+//         type: "Software",
+//         priority: "Medium",
+//         status: "Resolved",
+//         assignedUnit: "Helpdesk Unit",
+//         createdAt: "2024-02-01T11:00:00Z",
+//         updatedAt: "2024-02-01T14:30:00Z"
+//       }
+//     ];
+
+//     console.log("Mock recent tickets returned:", mockTickets.length);
+//     res.json(mockTickets);
+//   } catch (err) {
+//     console.error("Error returning mock tickets:", err);
+//     res.status(500).json({ error: err.message });
+//   }
+// };
