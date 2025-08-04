@@ -1,13 +1,9 @@
 // client/src/admin/adminTicketReply.jsx
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import { Editor } from 'primereact/editor';
-import "primereact/resources/themes/lara-light-indigo/theme.css";
-import "primereact/resources/primereact.min.css";
 import { useParams } from "react-router-dom";
-
-// Import Bootstrap CSS and Icons
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap-icons/font/bootstrap-icons.css';
+import { toast } from 'react-toastify';
+import { BsArrowRepeat, BsExclamationTriangle, BsPrinter, BsGeoAlt, BsCheckCircle } from "react-icons/bs";
 
 import {
     sendTicketReply,
@@ -21,8 +17,6 @@ import {
 
 import { Container, Card, Button, Form, Row, Col, Badge, Dropdown, Modal, Spinner } from "react-bootstrap";
 import MessageHistory from "../components/MessageHistory/MessageHistory";
-import { toast } from 'react-toastify';
-import { BsArrowRepeat } from "react-icons/bs";
 
 function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
     const [ticketDetails, setTicketDetails] = useState(null);
@@ -345,213 +339,218 @@ function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
     };
 
     return (
-        <Container
-            className="py-8 flex justify-center items-start animate-fade-in"
-            style={{ maxWidth: "1200px", width: '100%' }}
-        >
-            <Row className="justify-content-center w-full">
-                <Col md={12} lg={12} className="w-full">
-                    <div className="d-flex justify-content-between align-items-center mb-4">
-                        <Button
-                            variant="link"
-                            onClick={onBack}
-                            className="px-0 text-blue-600 hover:text-blue-800 transition-colors duration-200 flex items-center gap-2"
-                            style={{ fontWeight: 600, fontSize: 18 }}
-                        >
-                            <i className="bi bi-arrow-left-circle-fill mr-2 text-xl align-middle"></i>
-                            Back to Tickets
-                        </Button>
+        <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Ticket Header */}
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-2xl font-semibold text-gray-900">{ticketDetails?.subject}</h1>
+              <div className="mt-2 flex items-center space-x-4">
+                <div className="flex items-center text-sm text-gray-500">
+                  <BsGeoAlt className="mr-2" />
+                  Location: {ticketDetails?.location || 'Not specified'}
+                </div>
+                <div className="flex items-center text-sm text-gray-500">
+                  <BsPrinter className="mr-2" />
+                  Device: {ticketDetails?.device || 'Not specified'}
+                </div>
+                {ticketDetails?.error && (
+                  <div className="flex items-center text-sm text-red-500">
+                    <BsExclamationTriangle className="mr-2" />
+                    Error: {ticketDetails.error}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="flex space-x-3">
+              <span className={`px-3 py-1 rounded-full text-sm font-medium 
+                ${ticketDetails?.priority === 'Critical' ? 'bg-red-100 text-red-800' : 
+                  'bg-yellow-100 text-yellow-800'}`}>
+                {ticketDetails?.priority || 'Normal'} Priority
+              </span>
+              <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                {ticketDetails?.status || 'Open'}
+              </span>
+            </div>
+          </div>
+        </div>
 
-                        <Dropdown show={showReassignDropdown} onToggle={handleReassignClick} className="position-relative">
-                            <Dropdown.Toggle variant="primary" id="dropdown-reassign" className="d-flex align-items-center gap-2" disabled={loadingUnits}>
-                                <i className="bi bi-arrow-right-square-fill"></i> {loadingUnits ? "Loading Units..." : "Reassign this ticket"}
-                            </Dropdown.Toggle>
-
-                            <Dropdown.Menu className="shadow-lg p-2 rounded-lg" style={{ minWidth: '200px' }}>
-                                <Dropdown className="mb-2">
-                                    <Dropdown.Toggle variant="outline-secondary" id="dropdown-units" className="w-100" disabled={loadingUnits}>
-                                        {loadingUnits ? "Loading Units..." : (selectedUnit ? selectedUnit.name : "Select Unit")}
-                                    </Dropdown.Toggle>
-                                    <Dropdown.Menu>
-                                        {loadingUnits ? (
-                                            <Dropdown.Item disabled>Loading units...</Dropdown.Item>
-                                        ) : units.length > 0 ? (
-                                            units.map(unit => (
-                                                <Dropdown.Item key={unit._id} onClick={() => handleUnitSelect(unit)}>
-                                                    {unit.name}
-                                                </Dropdown.Item>
-                                            ))
-                                        ) : (
-                                            <Dropdown.Item disabled>No units available</Dropdown.Item>
-                                        )}
-                                    </Dropdown.Menu>
-                                </Dropdown>
-                            </Dropdown.Menu>
-                        </Dropdown>
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-3 gap-6">
+          {/* Message History and Reply Section */}
+          <div className="col-span-2 space-y-6">
+            {/* Message History */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold mb-4 flex items-center justify-between">
+                Message History
+                <span className="text-sm text-gray-500">{ticketDetails?.messages?.length || 0} messages</span>
+              </h2>
+              <div className="space-y-4">
+                {ticketDetails?.messages?.map((message, index) => (
+                  <div key={index} className={`p-4 rounded-lg ${
+                    message.authorRole === 'admin' ? 'bg-green-50' : 'bg-blue-50'
+                  }`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          message.authorRole === 'admin' ? 'bg-green-500' : 'bg-blue-500'
+                        } text-white font-medium`}>
+                          {message.author?.name?.charAt(0) || 'U'}
+                        </div>
+                        <div className="ml-3">
+                          <p className="font-medium">{message.author?.name}</p>
+                          <p className="text-sm text-gray-500">{new Date(message.date).toLocaleString()}</p>
+                        </div>
+                      </div>
                     </div>
+                    <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: message.content }} />
+                    {message.attachments?.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {message.attachments.map((attachment, i) => (
+                          <a key={i} href={attachment} className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-700 hover:bg-gray-200">
+                            📎 Download
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
 
-                    <Modal show={showUserModal} onHide={handleUserModalClose} centered>
-                        <Modal.Header closeButton>
-                            <Modal.Title>Select User in {selectedUnit?.name || 'Unit'}</Modal.Title>
-                        </Modal.Header>
-                        <Modal.Body>
-                            {loadingUsers ? (
-                                <div className="text-center text-primary py-3">
-                                    <div className="spinner-border spinner-border-sm me-2" role="status">
-                                        <span className="visually-hidden">Loading users...</span>
-                                    </div>
-                                    Loading users...
-                                </div>
-                            ) : usersInUnit.length > 0 ? (
-                                <Form.Group>
-                                    <Form.Label>Choose a user to assign this ticket:</Form.Label>
-                                    <Form.Select
-                                        value={""}
-                                        onChange={e => {
-                                            const user = usersInUnit.find(u => u._id === e.target.value);
-                                            if (user) handleUserReassign(user);
-                                        }}
-                                    >
-                                        <option value="">Select a user</option>
-                                        {usersInUnit.map(user => (
-                                            <option key={user._id} value={user._id}>
-                                                {user.name} ({user.email})
-                                            </option>
-                                        ))}
-                                    </Form.Select>
-                                </Form.Group>
-                            ) : (
-                                <div className="text-muted mt-2">No users found in this unit or unit has no assignable users.</div>
-                            )}
-                        </Modal.Body>
-                        <Modal.Footer>
-                            <Button variant="secondary" onClick={handleUserModalClose} disabled={loadingUsers}>Cancel</Button>
-                        </Modal.Footer>
-                    </Modal>
+            {/* Reply Editor */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold mb-4">Send Message</h2>
+              <Editor 
+                value={reply}
+                onTextChange={(e) => setReply(e.htmlValue)}
+                className="mb-4"
+                modules={modules}
+              />
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center mb-4">
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleImageChange}
+                  className="hidden"
+                  ref={quillRef}
+                />
+                <button
+                  onClick={() => quillRef.current?.click()}
+                  className="text-blue-600 hover:text-blue-700"
+                >
+                  Click to upload
+                </button>
+                <p className="text-sm text-gray-500 mt-1">or drag and drop files here</p>
+                <p className="text-xs text-gray-400">PNG, JPG, PDF up to 10MB</p>
+              </div>
+              <div className="flex justify-between items-center">
+                <p className="text-sm text-gray-500">
+                  💡 Tip: Use @mention to notify specific team members
+                </p>
+                <div className="flex space-x-3">
+                  <Button
+                    type="button"
+                    variant="warning"
+                    onClick={handleResolve}
+                    disabled={localStatus === "resolved"}
+                    className="transition-transform duration-200 hover:scale-105 hover:shadow-lg flex items-center gap-2"
+                  >
+                    <i className="bi bi-check2-circle mr-1"></i>
+                    Mark as Resolved
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="success"
+                    disabled={!reply || !reply.trim() || uploading}
+                    className="transition-transform duration-200 hover:scale-105 hover:shadow-lg flex items-center gap-2"
+                  >
+                    <i className="bi bi-send-fill mr-1"></i>
+                    {uploading ? "Uploading..." : "Send Reply"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
 
-                    <Card
-                        className="shadow-lg border-0 rounded-3xl transition-transform duration-200 hover:scale-[1.01] hover:shadow-2xl"
-                        style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #e0e7ef 100%)', borderRadius: '1.5rem' }}
-                    >
-                        <Card.Header className="bg-gradient-to-r from-blue-600 to-blue-400 text-white rounded-t-3xl flex flex-col md:flex-row md:items-center md:justify-between gap-2 p-4">
-                            <h4 className="mb-0 flex items-center gap-2">
-                                <i className="bi bi-chat-left-text-fill mr-2 text-2xl"></i>
-                                Reply to:
-                                <Badge bg="light" text="dark" className="ml-2 px-3 py-2 text-base rounded-xl shadow-sm">
-                                    {ticketDetails.subject}
-                                    {ticketDetails.reassigned && (
-                                        <span title="Reassigned" style={{ marginLeft: 6 }}>
-                                            <BsArrowRepeat style={{ color: '#0d6efd', verticalAlign: 'middle' }} />
-                                        </span>
-                                    )}
-                                </Badge>
-                            </h4>
-                            <div className="mt-2 md:mt-0 flex flex-wrap items-center gap-2">
-                                <Badge bg="secondary" className="text-capitalize px-3 py-2 rounded-xl flex items-center gap-1">
-                                    <i className="bi bi-diagram-3 me-1"></i>
-                                    Assigned Unit: {ticketDetails.assignedUnit || '—'}
-                                </Badge>
-                                <Badge bg="info" className="text-capitalize px-3 py-2 rounded-xl flex items-center gap-1">
-                                    <i className="bi bi-person me-1"></i>
-                                    Assigned To: {ticketDetails.assignedTo && typeof ticketDetails.assignedTo === 'object' && ticketDetails.assignedTo.name
-                                        ? ticketDetails.assignedTo.name
-                                        : 'N/A'}
-                                </Badge>
-                                {ticketDetails.reassigned && (
-                                    <>
-                                        <Badge bg="secondary" className="text-capitalize px-3 py-2 rounded-xl flex items-center gap-1">
-                                            <BsArrowRepeat className="me-1" />
-                                            Reassigned Unit: {ticketDetails.previousAssignedUnit || '—'}
-                                        </Badge>
-                                        <Badge bg="info" className="text-capitalize px-3 py-2 rounded-xl flex items-center gap-1">
-                                            <BsArrowRepeat className="me-1" />
-                                            Reassigned To: {ticketDetails.previousAssignedTo && typeof ticketDetails.previousAssignedTo === 'object' && ticketDetails.previousAssignedTo.name
-                                                ? ticketDetails.previousAssignedTo.name
-                                                : '—'}
-                                        </Badge>
-                                    </>
-                                )}
-                                <Badge bg={getStatusBadgeVariant(localStatus)} className="ml-2 px-3 py-2 rounded-xl animate-pulse">
-                                    <i className={`bi ${localStatus === 'resolved' ? 'bi-check-circle-fill' : 'bi-hourglass-split'} mr-1`}></i>
-                                    {localStatus.charAt(0).toUpperCase() + localStatus.slice(1)}
-                                </Badge>
-                            </div>
-                        </Card.Header>
-                        <Card.Body className="bg-white rounded-b-3xl p-6 md:p-8">
-                            <div className="mb-8">
-                                <MessageHistory
-                                    msg={messagesForHistory}
-                                    description={ticketDetails.description}
-                                    image={ticketDetails.image}
-                                    onDeleteMessage={handleDeleteMessage}
-                                    currentUserRole="admin"
-                                />
-                            </div>
+          {/* Right Sidebar */}
+          <div className="space-y-6">
+            {/* Quick Actions */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
+              <div className="space-y-3">
+                <Button className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center justify-center">
+                  <BsCheckCircle className="mr-2" /> Mark as Resolved
+                </Button>
+                <Button className="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 flex items-center justify-center">
+                  <BsArrowRepeat className="mr-2" /> Reassign Ticket
+                </Button>
+                <Button className="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center justify-center">
+                  ⚡ Escalate Priority
+                </Button>
+                <Button className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center justify-center">
+                  📚 Add to Knowledge Base
+                </Button>
+              </div>
+            </div>
 
-                            <Form onSubmit={handleSubmit} className="space-y-6">
-                                <Form.Group className="mb-4 mt-4">
-                                    <Form.Label className="font-semibold text-lg">Reply</Form.Label>
-                                    <div className="rounded-xl border border-blue-200 shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-blue-400 transition-all duration-200">
-                                        <Editor
-                                            ref={quillRef}
-                                            value={reply}
-                                            onTextChange={(e) => setReply(e.htmlValue)}
-                                            style={{ height: '320px', width: '100%', background: 'white' }}
-                                            modules={modules}
-                                        />
-                                    </div>
-                                </Form.Group>
-                                <Form.Group className="mb-4">
-                                    <Form.Label className="font-semibold text-lg">Attach Image</Form.Label>
-                                    <Form.Control
-                                        type="file"
-                                        accept="image/*"
-                                        multiple
-                                        onChange={handleImageChange}
-                                        disabled={uploading}
-                                        className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all duration-200"
-                                    />
-                                    {imageFiles.length > 0 && (
-                                        <div className="mt-2 text-green-600 flex items-center gap-2 animate-fade-in">
-                                            <i className="bi bi-image me-1"></i>
-                                            {imageFiles.length} file(s) selected
-                                        </div>
-                                    )}
-                                </Form.Group>
-                                <div className="flex flex-col md:flex-row justify-between gap-4 mt-6">
-                                    <Button
-                                        type="button"
-                                        variant="warning"
-                                        onClick={handleResolve}
-                                        disabled={localStatus === "resolved"}
-                                        className="transition-transform duration-200 hover:scale-105 hover:shadow-lg flex items-center gap-2"
-                                    >
-                                        <i className="bi bi-check2-circle mr-1"></i>
-                                        Mark as Resolved
-                                    </Button>
-                                    <Button
-                                        type="submit"
-                                        variant="success"
-                                        disabled={!reply || !reply.trim() || uploading}
-                                        className="transition-transform duration-200 hover:scale-105 hover:shadow-lg flex items-center gap-2"
-                                    >
-                                        <i className="bi bi-send-fill mr-1"></i>
-                                        {uploading ? "Uploading..." : "Send Reply"}
-                                    </Button>
-                                </div>
-                            </Form>
-                        </Card.Body>
-                    </Card>
-                </Col>
-            </Row>
-            <style>{`
-                @keyframes fade-in {
-                    from { opacity: 0; transform: translateY(20px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-                .animate-fade-in { animation: fade-in 0.7s cubic-bezier(0.4,0,0.2,1) both; }
-            `}</style>
-        </Container>
+            {/* Assignment Details */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold mb-4">Assignment Details</h2>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-gray-500">Assigned Unit</p>
+                  <div className="flex items-center justify-between mt-1">
+                    <p className="font-medium">{ticketDetails?.assignedUnit}</p>
+                    <button className="text-blue-600 text-sm hover:text-blue-700">Change</button>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Assigned To</p>
+                  <div className="flex items-center justify-between mt-1">
+                    <div className="flex items-center">
+                      <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-medium">
+                        {ticketDetails?.assignedTo?.name?.charAt(0) || 'A'}
+                      </div>
+                      <p className="ml-2 font-medium">{ticketDetails?.assignedTo?.name}</p>
+                    </div>
+                    <button className="text-blue-600 text-sm hover:text-blue-700">Change</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Ticket Information */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold mb-4">Ticket Information</h2>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <p className="text-sm text-gray-500">Ticket ID:</p>
+                  <p className="font-medium">{ticketDetails?.id}</p>
+                </div>
+                <div className="flex justify-between">
+                  <p className="text-sm text-gray-500">Category:</p>
+                  <p className="font-medium">{ticketDetails?.category}</p>
+                </div>
+                <div className="flex justify-between">
+                  <p className="text-sm text-gray-500">Created:</p>
+                  <p className="font-medium">{new Date(ticketDetails?.createdAt).toLocaleDateString()}</p>
+                </div>
+                <div className="flex justify-between">
+                  <p className="text-sm text-gray-500">Last Updated:</p>
+                  <p className="font-medium">{new Date(ticketDetails?.updatedAt).toLocaleDateString()}</p>
+                </div>
+                <div className="flex justify-between">
+                  <p className="text-sm text-gray-500">Response Time:</p>
+                  <p className="text-green-600 font-medium">15 minutes</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     );
 }
 

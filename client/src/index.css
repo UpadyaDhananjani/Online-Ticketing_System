@@ -232,3 +232,35 @@ a {
   border-color: var(--table-border); /* Ensure cell borders also theme */
   color: var(--text-color) !important; /* CRITICAL: Ensure all text in table cells is themed with !important */
 }
+
+
+
+
+
+
+
+
+
+
+.table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table thead th {
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.table td {
+  vertical-align: middle;
+}

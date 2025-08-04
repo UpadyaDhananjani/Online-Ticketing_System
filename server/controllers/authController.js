@@ -38,6 +38,8 @@ export const register = async (req, res) => {
             sameSite: isProduction ? 'None' : 'Lax',
             secure: isProduction,
         });
+        console.log("%cFetching users from token:","background:blue", token);
+
         console.log("CONTROLLER: Registration successful. Cookie 'token' set.");
 
         res.status(201).json({

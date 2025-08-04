@@ -41,16 +41,22 @@ app.use(cors({
     // If you add a Vite proxy, the browser treats requests as same-origin,
     // but CORS is still needed for the initial page load and for general API calls
     // that aren't proxied or for direct backend tests.
-    origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001'],
+    origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'],
     credentials: true // This must be true for cookies to be sent/received cross-origin
 }));
+
+app.use('/api/admin', adminRouter);
+
+// --- Server initialization ---
+app.listen(port, () => console.log(`Server started on PORT:${port}`));
 
 // --- API Routes ---
 app.get('/', (req, res) => res.send("API working"));
 app.use('/api/auth', authRouter);
 app.use('/api/user', userRouter);
-app.use('/api/tickets', ticketRoutes);
+
 app.use('/api/admin/tickets', ticketAdminRoutes);
+app.use('/api/tickets', ticketRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/public', publicRoutes);
 
@@ -65,7 +71,3 @@ app.get('/api/auth/is-auth', authMiddleware, (req, res) => {
 const uploadsDir = path.join(process.cwd(), 'uploads');
 app.use('/uploads', express.static(uploadsDir));
 
-app.use('/api/admin', adminRouter);
-
-// --- Server initialization ---
-app.listen(port, () => console.log(`Server started on PORT:${port}`));

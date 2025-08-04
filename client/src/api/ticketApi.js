@@ -308,6 +308,7 @@ export const getAvgResolutionTime = async () => {
 export const getAssigneePerformance = async () => {
     try {
         const response = await axiosInstance.get('/admin/tickets/assignee-performance');
+        console.log('%cAssignee Performance API Data:',"background: #222; color: #bada55", response.data);
         return response.data; // Explicitly return data
     } catch (error) {
         throw error;
@@ -335,6 +336,7 @@ export const getTicketTypeDistribution = async () => {
 export const getTicketsByUnit = async () => {
     try {
         const response = await axiosInstance.get(`/admin/tickets_by_unit/${encodeURIComponent(unitName)}`);
+        console.log(response.data);
         return response.data; // Explicitly return data
     } catch (error) {
         throw error;
@@ -352,7 +354,8 @@ export const getActivityLogs = async () => {
 
 export const getRecentTickets = async () => {
     try {
-        const response = await axiosInstance.get('/admin/recent-tickets');
+        const response = await axiosInstance.get('/admin/tickets/recent');
+        console.log(response.data);
         return response.data; // Explicitly return data
     } catch (error) {
         throw error;

@@ -12,14 +12,16 @@ import {
 } from "react-bootstrap";
 import { getAdminTickets, deleteAdminTicket } from "../api/ticketApi";
 import { toast } from "react-toastify";
-import { BsArrowRepeat } from "react-icons/bs";
 
-const statusColors = {
-  open: "success",
-  closed: "danger",
-  resolved: "primary",
-  reopened: "warning",
-  "in progress": "info",
+import { BsArrowRepeat, BsCircleFill } from "react-icons/bs";
+
+const statusStyles = {
+  Open: { color: "#dc3545", className: "bg-danger-subtle text-danger" }, // Red
+  "In Progress": {
+    color: "#ffc107",
+    className: "bg-warning-subtle text-warning",
+  }, // Yellow
+  Resolved: { color: "#198754", className: "bg-success-subtle text-success" }, // Green
 };
 
 const UNIT_OPTIONS = [
@@ -171,7 +173,7 @@ function TicketList({ onSelect, token, refresh }) {
 
   return (
     <Container className="mt-4">
-      <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+      <div style={{ maxWidth: 1400, margin: "0 auto" }}>
         <h2 className="mb-4 text-primary">
           <i className="bi bi-list-ul me-2"></i>All Tickets
         </h2>
@@ -179,12 +181,19 @@ function TicketList({ onSelect, token, refresh }) {
         {selectedTickets.size > 0 && (
           <Row className="mb-3">
             <Col>
-              <Alert variant="info" className="d-flex align-items-center justify-content-between">
+              <Alert
+                variant="info"
+                className="d-flex align-items-center justify-content-between"
+              >
                 <span>
                   <i className="bi bi-check-circle me-2"></i>
                   {selectedTickets.size} ticket(s) selected
                 </span>
-                <Button variant="danger" size="sm" onClick={handleDeleteSelected}>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={handleDeleteSelected}
+                >
                   <i className="bi bi-trash me-1"></i>
                   Delete Selected ({selectedTickets.size})
                 </Button>
@@ -244,100 +253,114 @@ function TicketList({ onSelect, token, refresh }) {
         {error && <Alert variant="danger">{error}</Alert>}
 
         {!loading && !error && (
-          <Table striped bordered hover responsive className="shadow-sm rounded" style={{ width: '100%' }}>
-            <thead style={{ background: "#f5f6fa" }}>
-              <tr>
-                <th>
-                  <Form.Check
-                    type="checkbox"
-                    checked={isAllSelected}
-                    ref={(input) => {
-                      if (input) input.indeterminate = isIndeterminate;
-                    }}
-                    onChange={(e) => handleSelectAll(e.target.checked)}
-                  />
-                </th>
-                <th>Subject</th>
-                <th>Type</th>
-                <th>Assigned Unit</th>
-                <th>Requester</th>
-                <th>Assigned To</th>
-                <th>Reassigned Unit</th>
-                <th>Reassigned To</th>
-                <th style={{ minWidth: 130, width: 150 }}><i className="bi bi-info-circle me-1"></i>Status</th>
-                <th>Last Update</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTickets.map((ticket) => (
-                <tr
-                  key={ticket._id}
-                  style={{
-                    background: ticket.status === "open" ? "#e6ffe6" : undefined,
-                    cursor: "pointer",
-                  }}
-                  onClick={() => onSelect(ticket)}
-                  onMouseOver={(e) => (e.currentTarget.style.background = "#f0f4ff")}
-                  onMouseOut={(e) =>
-                    (e.currentTarget.style.background =
-                      ticket.status === "open" ? "#e6ffe6" : "")
-                  }
-                >
-                  <td onClick={(e) => e.stopPropagation()}>
-                    <Form.Check
-                      type="checkbox"
-                      checked={selectedTickets.has(ticket._id)}
-                      onChange={(e) =>
-                        handleSelectTicket(ticket._id, e.target.checked)
-                      }
-                    />
-                  </td>
-                  <td>{ticket.subject}</td>
-                  <td>
-                    <Badge bg="info" text="dark" className="text-capitalize">
-                      {ticket.type}
-                    </Badge>
-                  </td>
-                  <td>
-                    <Badge bg="secondary" className="text-capitalize">
-                      {ticket.assignedUnit || "—"}
-                    </Badge>
-                  </td>
-                  <td>{ticket.user?.name || "N/A"}</td>
-                  <td>
-                    <Badge bg="info" className="text-capitalize">
-                      {ticket.assignedTo?.name || "—"}
-                    </Badge>
-                  </td>
-                  <td>
-                    <Badge bg="secondary" className="text-capitalize">
-                      {ticket.reassigned ? (ticket.previousAssignedUnit || "—") : "—"}
-                    </Badge>
-                  </td>
-                  <td>
-                    <Badge bg="info" className="text-capitalize">
-                      {ticket.reassigned ? (ticket.previousAssignedTo?.name || "—") : "—"}
-                    </Badge>
-                  </td>
-                  <td style={{ verticalAlign: 'middle' }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                      <Badge
-                        bg={statusColors[ticket.status] || "secondary"}
-                        className="px-3 py-2 text-capitalize"
+          <>
+            <style>
+              {`
+                .table {
+                  border-radius: 8px;
+                  overflow: hidden;
+                }
+
+                .table thead th {
+                  font-weight: 600;
+                  font-size: 0.875rem;
+                  text-transform: uppercase;
+                  letter-spacing: 0.05em;
+                  color: #6b7280;
+                  background-color: #f8f9fa;
+                  border-bottom: 1px solid #e5e7eb;
+                }
+
+                .table tbody tr:hover {
+                  background-color: #f9fafb;
+                }
+
+                .table td {
+                  vertical-align: middle;
+                }
+
+                .bg-danger-subtle {
+      background-color: #fff5f5;
+    }
+    .bg-warning-subtle {
+      background-color: #fffbeb;
+    }
+    .bg-success-subtle {
+      background-color: #f0fdf4;
+    }
+    .bg-secondary-subtle {
+      background-color: #f3f4f6;
+    }
+    .rounded-pill {
+      border-radius: 9999px;
+    }
+    .table td {
+      color: #374151;
+      font-size: 0.875rem;
+    }
+              `}
+            </style>
+
+            <Table
+              hover
+              className="bg-white rounded shadow-sm table"
+              style={{ borderCollapse: "separate", borderSpacing: 0 }}
+            >
+              <thead>
+                <tr>
+                  <th className="px-4 py-3">TICKET ID</th>
+                  <th className="px-4 py-3">SUBJECT</th>
+                  <th className="px-4 py-3">USER</th>
+                  <th className="px-4 py-3">CATEGORY</th>
+                  <th className="px-4 py-3">PRIORITY</th>
+                  <th className="px-4 py-3">STATUS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTickets.map((ticket) => (
+                  <tr
+                    key={ticket._id}
+                    onClick={() => onSelect(ticket)}
+                    style={{ cursor: "pointer" }}
+                    className="border-bottom"
+                  >
+                    <td className="px-4 py-3 text-secondary">
+                      {`ICT-${String(ticket._id).slice(-4).padStart(3, "0")}`}
+                    </td>
+                    <td className="px-4 py-3">{ticket.subject}</td>
+                    <td className="px-4 py-3">{ticket.user?.name || "N/A"}</td>
+                    <td className="px-4 py-3">{ticket.type}</td>
+                    <td className="px-4 py-3">
+                      <span
+                        style={{
+                          padding: "4px 12px",
+                          borderRadius: "12px",
+                          fontSize: "0.875rem",
+                          backgroundColor:
+                            priorityColors[ticket.priority] || "transparent",
+                        }}
+                      >
+                        {ticket.priority}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        style={{
+                          padding: "4px 12px",
+                          borderRadius: "12px",
+                          fontSize: "0.875rem",
+                          backgroundColor:
+                            statusBackgrounds[ticket.status] || "transparent",
+                        }}
                       >
                         {ticket.status}
-                      </Badge>
-                    </span>
-                  </td>
-                  <td>
-                    {ticket.updatedAt
-                      ? new Date(ticket.updatedAt).toLocaleString()
-                      : "N/A"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </>
         )}
       </div>
     </Container>
