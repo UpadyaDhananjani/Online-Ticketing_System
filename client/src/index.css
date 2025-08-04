@@ -1,53 +1,43 @@
 /* src/index.css */
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+@import "./styles/themes.css";
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* --- GLOBAL STYLES & THEME APPLICATION --- */
-
-/* Apply Outfit font globally to all elements */
 * {
   font-family: "outfit", sans-serif;
-  box-sizing: border-box; /* Ensure consistent box model */
+  box-sizing: border-box;
 }
 
-/* CRITICAL: Ensure html and body always reflect the current theme's background and text color */
-/* This overrides any default browser or Bootstrap light mode backgrounds */
 html, body {
-  background-image: none !important; /* Explicitly remove any background image */
-  background-color: var(--background-color) !important; /* Apply themed background from themes.css with !important */
-  color: var(--text-color) !important; /* Apply themed text color from themes.css with !important */
-  transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transitions for theme changes */
+  background-color: var(--background-color) !important;
+  color: var(--text-color) !important;
+  transition: background-color 0.3s ease, color 0.3s ease;
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  /* Font smoothing for better text rendering */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Remove default text decoration for links, let components handle hover */
 a {
   text-decoration: none !important;
 }
 
-/* --- APP-SPECIFIC GLOBAL CLASSES (moved from App.jsx inline style) --- */
-
-/* App Container Styles - Ensures the very outermost container also follows the theme */
+/* --- APP-SPECIFIC GLOBAL CLASSES --- */
 .app-container-outer {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    /* Background and color are now primarily handled by html/body, and Tailwind classes */
 }
 
-/* Header Styles - Use theme variables */
 .app-header {
     background-color: var(--primary-color);
-    color: var(--background-color); /* Text contrasting primary color */
+    color: var(--background-color);
     padding: 1rem 2rem;
     display: flex;
     justify-content: space-between;
@@ -56,32 +46,28 @@ a {
     transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* Content Wrapper to push content below Navbar */
 .content-wrapper {
-    min-height: calc(100vh - 80px); /* Dynamic height calculation, adjust 80px if Navbar changes */
-    background: var(--background-color); /* Use theme variable for main content background */
+    min-height: calc(100vh - 80px);
+    background: var(--background-color);
     transition: background-color 0.3s ease;
     flex-grow: 1;
 }
 
-/* Main Content Area (Sidebar + Main View) */
 .main-content-area {
     min-height: 100%;
     display: flex;
     flex-grow: 1;
 }
 
-/* Flex-grow-1 equivalent for main content area, now using padding from App.css */
 .main-view-content {
     padding: 32px 20px;
     width: 100%;
     box-sizing: border-box;
-    background-color: var(--background-color); /* Ensure this also uses theme variable */
-    color: var(--text-color); /* Ensure this also uses theme variable */
+    background-color: var(--background-color);
+    color: var(--text-color);
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Sidebar Nav Link Styles - Update with theme variables */
 .sidebar-nav-link {
     font-weight: 500;
     color: var(--text-color) !important;
@@ -114,7 +100,6 @@ a {
     background-color: var(--active-link-background);
 }
 
-/* User Initial Circle Styles - Update with theme variables */
 .user-initial-circle {
     width: 40px;
     height: 40px;
@@ -135,7 +120,6 @@ a {
     background-color: var(--secondary-color);
 }
 
-/* User Dropdown Menu Styles - Update with theme variables */
 .user-dropdown-menu {
     position: absolute;
     top: 100%;
@@ -160,7 +144,7 @@ a {
     padding: 10px 15px;
     cursor: pointer;
     font-size: 0.95rem;
-    color: var(--text-color);
+    color: var(--text-color) !important;
     transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
     text-align: left;
 }
@@ -170,65 +154,488 @@ a {
     color: var(--primary-color);
 }
 
+/* --- TRANSPARENT CARD EFFECT (Enhanced 3D) --- */
+.card {
+  background-image: none;
+  background-color: var(--card-transparent-bg);
+  border: 1px solid var(--card-transparent-border-color);
+  border-radius: 20px;
+  box-shadow:
+    var(--shadow-elevation-1),
+    var(--card-inset-shadow);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.4s cubic-bezier(.17,.67,.83,.67);
+}
+
 .hover-effect:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    transform: translateY(-15px);
+    box-shadow:
+        var(--shadow-elevation-hover-2),
+        var(--card-inset-shadow);
     cursor: pointer;
 }
 
-/* Basic Card Example */
-.card {
-  background-color: var(--card-background);
+/* --- Form Control (Input, Textarea, Select) Styles (Enhanced 3D) --- */
+.form-control,
+.form-select,
+textarea.form-control {
+  background-color: transparent;
+  background-image: linear-gradient(160deg, var(--input-bg-gradient-start), var(--input-bg-gradient-end));
   border: 1px solid var(--border-color);
-  color: var(--text-color);
-  padding: 15px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px var(--shadow-color);
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 10px;
+  box-shadow: var(--input-inset-shadow);
+  color: var(--text-color) !important;
+  padding: 0.75rem 1rem;
+  transition: all 0.2s ease-in-out;
 }
 
-/* Basic Button Example */
+/* Placeholder text color */
+.form-control::placeholder,
+.form-select::placeholder,
+textarea.form-control::placeholder {
+  color: var(--text-muted-color) !important;
+  opacity: 0.7;
+}
+
+/* For older WebKit browsers */
+.form-control::-webkit-input-placeholder,
+.form-select::-webkit-input-placeholder,
+textarea.form-control::-webkit-input-placeholder {
+  color: var(--text-muted-color) !important;
+  opacity: 0.7;
+}
+
+/* For Firefox */
+.form-control::-moz-placeholder,
+.form-select::-moz-placeholder,
+textarea.form-control::-moz-placeholder {
+  color: var(--text-muted-color) !important;
+  opacity: 0.7;
+}
+
+/* For Internet Explorer */
+.form-control:-ms-input-placeholder,
+.form-select:-ms-input-placeholder,
+textarea.form-control:-ms-input-placeholder {
+  color: var(--text-muted-color) !important;
+  opacity: 0.7;
+}
+
+/* Specific styling for <option> elements within a <select> */
+.form-select option {
+  background-color: var(--card-background) !important;
+  color: var(--text-color) !important;
+}
+
+.form-control:focus,
+.form-select:focus,
+textarea.form-control:focus {
+  background-image: linear-gradient(160deg, var(--input-bg-gradient-end), var(--input-bg-gradient-start));
+  border-color: var(--input-focus-outline-color);
+  box-shadow:
+    var(--input-inset-shadow),
+    0 0 0 0.3rem var(--input-border-focus);
+  outline: none;
+}
+
+/* --- Button Styles (Enhanced 3D) --- */
 .btn-primary {
-  background-color: var(--primary-color);
-  color: var(--background-color);
-  padding: 10px 20px;
+  background-image: linear-gradient(160deg, var(--button-gradient-start), var(--button-gradient-end));
+  background-color: transparent;
   border: none;
-  border-radius: 5px;
+  border-radius: 10px;
+  box-shadow:
+    var(--button-outer-shadow),
+    var(--button-inset-shadow);
+  color: var(--background-color);
+  padding: 12px 24px;
   cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  font-size: 1.1rem;
+  font-weight: 600;
+  transition: all 0.2s ease-in-out, transform 0.1s ease-out;
 }
 
 .btn-primary:hover {
-  filter: brightness(1.1);
+  background-image: linear-gradient(160deg, var(--button-hover-gradient-start), var(--button-hover-gradient-end));
+  box-shadow:
+    var(--button-outer-shadow),
+    var(--button-inset-shadow);
+  transform: translateY(-3px);
 }
 
-/* --- BOOTSTRAP TABLE OVERRIDES FOR THEMING --- */
-/* These ensure Bootstrap's table components also respect your theme variables */
+.btn-primary:active {
+  background-image: linear-gradient(160deg, var(--button-active-gradient-start), var(--button-active-gradient-end));
+  box-shadow:
+    var(--button-active-outer-shadow),
+    inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  transform: translateY(2px);
+}
+
+/* Additional styling for react-bootstrap's dropdown menu if not handled by .user-dropdown-menu */
+.dropdown-menu {
+  background-color: var(--card-background) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: var(--shadow-elevation-1) !important;
+}
+
+.dropdown-menu .dropdown-item {
+  color: var(--text-color) !important;
+  background-color: transparent !important;
+}
+
+.dropdown-menu .dropdown-item:hover,
+.dropdown-menu .dropdown-item:focus {
+  background-color: var(--active-link-background) !important;
+  color: var(--primary-color) !important;
+}
+
+/* --- ENHANCED TABLE STYLES --- */
+.data-table-container {
+  width: 100%;
+  overflow-x: auto;
+  margin: 2rem 0;
+  border-radius: 12px;
+  background-color: var(--table-bg);
+  box-shadow: var(--shadow-elevation-1);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--table-text-color);
+  font-size: 0.9rem;
+}
+
+.data-table thead {
+  background-color: var(--table-header-bg);
+  position: sticky;
+  top: 0;
+}
+
+.data-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--table-text-color);
+  border-bottom: 2px solid var(--table-border-color);
+}
+
+.data-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--table-border-color);
+  vertical-align: middle;
+}
+
+.data-table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.data-table tbody tr:nth-child(odd) {
+  background-color: var(--table-row-odd-bg);
+}
+
+.data-table tbody tr:nth-child(even) {
+  background-color: var(--table-row-even-bg);
+}
+
+.data-table tbody tr:hover {
+  background-color: var(--table-hover-bg);
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  border: 1px solid transparent;
+}
+
+.status-badge.open {
+  background-color: var(--status-open-bg);
+  color: var(--status-open-text);
+  border-color: var(--status-open-border);
+}
+
+.status-badge.inprogress {
+  background-color: var(--status-inprogress-bg);
+  color: var(--status-inprogress-text);
+  border-color: var(--status-inprogress-border);
+}
+
+.status-badge.resolved {
+  background-color: var(--status-resolved-bg);
+  color: var(--status-resolved-text);
+  border-color: var(--status-resolved-border);
+}
+
+.status-badge.closed {
+  background-color: var(--status-closed-bg);
+  color: var(--status-closed-text);
+  border-color: var(--status-closed-border);
+}
+
+/* Type Indicators */
+.type-indicator {
+  display: inline-block;
+  padding: 0.3rem 0.6rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.type-indicator.regest {
+  background-color: rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+}
+
+.type-indicator.maintenance {
+  background-color: rgba(234, 179, 8, 0.2);
+  color: #eab308;
+}
+
+.type-indicator.bug {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.type-indicator.incident {
+  background-color: rgba(139, 92, 246, 0.2);
+  color: #8b5cf6;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .data-table {
+    font-size: 0.85rem;
+  }
+  
+  .data-table th,
+  .data-table td {
+    padding: 0.75rem 0.5rem;
+  }
+  
+  .status-badge,
+  .type-indicator {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+  }
+}
+
+/* --- TABLE STYLES (Original) --- */
 .table {
-  --bs-table-bg: var(--card-background); /* Default table background */
-  --bs-table-color: var(--text-color); /* Default table text color */
-  --bs-table-border-color: var(--table-border); /* Table border color */
+  width: 100% !important;
+  margin-bottom: 1rem !important;
+  color: var(--table-text-color) !important;
+  background-color: var(--table-bg) !important;
+  border-collapse: collapse !important;
+  border-radius: 10px !important;
+  overflow: hidden !important;
 }
 
-.table-striped > tbody > tr:nth-of-type(odd) > * {
-  --bs-table-bg-type: var(--table-row-odd-bg); /* Odd row background */
+.table thead th {
+  vertical-align: bottom !important;
+  border-bottom: 2px solid var(--table-border-color) !important;
+  background-color: var(--table-header-bg) !important;
+  color: var(--table-text-color) !important;
+  padding: 0.75rem !important;
+  text-align: left !important;
 }
 
-.table-striped > tbody > tr:nth-of-type(even) > * {
-  --bs-table-bg-type: var(--table-row-even-bg); /* Even row background */
+.table tbody tr {
+  border-bottom: 1px solid var(--table-border-color) !important;
+  transition: background-color 0.2s ease-in-out !important;
 }
 
-.table-striped > tbody > tr > * {
-  background-color: var(--bs-table-bg-type); /* Apply the striped background */
+.table tbody tr:last-child {
+  border-bottom: none !important;
 }
 
-.table thead {
-  background-color: var(--table-header-bg); /* Table header background */
-  color: var(--text-color); /* Table header text color */
+.table tbody tr:nth-of-type(odd) {
+  background-color: var(--table-row-odd-bg) !important;
 }
 
-.table th, .table td {
-  border-color: var(--table-border); /* Ensure cell borders also theme */
-  color: var(--text-color) !important; /* CRITICAL: Ensure all text in table cells is themed with !important */
+.table tbody tr:nth-of-type(even) {
+  background-color: var(--table-row-even-bg) !important;
+}
+
+.table tbody tr:hover {
+  background-color: var(--table-hover-bg) !important;
+}
+
+.table td,
+.table th {
+  padding: 0.75rem !important;
+  vertical-align: middle !important;
+  border-top: 1px solid var(--table-border-color) !important;
+}
+
+.table tbody tr:first-child td,
+.table tbody tr:first-child th {
+    border-top: none !important;
+}
+
+/* Priority indicators */
+.priority-high {
+  color: #ff6b6b;
+  font-weight: 600;
+}
+
+.priority-critical {
+  color: #ff0000;
+  font-weight: 700;
+  animation: pulse 2s infinite;
+}
+
+.priority-medium {
+  color: #fcc419;
+  font-weight: 600;
+}
+
+.priority-low {
+  color: #51cf66;
+  font-weight: 600;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+/* Responsive table adjustments */
+@media (max-width: 768px) {
+  .table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 8px;
+  }
+  
+  .table thead th {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.8rem;
+  }
+  
+  .table td, .table th {
+    padding: 0.75rem 0.5rem;
+    white-space: nowrap;
+  }
+}
+/* Enhanced Table Styles */
+.ticket-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  background-color: var(--table-bg);
+  color: var(--table-text-color);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.ticket-table thead {
+  background-color: var(--table-header-bg);
+}
+
+.ticket-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid var(--table-border-color);
+}
+
+.ticket-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--table-border-color);
+  vertical-align: middle;
+}
+
+.ticket-table tbody tr:nth-child(odd) {
+  background-color: var(--table-row-odd-bg);
+}
+
+.ticket-table tbody tr:nth-child(even) {
+  background-color: var(--table-row-even-bg);
+}
+
+.ticket-table tbody tr:hover {
+  background-color: var(--table-hover-bg);
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+  border: 1px solid transparent;
+}
+
+.status-badge.open {
+  background-color: var(--status-open-bg);
+  color: var(--status-open-text);
+  border-color: var(--status-open-border);
+}
+
+.status-badge.resolved {
+  background-color: var(--status-resolved-bg);
+  color: var(--status-resolved-text);
+  border-color: var(--status-resolved-border);
+}
+
+.status-badge.closed {
+  background-color: var(--status-closed-bg);
+  color: var(--status-closed-text);
+  border-color: var(--status-closed-border);
+}
+
+/* Type Indicators */
+.type-indicator {
+  display: inline-block;
+  padding: 0.3rem 0.6rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.type-indicator.regest {
+  background-color: rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+}
+
+.type-indicator.maintenance {
+  background-color: rgba(234, 179, 8, 0.2);
+  color: #eab308;
+}
+
+.type-indicator.bug {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.type-indicator.incident {
+  background-color: rgba(139, 92, 246, 0.2);
+  color: #8b5cf6;
+}
+
+/* Responsive Table */
+@media (max-width: 768px) {
+  .ticket-table {
+    display: block;
+    overflow-x: auto;
+  }
+  
+  .ticket-table th,
+  .ticket-table td {
+    padding: 0.75rem 0.5rem;
+  }
 }

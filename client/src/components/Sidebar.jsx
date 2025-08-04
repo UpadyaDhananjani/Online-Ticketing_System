@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react';
 import { NavLink, useLocation, Link } from 'react-router-dom';
 import { Nav, Navbar } from 'react-bootstrap';
 import { AppContent } from '../context/AppContext';
-import ThemeToggle from './ThemeToggle'; // <--- NEW: Import ThemeToggle
+import ThemeToggle from './ThemeToggle';
 
 function Sidebar() {
     const location = useLocation();
@@ -173,15 +173,18 @@ function Sidebar() {
                         </Nav.Link>
                     </>
                 )}
-                <Nav.Link
-                    as={NavLink}
-                    to="/reports"
-                    className="sidebar-nav-link"
-                    style={{ padding: linkPadding }}
-                >
-                    <i className="bi bi-bar-chart-fill me-2"></i> {/* Reports icon */}
-                    {!isCollapsed && "Reports"}
-                </Nav.Link>
+                {/* Only show Reports button if the user is an admin */}
+                {isAdmin && (
+                    <Nav.Link
+                        as={NavLink}
+                        to="/reports"
+                        className="sidebar-nav-link"
+                        style={{ padding: linkPadding }}
+                    >
+                        <i className="bi bi-bar-chart-fill me-2"></i> {/* Reports icon */}
+                        {!isCollapsed && "Reports"}
+                    </Nav.Link>
+                )}
             </Nav>
 
             <style>{`

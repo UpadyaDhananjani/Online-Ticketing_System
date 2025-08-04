@@ -2,32 +2,33 @@
 
 import express from 'express';
 import {
-  getAllTickets,
-  addAdminReply,
-  deleteMessage,
-  resolveTicket,
-  markTicketOpen,
-  markTicketInProgress,
-  deleteTicket,
-  reassignTicket,
-  getAdminTicketById,
-  getAdminTicketsSummary
-} from '../controllers/ticketAdminController.js';
+    getAllTickets,
+    addAdminReply,
+    deleteMessage,
+    resolveTicket,
+    markTicketOpen,
+    markTicketInProgress,
+    deleteTicket,
+    reassignTicket,
+    getAdminTicketById,
+    getAdminTicketsSummary,
+    getRecentTickets // <-- ADDED THIS IMPORT
+} from '../controllers/ticketAdminController.js'; // Ensure this path is correct
 
 import {
-  generateReportChartImage, 
-  downloadReportPdf,
-  getAssigneePerformance,
-  getTicketsByUnit,
-  getAvgResolutionTime,
-  getTicketActivityLogs,
-  getTicketStatusDistribution,  // Add this import
-  getTicketTypeDistribution     // Add this import
-} from '../controllers/ReportController.js';
+    generateReportChartImage,
+    downloadReportPdf,
+    getAssigneePerformance,
+    getTicketsByUnit,
+    getAvgResolutionTime,
+    getTicketActivityLogs,
+    getTicketStatusDistribution,
+    getTicketTypeDistribution
+} from '../controllers/ReportController.js'; // Ensure this path is correct
 
 import authMiddleware from '../middleware/authMiddleware.js';
 import authorizeRoles from '../middleware/authorizeRoles.js';
-import upload from '../middleware/uploadMiddleware.js';
+import upload from '../middleware/uploadMiddleware.js'; // Assuming this is for file uploads
 
 const router = express.Router();
 
@@ -47,9 +48,12 @@ router.get('/assignee-performance', getAssigneePerformance);
 router.get('/tickets_by_unit', getTicketsByUnit);
 router.get('/avg-resolution-time', getAvgResolutionTime);
 router.get('/activity-logs', getTicketActivityLogs);
-router.get('/status-distribution', getTicketStatusDistribution);  // Add this route
-router.get('/type-distribution', getTicketTypeDistribution);      // Add this route
-router.get('/recent-tickets', getRecentTickets); // New route for recent tickets
+router.get('/status-distribution', getTicketStatusDistribution);
+router.get('/type-distribution', getTicketTypeDistribution);
+
+// New route for recent tickets (now correctly imported)
+router.get('/recent-tickets', getRecentTickets);
+
 // Get all tickets for admin dashboard
 router.get('/', getAllTickets);
 
@@ -74,7 +78,6 @@ router.delete('/:id', deleteTicket);
 router.patch('/:id/assign', reassignTicket);
 
 // -------------------- Admin Summary and Reports --------------------
-
 
 
 export default router;

@@ -1,247 +1,305 @@
 // server/controllers/ticketAdminController.js
-import Ticket from '../models/ticketModel.js';
-import User from '../models/userModel.js'; // Ensure User model is imported
-import path from 'path';
-import fs from 'fs';
-import PDFDocument from 'pdfkit';
-import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
 
-// Get all tickets (admin)
+import Ticket from '../models/ticketModel.js';
+import userModel from '../models/userModel.js'; // Assuming userModel is needed for populating assignedTo/user details
+
+// Helper to normalize status for consistent filtering/display
+const normalizeStatus = (status) => {
+    if (!status) return null;
+    return status.toLowerCase().replace(/-/g, ' ');
+};
+
+// @desc    Get all tickets for admin dashboard
+// @route   GET /api/admin/tickets
+// @access  Admin
 export const getAllTickets = async (req, res) => {
     try {
+        // Admins can see all tickets, regardless of assignment
         const tickets = await Ticket.find({})
-            .populate('user', 'name email')
-            .populate('assignedTo', 'name email')
-            .populate('previousAssignedTo', 'name email')
-            .sort({ createdAt: -1 });
-
-        res.json(tickets);
-    } catch (err) {
-        console.error("Get All Tickets Error:", err);
-        res.status(500).json({ error: err.message });
+            .populate('user', 'name email') // Populate original user
+            .populate('assignedTo', 'name email') // Populate assigned admin/user
+            .sort({ createdAt: -1 }); // Sort by most recent
+        res.status(200).json(tickets);
+    } catch (error) {
+        console.error("Error fetching all tickets for admin:", error);
+        res.status(500).json({ message: 'Server error fetching tickets.' });
     }
 };
 
-// Get a single ticket by ID for admin
+// @desc    Get a single ticket by ID for admin
+// @route   GET /api/admin/tickets/:id
+// @access  Admin
 export const getAdminTicketById = async (req, res) => {
     try {
         const ticket = await Ticket.findById(req.params.id)
             .populate('user', 'name email')
             .populate('assignedTo', 'name email')
-            .populate('previousAssignedTo', 'name email');
+            .populate({
+                path: 'messages.author', // Populate the author of each message
+                select: 'name email role' // Select relevant fields
+            });
 
         if (!ticket) {
-            return res.status(404).json({ error: 'Ticket not found' });
+            return res.status(404).json({ message: 'Ticket not found.' });
         }
-        return res.json(ticket);
-    } catch (err) {
-        console.error("Get Admin Ticket By ID Error:", err);
-        return res.status(500).json({ error: err.message });
-    }
-};
-
-// --- MODIFIED: Get users by unit (now expecting unitName as a string) ---
-export const getUsersByUnit = async (req, res) => {
-    try {
-        const { unitName } = req.params; // Changed from unitId to unitName
-        // Now query by the string name of the unit
-        const users = await User.find({ unit: unitName }).select('name email');
-        res.json(users);
+        res.status(200).json(ticket);
     } catch (error) {
-        console.error("Get Users By Unit Error:", error);
-        res.status(500).json({ message: 'Error fetching users by unit', error: error.message });
+        console.error("Error fetching admin ticket by ID:", error);
+        // Check for invalid MongoDB ID format
+        if (error.name === 'CastError' && error.kind === 'ObjectId') {
+            return res.status(400).json({ message: 'Invalid ticket ID format.' });
+        }
+        res.status(500).json({ message: 'Server error fetching ticket details.' });
     }
 };
 
-// --- NEW FUNCTION: Reassign a ticket ---
-export const reassignTicket = async (req, res) => {
+
+// @desc    Add a reply to a ticket (admin)
+// @route   POST /api/admin/tickets/:id/reply
+// @access  Admin
+export const addAdminReply = async (req, res) => {
     try {
         const { id } = req.params;
-        const { userId } = req.body;
+        const { content } = req.body;
+        const attachments = req.files ? req.files.map(f => ({
+            filename: f.originalname,
+            url: `/uploads/${f.filename}`, // Assuming uploads are served statically
+            mimetype: f.mimetype,
+            size: f.size
+        })) : [];
 
         const ticket = await Ticket.findById(id);
         if (!ticket) {
             return res.status(404).json({ message: 'Ticket not found.' });
         }
 
-        if (userId) {
-            const user = await User.findById(userId);
-            if (!user) {
-                return res.status(404).json({ message: 'User not found.' });
-            }
-            ticket.previousAssignedUnit = ticket.assignedUnit;
-            ticket.previousAssignedTo = ticket.assignedTo;
-            ticket.assignedTo = userId;
-            ticket.assignedUnit = user.unit;
-            ticket.reassigned = true;
-        } else {
-            ticket.previousAssignedUnit = ticket.assignedUnit;
-            ticket.previousAssignedTo = ticket.assignedTo;
-            ticket.assignedTo = null;
-            ticket.reassigned = false;
+        // Ensure messages array exists
+        if (!ticket.messages) {
+            ticket.messages = [];
         }
-        ticket.updatedAt = Date.now();
-        await ticket.save();
-
-        const updatedTicket = await Ticket.findById(id)
-            .populate('user', 'name email')
-            .populate('assignedTo', 'name email')
-            .populate('previousAssignedTo', 'name email');
-
-        res.json({ success: true, message: 'Ticket reassigned successfully.', ticket: updatedTicket });
-    } catch (error) {
-        res.status(500).json({ message: 'Failed to reassign ticket due to server error.', error: error.message });
-    }
-};
-
-// Add a reply to a ticket (admin)
-export const addAdminReply = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { content } = req.body;
-        let attachments = [];
-
-        if (!req.user || !req.user._id) {
-            return res.status(401).json({ error: "Admin not authenticated to add reply." });
-        }
-
-        if (req.files && req.files.length > 0) {
-            attachments = req.files.map(f => `/uploads/${f.filename}`);
-        }
-
-        const ticket = await Ticket.findById(id);
-        if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
-
-        if (!Array.isArray(ticket.messages)) ticket.messages = [];
 
         ticket.messages.push({
-            author: req.user._id,
+            author: req.user._id, // Admin's ID
             authorRole: 'admin',
             content,
-            attachments
+            attachments,
+            timestamp: new Date()
         });
 
-        if (ticket.status !== "resolved") {
-            ticket.status = "in progress";
+        // If ticket was resolved, mark it in-progress again when admin replies
+        if (ticket.status === 'resolved' || ticket.status === 'closed') {
+            ticket.status = 'in progress';
         }
+        ticket.updatedAt = new Date();
 
-        ticket.updatedAt = Date.now();
         await ticket.save();
 
-        res.json({ success: true, ticket });
-    } catch (err) {
-        console.error("Add Admin Reply Error:", err);
-        res.status(500).json({ error: err.message });
+        // Re-populate the ticket to send back comprehensive data
+        const updatedTicket = await Ticket.findById(ticket._id)
+            .populate('user', 'name email')
+            .populate('assignedTo', 'name email')
+            .populate({
+                path: 'messages.author',
+                select: 'name email role'
+            });
+
+        res.status(200).json(updatedTicket);
+    } catch (error) {
+        console.error("Error adding admin reply:", error);
+        res.status(500).json({ message: 'Server error adding reply.' });
     }
 };
 
-// Delete a message from a ticket
+// @desc    Delete a message from a ticket (admin)
+// @route   DELETE /api/admin/tickets/:ticketId/messages/:messageId
+// @access  Admin
 export const deleteMessage = async (req, res) => {
     try {
         const { ticketId, messageId } = req.params;
+
         const ticket = await Ticket.findById(ticketId);
         if (!ticket) {
-            console.error(`Admin: Ticket not found for ID: ${ticketId}`);
-            return res.status(404).json({ success: false, message: 'Ticket not found.' });
+            return res.status(404).json({ message: 'Ticket not found.' });
         }
 
-        // Find the index of the message to be deleted
-        const messageIndex = ticket.messages.findIndex(
-          msg => msg._id.toString() === messageId && msg.author && msg.author.toString() === req.user._id.toString()
-        );
-
+        const messageIndex = ticket.messages.findIndex(m => m._id.toString() === messageId);
         if (messageIndex === -1) {
-          return res.status(403).json({ success: false, message: 'You can only delete your own messages.' });
+            return res.status(404).json({ message: 'Message not found.' });
         }
+
+        // Optional: Add logic to check if admin is allowed to delete this specific message
+        // e.g., if (ticket.messages[messageIndex].author.toString() !== req.user._id.toString() && req.user.role !== 'superadmin') {
+        //     return res.status(403).json({ message: 'Not authorized to delete this message.' });
+        // }
 
         ticket.messages.splice(messageIndex, 1);
-        ticket.updatedAt = Date.now();
+        ticket.updatedAt = new Date();
         await ticket.save();
-        console.log(`Admin: Message ${messageId} deleted from ticket ${ticketId}`);
-        return res.status(200).json({ success: true, message: 'Message deleted successfully.' });
+
+        res.status(200).json({ message: 'Message deleted successfully.' });
     } catch (error) {
-        console.error("Admin: Error deleting message:", error);
-        return res.status(500).json({ success: false, message: 'Failed to delete message due to server error.' });
+        console.error("Error deleting message:", error);
+        res.status(500).json({ message: 'Server error deleting message.' });
     }
 };
 
-// Delete a ticket (Admin only)
+// @desc    Resolve a ticket
+// @route   PATCH /api/admin/tickets/:id/resolve
+// @access  Admin
+export const resolveTicket = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const ticket = await Ticket.findByIdAndUpdate(
+            id,
+            { status: 'resolved', updatedAt: new Date() },
+            { new: true }
+        ).populate('user', 'name email').populate('assignedTo', 'name email');
+
+        if (!ticket) {
+            return res.status(404).json({ message: 'Ticket not found.' });
+        }
+        res.status(200).json(ticket);
+    } catch (error) {
+        console.error("Error resolving ticket:", error);
+        res.status(500).json({ message: 'Server error resolving ticket.' });
+    }
+};
+
+// @desc    Mark ticket as open
+// @route   PATCH /api/admin/tickets/:id/open
+// @access  Admin
+export const markTicketOpen = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const ticket = await Ticket.findByIdAndUpdate(
+            id,
+            { status: 'open', updatedAt: new Date() },
+            { new: true }
+        ).populate('user', 'name email').populate('assignedTo', 'name email');
+
+        if (!ticket) {
+            return res.status(404).json({ message: 'Ticket not found.' });
+        }
+        res.status(200).json(ticket);
+    } catch (error) {
+        console.error("Error marking ticket open:", error);
+        res.status(500).json({ message: 'Server error marking ticket open.' });
+    }
+};
+
+// @desc    Mark ticket as in progress
+// @route   PATCH /api/admin/tickets/:id/in-progress
+// @access  Admin
+export const markTicketInProgress = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const ticket = await Ticket.findByIdAndUpdate(
+            id,
+            { status: 'in progress', updatedAt: new Date() },
+            { new: true }
+        ).populate('user', 'name email').populate('assignedTo', 'name email');
+
+        if (!ticket) {
+            return res.status(404).json({ message: 'Ticket not found.' });
+        }
+        res.status(200).json(ticket);
+    } catch (error) {
+        console.error("Error marking ticket in progress:", error);
+        res.status(500).json({ message: 'Server error marking ticket in progress.' });
+    }
+};
+
+// @desc    Delete a ticket (admin)
+// @route   DELETE /api/admin/tickets/:id
+// @access  Admin
 export const deleteTicket = async (req, res) => {
     try {
         const { id } = req.params;
         const ticket = await Ticket.findByIdAndDelete(id);
+
         if (!ticket) {
-            return res.status(404).json({ success: false, message: 'Ticket not found.' });
+            return res.status(404).json({ message: 'Ticket not found.' });
         }
-        return res.status(200).json({ success: true, message: 'Ticket deleted successfully.' });
+        res.status(200).json({ message: 'Ticket deleted successfully.' });
     } catch (error) {
-        console.error('Admin: Error deleting ticket:', error);
-        return res.status(500).json({ success: false, message: 'Failed to delete ticket due to server error.' });
+        console.error("Error deleting ticket:", error);
+        res.status(500).json({ message: 'Server error deleting ticket.' });
     }
 };
 
-// Mark ticket as resolved
-export const resolveTicket = async (req, res) => {
+// @desc    Reassign a ticket to another user/admin
+// @route   PATCH /api/admin/tickets/:id/assign
+// @access  Admin
+export const reassignTicket = async (req, res) => {
     try {
+        const { id } = req.params;
+        const { userId } = req.body; // The ID of the user/admin to reassign to
+
+        if (!userId) {
+            return res.status(400).json({ message: 'User ID for reassignment is required.' });
+        }
+
+        const newAssignee = await userModel.findById(userId);
+        if (!newAssignee) {
+            return res.status(404).json({ message: 'New assignee user not found.' });
+        }
+
         const ticket = await Ticket.findByIdAndUpdate(
-            req.params.id,
-            { status: 'resolved', updatedAt: Date.now() },
+            id,
+            {
+                assignedTo: newAssignee._id,
+                assignedUnit: newAssignee.unit, // Update unit based on new assignee
+                reassigned: true, // Mark as reassigned
+                updatedAt: new Date()
+            },
             { new: true }
-        );
-        if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
-        res.json(ticket);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+        ).populate('user', 'name email').populate('assignedTo', 'name email');
+
+        if (!ticket) {
+            return res.status(404).json({ message: 'Ticket not found.' });
+        }
+        res.status(200).json(ticket);
+    } catch (error) {
+        console.error("Error reassigning ticket:", error);
+        res.status(500).json({ message: 'Server error reassigning ticket.' });
     }
 };
 
-// Mark ticket as open
-export const markTicketOpen = async (req, res) => {
-    try {
-        const ticket = await Ticket.findByIdAndUpdate(
-            req.params.id,
-            { status: 'open', updatedAt: Date.now() },
-            { new: true }
-        );
-        if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
-        res.json(ticket);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-};
-
-// Mark ticket as in progress
-export const markTicketInProgress = async (req, res) => {
-    try {
-        const ticket = await Ticket.findByIdAndUpdate(
-            req.params.id,
-            { status: 'in progress', updatedAt: Date.now() },
-            { new: true }
-        );
-        if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
-        res.json(ticket);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-};
-
-// Generate a chart image (PNG) for ticket status summary
-
-// Get admin ticket summary
+// @desc    Get summary counts for admin dashboard (open, in progress, resolved)
+// @route   GET /api/admin/tickets/summary
+// @access  Admin
 export const getAdminTicketsSummary = async (req, res) => {
-  try {
-    console.log("Getting admin ticket summary for user:", req.user);
-    const openCount = await Ticket.countDocuments({ status: 'open' });
-    const inProgressCount = await Ticket.countDocuments({ status: 'in progress' });
-    const resolvedCount = await Ticket.countDocuments({ status: 'resolved' });
+    try {
+        const openTickets = await Ticket.countDocuments({ status: 'open' });
+        const inProgressTickets = await Ticket.countDocuments({ status: 'in progress' });
+        const resolvedTickets = await Ticket.countDocuments({ status: 'resolved' });
 
-    return res.json({
-      open: openCount,
-      inProgress: inProgressCount,
-      resolved: resolvedCount,
-    });
-  } catch (err) {
-    console.error("Error fetching admin ticket summary:", err);
-    return res.status(500).json({ error: 'Failed to fetch ticket summary from server.' });
-  }
+        res.status(200).json({
+            openTickets,
+            inProgressTickets,
+            resolvedTickets
+        });
+    } catch (error) {
+        console.error("Error fetching admin ticket summary:", error);
+        res.status(500).json({ message: 'Server error fetching summary.' });
+    }
+};
+
+// @desc    Get recent tickets (for dashboard table)
+// @route   GET /api/admin/tickets/recent-tickets
+// @access  Admin
+export const getRecentTickets = async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 10; // Default to 10 recent tickets
+        const tickets = await Ticket.find({})
+            .sort({ createdAt: -1 }) // Sort by most recent first
+            .limit(limit)
+            .populate('user', 'name email') // Populate the user who created the ticket
+            .populate('assignedTo', 'name email'); // Populate the assigned user/admin
+
+        res.status(200).json(tickets);
+    } catch (error) {
+        console.error("Error fetching recent tickets:", error);
+        res.status(500).json({ message: 'Server error fetching recent tickets.' });
+    }
 };
