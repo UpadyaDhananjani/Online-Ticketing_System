@@ -1,0 +1,101 @@
+/* src/styles/themes.css */
+
+/* Define CSS variables for the default (light) theme */
+:root {
+  --background-color: #ffffff;
+  --text-color: #333333;
+  --primary-color: #007bff;
+  --secondary-color: #6c757d;
+  --card-background: #f8f9fa;
+  --border-color: #dee2e6;
+
+  /* General purpose variables */
+  --shadow-color: rgba(0,0,0,0.03);
+  --link-color: #007bff;
+  --link-hover-color: #0056b3;
+  --text-muted-color: #6c757d;
+  --heading-color: #1a2233;
+
+  /* Sidebar specific colors */
+  --sidebar-bg: #f8f9fa;
+  --sidebar-border: #dee2e6;
+  --sidebar-shadow: rgba(0,0,0,0.03);
+
+  /* Link/Button specific colors */
+  --primary-color-hover: #0056b3;
+  --card-background-light: #f0f2f5;
+  --active-link-background: #e9ecef;
+  --text-color-secondary: #444444;
+
+  /* Specific status colors */
+  --status-open-bg: #fff5f5;
+  --status-open-border: #f87171;
+  --status-open-text: #e11d48;
+
+  --status-inprogress-bg: #fffae6;
+  --status-inprogress-border: #fbbf24;
+  --status-inprogress-text: #f59e1b;
+
+  --status-resolved-bg: #f0fdf4;
+  --status-resolved-border: #22c55e;
+  --status-resolved-text: #16a34a;
+
+  --footer-bg: #232b36;
+  --footer-text: #fff;
+
+  /* Table specific colors */
+  --table-header-bg: #e9ecef;
+  --table-row-even-bg: #f8f9fa;
+  --table-row-odd-bg: #ffffff;
+  --table-border: #dee2e6;
+}
+
+/* Override CSS variables when the 'data-theme="dark"' attribute is present on the <html> element */
+[data-theme="dark"] {
+  --background-color: #212121;
+  --text-color: #e0e0e0;
+  --primary-color: #82b1ff;
+  --secondary-color: #bb86fc;
+  --card-background: #2a2a2a;
+  --border-color: #444444;
+
+  /* General purpose variables in Dark Mode */
+  --shadow-color: rgba(0,0,0,0.7);
+  --link-color: #82b1ff;
+  --link-hover-color: #639aff;
+  --text-muted-color: #b0b0b0;
+  --heading-color: #e0e0e0;
+
+  /* Sidebar specific colors in Dark Mode */
+  --sidebar-bg: #2a2a2a;
+  --sidebar-border: #444444;
+  --sidebar-shadow: rgba(0,0,0,0.7);
+
+  /* Link/Button specific colors in Dark Mode */
+  --primary-color-hover: #639aff;
+  --card-background-light: #3a3a3a;
+  --active-link-background: #3a3a3a;
+  --text-color-secondary: #b0b0b0;
+
+  /* Specific status colors in Dark Mode */
+  --status-open-bg: #3b1c1c;
+  --status-open-border: #cf6679;
+  --status-open-text: #cf6679;
+
+  --status-inprogress-bg: #3b321c;
+  --status-inprogress-border: #f5c542;
+  --status-inprogress-text: #f5c542;
+
+  --status-resolved-bg: #1c3b1c;
+  --status-resolved-border: #66bb6a;
+  --status-resolved-text: #66bb6a;
+
+  --footer-bg: #212121;
+  --footer-text: #e0e0e0;
+
+  /* Table specific colors in Dark Mode */
+  --table-header-bg: #333333;
+  --table-row-even-bg: #2f2f2f;
+  --table-row-odd-bg: #212121;
+  --table-border: #555555;
+}

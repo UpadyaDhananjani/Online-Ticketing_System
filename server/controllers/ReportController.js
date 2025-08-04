@@ -291,14 +291,6 @@ export const getTicketPriorityDistribution = async (req, res) => {
 };
 
 // Recent Tickets for dashboard table
-export const getRecentTickets = async (req, res) => {
-  try {
-    const tickets = await Ticket.find().sort({ createdAt: -1 }).limit(10);
-    res.json(tickets);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
 
 
 // Status distribution for chart
@@ -318,3 +310,5 @@ export const getTicketStatusDistribution = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+

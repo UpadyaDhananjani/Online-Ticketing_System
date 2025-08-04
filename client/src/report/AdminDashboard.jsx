@@ -20,12 +20,14 @@ import {
 import {
   getTicketStatusDistribution,
   getTicketTypeDistribution,
-  getTicketsByUnit,
   getRecentTickets,
   getAssigneePerformance
 } from "../api/ticketApi";
-import DarkModeToggle from "../components/DarkModeToggle";
+import { Container, Row, Col } from "react-bootstrap";
+import { BsCheck2Circle } from "react-icons/bs";
+
 import TicketsByUnitChart from "./TicketsByUnitChart";
+import AssigneePerformanceTable from "./AssigneePerformanceTable";
 
 // Register Chart.js components
 ChartJS.register(
@@ -68,7 +70,7 @@ function AdminDashboard() {
 
   useEffect(() => {
     // Fetch recent tickets
-    getRecentTickets().then(setTickets);
+    getRecentTickets().then(setTickets).catch(console.error);
 
     // Fetch category breakdown
     getTicketTypeDistribution().then(data => {
@@ -82,7 +84,7 @@ function AdminDashboard() {
           hoverOffset: 20,
         }]
       });
-    });
+    }).catch(console.error);
 
     // Fetch priority distribution
     getTicketStatusDistribution().then(data => {
@@ -96,16 +98,36 @@ function AdminDashboard() {
           ],
         }]
       });
-    });
+    }).catch(console.error);
 
     // Fetch team performance
-    getAssigneePerformance().then(setTeamPerformance);
-
-    // Fetch stats (example, you may need a separate endpoint)
-    // getAdminTicketsSummary().then(setStats);
+    getAssigneePerformance().then(setTeamPerformance).catch(console.error);
   }, []);
 
-  // Ticket Trends Chart (Line chart) - static demo data
+  // Real-time stats fetch every 30 seconds
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch("/api/tickets/summary");
+        if (!res.ok) return;
+        const data = await res.json();
+        setStats({
+          openTickets: data.open || 0,
+          inProgressTickets: data.inProgress || 0,
+          resolvedToday: data.resolved || 0,
+          avgResponseTime: data.avgResponseTime || 0,
+        });
+      } catch {
+        // Silent catch or add error handling as needed
+      }
+    };
+
+    fetchStats();
+    const intervalId = setInterval(fetchStats, 30000);
+    return () => clearInterval(intervalId);
+  }, []);
+
+  // Static demo ticket trends data
   const ticketTrendsData = {
     labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     datasets: [
@@ -157,8 +179,7 @@ function AdminDashboard() {
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900 min-h-screen p-6 transition-colors duration-200">
-      
-      {/* Header - Make it darker */}
+      {/* Header */}
       <header className="bg-gradient-to-r from-blue-900 to-blue-400 dark:from-slate-800 dark:to-slate-700 text-white shadow-lg rounded-lg p-6 mb-8">
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-4">
@@ -173,65 +194,64 @@ function AdminDashboard() {
         </div>
       </header>
 
-      <DarkModeToggle />
+      {/* Main Dashboard Content */}
+      <Container className="py-4">
+        <div className="text-center mb-4">
+          <h2 className="fw-bold mb-1" style={{ color: '#1a2233', fontSize: 32 }}>Current Ticket Status</h2>
+          <div className="text-muted" style={{ fontSize: 18 }}>Real-time overview of helpdesk tickets</div>
+        </div>
+        <Row className="justify-content-center g-4 mb-5">
+          {/* Open Issues Card */}
+          <Col xs={12} md={4}>
+            <StatusCard
+              count={stats.openTickets}
+              label="Open Issues"
+              description="Awaiting assignment"
+              colorBg="#fff5f5"
+              borderColor="#f87171"
+              textColor="#e11d48"
+            />
+          </Col>
+          {/* In Progress Issues Card */}
+          <Col xs={12} md={4}>
+            <StatusCard
+              count={stats.inProgressTickets}
+              label="In Progress Issues"
+              description="Being worked on"
+              colorBg="#fffae6"
+              borderColor="#fbbf24"
+              textColor="#f59e1b"
+            />
+          </Col>
+          {/* Resolved Issues Card */}
+          <Col xs={12} md={4}>
+            <StatusCard
+              count={stats.resolvedToday}
+              label="Resolved Issues"
+              description="This month"
+              colorBg="#f0fdf4"
+              borderColor="#22c55e"
+              textColor="#16a34a"
+              icon={<BsCheck2Circle size={28} color="#16a34a" />}
+            />
+          </Col>
+        </Row>
+      </Container>
 
-      {/* Stats Cards - Darker theme */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard
-          title="Open Tickets"
-          count={stats.openTickets}
-          change="+5 from yesterday"
-          icon="🔴"
-          iconBg="bg-red-100"
-          iconColor="text-red-600"
-          countColor="text-red-600"
-        />
-        <StatCard
-          title="In Progress"
-          count={stats.inProgressTickets}
-          change="-2 from yesterday"
-          icon="🟡"
-          iconBg="bg-yellow-100"
-          iconColor="text-yellow-600"
-          countColor="text-yellow-600"
-        />
-        <StatCard
-          title="Resolved Today"
-          count={stats.resolvedToday}
-          change="+12 from yesterday"
-          icon="✅"
-          iconBg="bg-green-100"
-          iconColor="text-green-600"
-          countColor="text-green-600"
-        />
-        <StatCard
-          title="Avg Response Time"
-          count={`${stats.avgResponseTime}h`}
-          change="-0.3h improvement"
-          icon="⏱️"
-          iconBg="bg-blue-100"
-          iconColor="text-blue-600"
-          countColor="text-blue-600"
-        />
-      </div>
-
-      {/* Charts Section - Both cards smaller and side by side */}
+      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <div className="bg-white dark:bg-slate-700 rounded-lg shadow-md p-4 fade-in transition-colors duration-200 dark:border dark:border-slate-600">
-          <h3 className="text-sm font-semibold text-gray-800 dark:text-slate-200 mb-3">Ticket Trends (Last 7 Days)</h3>
-          <div style={{ height: "200px" }}>
+        <ChartCard title="Ticket Trends (Last 7 Days)">
+          <div style={{ height: "300px" }}>
             <Line data={ticketTrendsData} options={ticketTrendsOptions} />
           </div>
-        </div>
-        <div className="bg-white dark:bg-slate-700 rounded-lg shadow-md p-4 fade-in transition-colors duration-200 dark:border dark:border-slate-600">
-          <h3 className="text-sm font-semibold text-gray-800 dark:text-slate-200 mb-3">Tickets by Category</h3>
-          <div style={{ height: "200px" }}>
+        </ChartCard>
+        <ChartCard title="Tickets by Category">
+          <div style={{ height: "320px" }} className="flex items-center justify-center">
             <Doughnut data={categoryData} options={categoryOptions} />
           </div>
-        </div>
+        </ChartCard>
       </div>
 
-      {/* Keep the unit chart and priority distribution in their own row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <ChartCard title="Tickets by Unit/Team">
           <TicketsByUnitChart />
@@ -241,42 +261,50 @@ function AdminDashboard() {
         </ChartCard>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* System Status Box */}
-        <div className="bg-white dark:bg-slate-700 rounded-lg shadow-md p-6 fade-in dark:border dark:border-slate-600">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-slate-200 mb-4">System Status</h3>
-          <SystemStatus />
-        </div>
-
-        {/* Quick Actions */}
-        <div className="bg-white dark:bg-slate-700 rounded-lg shadow-md p-6 fade-in dark:border dark:border-slate-600">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-slate-200 mb-4">Quick Actions</h3>
-          <QuickActions />
-        </div>
+      {/* Quick Actions */}
+      <div className="bg-white dark:bg-slate-700 rounded-lg shadow-md p-6 fade-in dark:border dark:border-slate-600 mb-8">
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-slate-200 mb-4">Quick Actions</h3>
+        <QuickActions />
       </div>
 
       {/* Recent Tickets Table */}
       <TableSection tickets={tickets} />
 
-      {/* Team Performance Section */}
-      <TeamPerformanceSection teamPerformance={teamPerformance} />
+      {/* Assignee Performance Section */}
+      <AssigneePerformanceTable data={teamPerformance} />
     </div>
   );
 }
 
-function StatCard({ title, count, change, icon, iconBg, iconColor, countColor }) {
+function StatusCard({ count, label, description, colorBg, borderColor, textColor, icon }) {
   return (
-    <div className="bg-white dark:bg-slate-700 rounded-lg shadow-md p-6 card-hover fade-in flex justify-between items-center transition-colors duration-200 dark:border dark:border-slate-600">
+    <div className="h-100 p-4 d-flex flex-row align-items-center justify-content-between rounded-3 shadow-sm"
+      style={{ background: colorBg, borderLeft: `6px solid ${borderColor}`, minHeight: 140 }}>
       <div>
-        <p className="text-gray-600 dark:text-slate-300 text-sm font-medium">{title}</p>
-        <p className={`text-3xl font-bold dark:text-white ${countColor}`}>{count}</p>
-        <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">{change}</p>
+        <div className="fw-bold" style={{ fontSize: 36, color: textColor }}>{count}</div>
+        <div className="fw-bold" style={{ fontSize: 20, color: '#1a2233' }}>{label}</div>
+        <div className="text-muted" style={{ fontSize: 15 }}>{description}</div>
       </div>
-      <div className={`w-12 h-12 ${iconBg} dark:bg-slate-600 rounded-full flex items-center justify-center`}>
-        <span className={`${iconColor} dark:text-slate-200 text-2xl`}>{icon}</span>
-      </div>
+      <span className="d-inline-flex align-items-center justify-content-center ms-3"
+        style={{
+          width: 38, height: 38, borderRadius: '50%',
+          background: `linear-gradient(135deg, #bbf7d0 60%, ${borderColor} 100%)`,
+          boxShadow: `0 2px 8px rgba(${hexToRgb(borderColor)}, 0.13)`
+        }}
+      >
+        {icon}
+      </span>
     </div>
   );
+}
+
+function hexToRgb(hex) {
+  hex = hex.replace('#', '');
+  const bigint = parseInt(hex, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `${r}, ${g}, ${b}`;
 }
 
 function ChartCard({ title, children }) {
@@ -284,28 +312,6 @@ function ChartCard({ title, children }) {
     <div className="bg-white dark:bg-slate-700 rounded-lg shadow-md p-6 fade-in transition-colors duration-200 dark:border dark:border-slate-600">
       <h3 className="text-lg font-semibold text-gray-800 dark:text-slate-200 mb-4">{title}</h3>
       <div className="chart-container">{children}</div>
-    </div>
-  );
-}
-
-function SystemStatus() {
-  const statuses = [
-    { label: "Email Server", color: "bg-green-500", status: "Online", statusClass: "text-green-400" },
-    { label: "Database", color: "bg-green-500", status: "Online", statusClass: "text-green-400" },
-    { label: "File Storage", color: "bg-yellow-500", status: "Warning", statusClass: "text-yellow-400" },
-    { label: "Backup System", color: "bg-green-500", status: "Online", statusClass: "text-green-400" },
-  ];
-  return (
-    <div className="space-y-4">
-      {statuses.map(({ label, color, status, statusClass }) => (
-        <div key={label} className="flex items-center justify-between">
-          <span className="text-gray-600 dark:text-slate-300">{label}</span>
-          <div className="flex items-center space-x-2">
-            <div className={`${color} w-3 h-3 rounded-full pulse-dot`}></div>
-            <span className={`text-sm dark:${statusClass} ${statusClass}`}>{status}</span>
-          </div>
-        </div>
-      ))}
     </div>
   );
 }
@@ -341,7 +347,6 @@ function QuickActions() {
   );
 }
 
-// TableSection: Add dark mode classes
 function TableSection({ tickets }) {
   return (
     <div className="bg-white dark:bg-slate-700 rounded-lg shadow-md overflow-hidden mb-8 fade-in transition-colors duration-200 dark:border dark:border-slate-600">
@@ -363,119 +368,65 @@ function TableSection({ tickets }) {
         <table className="w-full">
           <thead className="bg-gray-50 dark:bg-slate-600">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Ticket ID</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Subject</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">User</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Category</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Priority</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Type</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Assigned Unit</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Requester</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Assigned To</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Last Update</th>
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-slate-700 divide-y divide-gray-200 dark:divide-slate-600">
             {tickets.map((ticket) => (
               <tr key={ticket._id || ticket.id} className="dark:hover:bg-slate-600">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-slate-200">{ticket.ticketId || ticket.id}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-slate-300">{ticket.subject}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-slate-300">{ticket.user?.name || ticket.user || ticket.requester}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-slate-300">{ticket.category || ticket.type}</td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${priorityClasses[ticket.priority] || "bg-gray-100 dark:bg-slate-600 text-gray-800 dark:text-slate-200"}`}>
-                    {ticket.priority}
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-slate-300">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                    {ticket.type}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-slate-300">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-slate-600 dark:text-slate-200">
+                    {ticket.assignedUnit || "—"}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-slate-300">
+                  {ticket.user?.name || ticket.user || ticket.requester || "N/A"}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-slate-300">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                    {ticket.assignedTo?.name || ticket.assignedTo || "—"}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClasses[ticket.status] || "bg-gray-100 dark:bg-slate-600 text-gray-800 dark:text-slate-200"}`}>
+                  <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      statusClasses[ticket.status] || "bg-gray-100 dark:bg-slate-600 text-gray-800 dark:text-slate-200"
+                    }`}
+                  >
                     {ticket.status}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 mr-3">
-                    View
-                  </button>
-                  <button className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300">
-                    Assign
-                  </button>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-slate-300">
+                  {ticket.updatedAt
+                    ? new Date(ticket.updatedAt).toLocaleString()
+                    : "N/A"}
                 </td>
               </tr>
             ))}
+            {tickets.length === 0 && (
+              <tr>
+                <td colSpan="7" className="text-center py-4 text-gray-500 dark:text-slate-400">
+                  No tickets found.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
     </div>
   );
 }
-
-// TeamPerformanceSection: Add dark mode classes
-function TeamPerformanceSection({ teamPerformance }) {
-  const statusColors = {
-    Online: "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300",
-    Away: "bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300",
-    Offline: "bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300",
-  };
-
-  return (
-    <div className="bg-white dark:bg-slate-700 rounded-lg shadow-md overflow-hidden fade-in transition-colors duration-200 dark:border dark:border-slate-600">
-      <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-600">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-slate-200">Team Performance</h3>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50 dark:bg-slate-600">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Team Member</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Assigned</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Resolved</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Avg Response</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Rating</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Status</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white dark:bg-slate-700 divide-y divide-gray-200 dark:divide-slate-600">
-            {teamPerformance.map((member, idx) => (
-              <tr key={member._id || idx} className="dark:hover:bg-slate-600">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <div className="w-8 h-8 bg-blue-500 dark:bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                      {member.initials || (member.name ? member.name.split(" ").map(n => n[0]).join("") : "TM")}
-                    </div>
-                    <div className="ml-3">
-                      <div className="text-sm font-medium text-gray-900 dark:text-slate-200">{member.name || member._id || "Unknown"}</div>
-                      <div className="text-sm text-gray-500 dark:text-slate-400">{member.position || ""}</div>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-slate-300">{member.assigned}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-slate-300">{member.resolved}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-slate-300">{member.avgResponse || "-"}</td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <span className="text-sm text-gray-900 dark:text-slate-300">{member.rating || "-"}</span>
-                    <div className="ml-1 text-yellow-400">{"⭐".repeat(Math.round(member.rating || 0))}</div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[member.status] || "bg-gray-100 dark:bg-slate-600 text-gray-800 dark:text-slate-200"}`}>
-                    {member.status || "Unknown"}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {teamPerformance.length === 0 && (
-        <div className="px-6 py-4">
-          <div className="text-center text-gray-500 dark:text-slate-400">
-            No team performance data found.
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-
-
 
 export default AdminDashboard;

@@ -11,7 +11,8 @@ import {
   deleteTicket,
   reassignTicket,
   getAdminTicketById,
-  getAdminTicketsSummary
+  getAdminTicketsSummary,
+   getRecentTickets
 } from '../controllers/ticketAdminController.js';
 
 import {
@@ -22,7 +23,7 @@ import {
   getAvgResolutionTime,
   getTicketActivityLogs,
   getTicketStatusDistribution,  // Add this import
-  getTicketTypeDistribution     // Add this import
+  getTicketTypeDistribution    // Add this import
 } from '../controllers/ReportController.js';
 
 import authMiddleware from '../middleware/authMiddleware.js';
@@ -36,19 +37,23 @@ router.use(authMiddleware);
 router.use(authorizeRoles('admin'));
 
 // -------------------- Admin Ticket Routes --------------------
-// Summary widget for dashboard
-router.get('/summary', getAdminTicketsSummary);
+
 
 // Charts and analytics
 // --- REPORT ROUTES ---
 router.get('/reports/chart-image', generateReportChartImage);
 router.get('/reports/pdf', downloadReportPdf);
 router.get('/assignee-performance', getAssigneePerformance);
-router.get('/tickets-by-unit', getTicketsByUnit);
+router.get('/tickets_by_unit', getTicketsByUnit);
 router.get('/avg-resolution-time', getAvgResolutionTime);
 router.get('/activity-logs', getTicketActivityLogs);
 router.get('/status-distribution', getTicketStatusDistribution);  // Add this route
 router.get('/type-distribution', getTicketTypeDistribution);      // Add this route
+router.get('/recent', getRecentTickets); // New route for recent tickets
+
+// Summary widget for dashboard
+router.get('/summary', getAdminTicketsSummary);
+
 // Get all tickets for admin dashboard
 router.get('/', getAllTickets);
 

@@ -6,7 +6,7 @@ import ChartAnalytics from "./ChartAnalytics";
 import { getTicketStatusDistribution } from "../api/ticketApi";
 import AssigneePerformanceTable from "./AssigneePerformanceTable";
 import AvgResolutionTimeChart from "./AvgResolutionTimeChart";
-import TicketsByUnitChart from "./TicketsByUnitChart";
+
 
 const AnalyticsPage = () => {
   // State variables for data, loading, and error
@@ -76,7 +76,7 @@ const AnalyticsPage = () => {
         <AvgResolutionTimeChart />
       </div>
       <div style={{ marginTop: 32 }}>
-        <TicketsByUnitChart />
+       
       </div>
       <div style={{ marginTop: 32, marginBottom: 32 }}>
         <AssigneePerformanceTable />
