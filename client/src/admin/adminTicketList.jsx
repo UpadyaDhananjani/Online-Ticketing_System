@@ -12,16 +12,23 @@ import {
 } from "react-bootstrap";
 import { getAdminTickets, deleteAdminTicket } from "../api/ticketApi";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
 
-import { BsArrowRepeat, BsCircleFill } from "react-icons/bs";
+// Helper object for priority styling
+const priorityStyles = {
+  Critical: { className: "bg-danger", color: "white" }, // Red
+  High: { className: "bg-warning", color: "black" },   // Yellow
+  Medium: { className: "bg-info", color: "black" },     // Blue
+  Low: { className: "bg-success", color: "white" },    // Green
+};
 
+// Helper object for status styling
 const statusStyles = {
-  Open: { color: "#dc3545", className: "bg-danger-subtle text-danger" }, // Red
-  "In Progress": {
-    color: "#ffc107",
-    className: "bg-warning-subtle text-warning",
-  }, // Yellow
-  Resolved: { color: "#198754", className: "bg-success-subtle text-success" }, // Green
+  open: { className: "bg-danger", color: "white" },
+  'in progress': { className: "bg-warning", color: "black" },
+  resolved: { className: "bg-success", color: "white" },
+  closed: { className: "bg-secondary", color: "white" },
+  reopened: { className: "bg-info", color: "black" },
 };
 
 const UNIT_OPTIONS = [
@@ -51,7 +58,7 @@ const TYPE_OPTIONS = [
   "service",
 ];
 
-function TicketList({ onSelect, token, refresh }) {
+function TicketList({ refresh }) { // Removed 'onSelect' and 'token' as props
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -59,6 +66,8 @@ function TicketList({ onSelect, token, refresh }) {
   const [statusFilter, setStatusFilter] = useState("All");
   const [typeFilter, setTypeFilter] = useState("All");
   const [selectedTickets, setSelectedTickets] = useState(new Set());
+
+  const navigate = useNavigate(); // Initialize useNavigate hook
 
   useEffect(() => {
     setLoading(true);
@@ -68,15 +77,12 @@ function TicketList({ onSelect, token, refresh }) {
         const fetchedTickets = res.data ?? [];
         setTickets(fetchedTickets);
         setLoading(false);
-        if (fetchedTickets.length > 0) {
-          console.log("First ticket user:", fetchedTickets[0].user);
-        }
       })
       .catch((err) => {
         console.error("Error fetching tickets:", err);
         setError("Failed to fetch tickets.");
         toast.error(
-          err.response?.data?.error ||
+          err.response?.data?.message ||
             err.message ||
             "Failed to fetch tickets for admin dashboard."
         );
@@ -254,53 +260,6 @@ function TicketList({ onSelect, token, refresh }) {
 
         {!loading && !error && (
           <>
-            <style>
-              {`
-                .table {
-                  border-radius: 8px;
-                  overflow: hidden;
-                }
-
-                .table thead th {
-                  font-weight: 600;
-                  font-size: 0.875rem;
-                  text-transform: uppercase;
-                  letter-spacing: 0.05em;
-                  color: #6b7280;
-                  background-color: #f8f9fa;
-                  border-bottom: 1px solid #e5e7eb;
-                }
-
-                .table tbody tr:hover {
-                  background-color: #f9fafb;
-                }
-
-                .table td {
-                  vertical-align: middle;
-                }
-
-                .bg-danger-subtle {
-      background-color: #fff5f5;
-    }
-    .bg-warning-subtle {
-      background-color: #fffbeb;
-    }
-    .bg-success-subtle {
-      background-color: #f0fdf4;
-    }
-    .bg-secondary-subtle {
-      background-color: #f3f4f6;
-    }
-    .rounded-pill {
-      border-radius: 9999px;
-    }
-    .table td {
-      color: #374151;
-      font-size: 0.875rem;
-    }
-              `}
-            </style>
-
             <Table
               hover
               className="bg-white rounded shadow-sm table"
@@ -320,7 +279,7 @@ function TicketList({ onSelect, token, refresh }) {
                 {filteredTickets.map((ticket) => (
                   <tr
                     key={ticket._id}
-                    onClick={() => onSelect(ticket)}
+                    onClick={() => navigate(`/admin/tickets/${ticket._id}`)}
                     style={{ cursor: "pointer" }}
                     className="border-bottom"
                   >
@@ -331,30 +290,20 @@ function TicketList({ onSelect, token, refresh }) {
                     <td className="px-4 py-3">{ticket.user?.name || "N/A"}</td>
                     <td className="px-4 py-3">{ticket.type}</td>
                     <td className="px-4 py-3">
-                      <span
-                        style={{
-                          padding: "4px 12px",
-                          borderRadius: "12px",
-                          fontSize: "0.875rem",
-                          backgroundColor:
-                            priorityColors[ticket.priority] || "transparent",
-                        }}
+                      <Badge
+                        bg={priorityStyles[ticket.priority]?.className}
+                        style={{ color: priorityStyles[ticket.priority]?.color }}
                       >
                         {ticket.priority}
-                      </span>
+                      </Badge>
                     </td>
                     <td className="px-4 py-3">
-                      <span
-                        style={{
-                          padding: "4px 12px",
-                          borderRadius: "12px",
-                          fontSize: "0.875rem",
-                          backgroundColor:
-                            statusBackgrounds[ticket.status] || "transparent",
-                        }}
+                      <Badge
+                        bg={statusStyles[ticket.status]?.className}
+                        style={{ color: statusStyles[ticket.status]?.color }}
                       >
                         {ticket.status}
-                      </span>
+                      </Badge>
                     </td>
                   </tr>
                 ))}

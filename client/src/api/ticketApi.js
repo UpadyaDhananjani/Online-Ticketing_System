@@ -30,8 +30,6 @@ axiosInstance.interceptors.request.use(
 );
 
 // Response Interceptor: Logs incoming responses
-// IMPORTANT CHANGE HERE: Interceptor now just logs and passes the FULL response object.
-// Individual API functions will then extract .data if needed.
 axiosInstance.interceptors.response.use(
     response => {
         console.log('API Response:', {
@@ -242,6 +240,24 @@ export const reassignTicket = async (ticketId, userId) => {
     }
 };
 
+// =======================================================
+// --- NEW FUNCTION: Update Ticket Priority (for admins) ---
+// =======================================================
+/**
+ * Updates the priority of a specific ticket.
+ * @param {string} ticketId - The ID of the ticket to update.
+ * @param {string} newPriority - The new priority level ('Low', 'Normal', 'High', 'Critical').
+ * @returns {Promise<object>} A promise that resolves to the updated ticket object.
+ * @throws {Error} If the API call fails.
+ */
+export const updateTicketPriority = async (ticketId, newPriority) => {
+    try {
+        const response = await axiosInstance.put(`/admin/tickets/${ticketId}/priority`, { priority: newPriority });
+        return response.data; // Explicitly return data
+    } catch (error) {
+        throw error;
+    }
+};
 
 // =======================================================
 // --- PUBLIC / GENERAL APIs ---
@@ -333,7 +349,8 @@ export const getTicketTypeDistribution = async () => {
     }
 };
 
-export const getTicketsByUnit = async () => {
+// Corrected function to accept unitName as a parameter
+export const getTicketsByUnit = async (unitName) => {
     try {
         const response = await axiosInstance.get(`/admin/tickets_by_unit/${encodeURIComponent(unitName)}`);
         console.log(response.data);
