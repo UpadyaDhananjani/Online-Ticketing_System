@@ -159,194 +159,278 @@ const Ticket = () => {
   }));
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen animate-fade-in" style={{ minHeight: '100vh' }}>
-      {/* Floating Back Button */}
-      <Button
-        variant="light"
-        className="absolute top-4 left-4 z-10 flex items-center gap-2 shadow-md rounded-full px-3 py-2 hover:bg-blue-100 transition"
-        onClick={() => navigate(-1)}
-        style={{ position: 'fixed', top: 24, left: 24 }}
-      >
-        <BsArrowLeft className="text-blue-500" size={20} /> Back
-      </Button>
-      <Container className="py-4" style={{ maxWidth: 1200, width: '100%' }}>
-        <Row className="justify-content-center">
-          <Col xs={12}>
-            <Card className="shadow-lg border-0 mb-4 animate-pop" style={{ borderRadius: 18 }}>
-              <Card.Body className="p-5">
-                <Row>
-                  <Col xs={12} md={8}>
-                    <h3 className="mb-4 text-blue-700 flex items-center gap-2">
-                      <BsTicketDetailed className="text-blue-500" size={28} />
-                      Ticket Details
-                    </h3>
-                    <div className="mb-3 flex items-center gap-2">
-                      <span className="font-semibold text-gray-600 flex items-center gap-2"><BsCardText /> Subject:</span>
-                      <span className="text-lg font-bold">{ticket.subject}</span>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Back Button */}
+        <Button
+          variant="outline-primary"
+          className="mb-4 flex items-center gap-2 shadow-sm"
+          onClick={() => navigate(-1)}
+        >
+          <BsArrowLeft size={20} /> Back to Tickets
+        </Button>
+
+        {/* Ticket Header */}
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-2xl font-semibold text-gray-900">{ticket.subject}</h1>
+              <div className="mt-2 flex items-center space-x-4">
+                <div className="flex items-center text-sm text-gray-500">
+                  <BsCalendar className="mr-2" />
+                  Created: {ticket.createdAt && new Date(ticket.createdAt).toLocaleString()}
+                </div>
+                <div className="flex items-center text-sm text-gray-500">
+                  <BsDiagram3 className="mr-2" />
+                  Unit: {ticket.assignedUnit || 'Not assigned'}
+                </div>
+                <div className="flex items-center text-sm text-gray-500">
+                  <BsPersonBadge className="mr-2" />
+                  Assigned: {ticket.assignedTo?.name || 'Not assigned'}
+                </div>
+              </div>
+            </div>
+            <div className="flex space-x-3">
+              <span className={`px-3 py-1 rounded-full text-sm font-medium 
+                ${ticket.type === 'incident' ? 'bg-red-100 text-red-800' : 
+                  ticket.type === 'request' ? 'bg-blue-100 text-blue-800' :
+                  'bg-gray-100 text-gray-800'}`}>
+                <BsTag className="mr-1" />
+                {ticket.type}
+              </span>
+              <span className={`px-3 py-1 rounded-full text-sm font-medium 
+                ${ticket.status === 'open' ? 'bg-red-100 text-red-800' :
+                  ticket.status === 'in progress' ? 'bg-yellow-100 text-yellow-800' :
+                  ticket.status === 'resolved' ? 'bg-green-100 text-green-800' :
+                  ticket.status === 'closed' ? 'bg-gray-100 text-gray-800' :
+                  'bg-blue-100 text-blue-800'}`}>
+                <BsInfoCircle className="mr-1" />
+                {ticket.status}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-3 gap-6">
+          {/* Message History and Reply Section */}
+          <div className="col-span-2 space-y-6">
+            {/* Ticket Description */}
+            {ticket.description && (
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h2 className="text-lg font-semibold mb-4">Initial Request</h2>
+                <div className="prose prose-sm max-w-none">
+                  <p className="text-gray-700">{ticket.description}</p>
+                </div>
+                {ticket.attachments && ticket.attachments.length > 0 && (
+                  <div className="mt-4">
+                    <h5 className="font-semibold mb-2 flex items-center gap-2">
+                      <BsImage className="text-blue-400" /> Attachments
+                    </h5>
+                    <div className="flex flex-wrap gap-3">
+                      {ticket.attachments.map((url, idx) => (
+                        <a
+                          key={idx}
+                          href={getAttachmentUrl(url)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block"
+                        >
+                          {url.match(/\.(jpg|jpeg|png)$/i) ? (
+                            <img
+                              src={getAttachmentUrl(url)}
+                              alt={`attachment-${idx}`}
+                              className="w-20 h-20 object-cover rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                              onClick={() => handleAttachmentClick(getAttachmentUrl(url))}
+                            />
+                          ) : (
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">
+                              📎 {url.split('/').pop()}
+                            </span>
+                          )}
+                        </a>
+                      ))}
                     </div>
-                    <div className="mb-3 flex items-center gap-2">
-                      <span className="font-semibold text-gray-600 flex items-center gap-2"><BsCalendar /> Opened:</span>
-                      <span>{ticket.createdAt && new Date(ticket.createdAt).toLocaleString()}</span>
-                    </div>
-                    <div className="mb-3 flex items-center gap-2">
-                      <span className="font-semibold text-gray-600 flex items-center gap-2"><BsDiagram3 /> Assigned Unit:</span>
-                      <Badge bg="secondary" className="text-capitalize px-3 py-2 rounded-xl flex items-center gap-1">
-                        <BsDiagram3 className="me-1" />
-                        {ticket.assignedUnit || '—'}
-                      </Badge>
-                    </div>
-                    <div className="mb-3 flex items-center gap-2">
-                      <span className="font-semibold text-gray-600 flex items-center gap-2"><BsPersonBadge /> Assigned To:</span>
-                      <Badge bg="info" className="text-capitalize px-3 py-2 rounded-xl flex items-center gap-1">
-                        <BsPersonBadge className="me-1" />
-                        {ticket.assignedTo && typeof ticket.assignedTo === 'object' && ticket.assignedTo.name
-                          ? ticket.assignedTo.name
-                          : '—'}
-                      </Badge>
-                    </div>
-                    <div className="mb-3 flex items-center gap-2">
-                      <span className="font-semibold text-gray-600 flex items-center gap-2"><BsInfoCircle /> Status:</span>
-                      <span className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl border font-semibold text-base transition ${statusBg[ticket.status] || 'bg-gray-100 text-gray-700 border-gray-300'}`}> <BsInfoCircle /> {ticket.status}</span>
-                    </div>
-                    <div className="mb-3 flex items-center gap-2">
-                      <span className="font-semibold text-gray-600 flex items-center gap-2"><BsTag /> Type:</span>
-                      <Badge bg="info" text="dark" className="text-capitalize px-3 py-2 rounded-xl flex items-center gap-1"><BsTag />{ticket.type}</Badge>
-                    </div>
-                  </Col>
-                  <Col xs={12} md={4} className="d-flex align-items-center justify-content-md-end justify-content-start mt-3 mt-md-0">
-                    {ticket.status === "open" && (
-                      <Button
-                        variant="danger"
-                        onClick={handleCloseTicket}
-                        disabled={closing}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg shadow hover:scale-105 hover:shadow-lg transition-all duration-200 animate-pop"
-                      >
-                        <BsXCircle className="me-2" size={22} />
-                        {closing ? "Closing..." : "Close Ticket"}
-                      </Button>
-                    )}
-                  </Col>
-                </Row>
-                <hr className="my-5 border-blue-200 animate-fade-in" />
-                <Row>
-                  <Col>
-                    {ticket.attachments && ticket.attachments.length > 0 && (
-                      <div className="mb-4">
-                        <h5 className="font-semibold mb-2 flex items-center gap-2">
-                          <BsImage className="text-blue-400" /> Attachments
-                        </h5>
-                        <div className="flex flex-wrap gap-3">
-                          {ticket.attachments.map((url, idx) => (
-                            <a
-                              key={idx}
-                              href={getAttachmentUrl(url)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-block"
-                            >
-                              {url.match(/\.(jpg|jpeg|png)$/i) ? (
-                                <img
-                                  src={getAttachmentUrl(url)}
-                                  alt={`attachment-${idx}`}
-                                  style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
-                                  className="hover:scale-105 transition"
-                                />
-                              ) : (
-                                <span className="px-3 py-2 bg-gray-100 rounded shadow text-blue-700 font-semibold hover:bg-blue-50 transition">
-                                  {url.split('/').pop()}
-                                </span>
-                              )}
-                            </a>
-                          ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Message History */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold mb-4 flex items-center justify-between">
+                Message History
+                <span className="text-sm text-gray-500">{messages.length} messages</span>
+              </h2>
+              <div className="space-y-4">
+                {messages.map((message, index) => (
+                  <div key={index} className={`p-4 rounded-lg ${
+                    message.sender === 'Admin' ? 'bg-green-50' : 'bg-blue-50'
+                  }`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          message.sender === 'Admin' ? 'bg-green-500' : 'bg-blue-500'
+                        } text-white font-medium`}>
+                          {message.sender === 'Admin' ? 'A' : 'U'}
+                        </div>
+                        <div className="ml-3">
+                          <p className="font-medium">{message.sender}</p>
+                          <p className="text-sm text-gray-500">{new Date(message.date).toLocaleString()}</p>
                         </div>
                       </div>
+                      {message.sender === 'User' && message.authorId === currentUserId && (
+                        <button
+                          onClick={() => handleDeleteMessage(message._id)}
+                          className="text-red-500 hover:text-red-700 text-sm"
+                        >
+                          <BsXCircle />
+                        </button>
+                      )}
+                    </div>
+                    <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: message.message }} />
+                    {message.attachments?.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {message.attachments.map((attachment, i) => (
+                          <a 
+                            key={i} 
+                            href={getAttachmentUrl(attachment)} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          >
+                            📎 Download
+                          </a>
+                        ))}
+                      </div>
                     )}
-                    <MessageHistory
-                      msg={messages}
-                      description={ticket.description}
-                      image={ticket.image}
-                      currentUserRole="user"
-                      currentUserId={currentUserId}
-                      onAttachmentClick={handleAttachmentClick}
-                      onDeleteMessage={(messageId) => {
-                        const message = messages.find(m => m._id === messageId);
-                        if (message && message.authorId === currentUserId) {
-                          handleDeleteMessage(messageId);
-                        } else {
-                          toast.error("You can only delete your own messages.");
-                        }
-                      }}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Reply Editor */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold mb-4">Send Message</h2>
+              <Form onSubmit={handleUserReply}>
+                <Form.Group className="mb-4">
+                  <Editor
+                    value={reply}
+                    onTextChange={(e) => setReply(e.htmlValue)}
+                    style={{ height: '200px' }}
+                  />
+                </Form.Group>
+                <Form.Group className="mb-4">
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                    <Form.Control
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageChange}
+                      disabled={uploading}
+                      className="hidden"
+                      id="file-upload"
                     />
-                  </Col>
-                </Row>
-                <hr className="my-5 border-blue-200 animate-fade-in" />
-                <Row>
-                  <Col>
-                    <Card className="shadow-sm mt-4 animate-pop" style={{ borderRadius: 14 }}>
-                      <Card.Body>
-                        <Form onSubmit={handleUserReply} className="space-y-4">
-                          <Form.Group className="mb-4">
-                            <Form.Label className="font-semibold flex items-center gap-2"><BsSend className="text-blue-400" /> Reply</Form.Label>
-                            <Editor
-                              value={reply}
-                              onTextChange={(e) => setReply(e.htmlValue)}
-                              style={{ height: '180px', width: '100%' }}
-                            />
-                          </Form.Group>
-                          <Form.Group className="mb-4">
-                            <Form.Label className="font-semibold flex items-center gap-2"><BsImage className="text-blue-400" /> Attach Image</Form.Label>
-                            <Form.Control
-                              type="file"
-                              accept="image/*"
-                              multiple
-                              onChange={handleImageChange}
-                              disabled={uploading}
-                            />
-                            {imageFiles.length > 0 && (
-                              <div className="mt-2 text-green-600 flex items-center gap-2 animate-fade-in">
-                                <BsImage /> {imageFiles.length} files selected
-                              </div>
-                            )}
-                          </Form.Group>
-                          <div className="d-grid">
-                            <Button
-                              type="submit"
-                              variant="primary"
-                              disabled={!reply || !reply.trim() || uploading}
-                              className="flex items-center gap-2 px-4 py-2 rounded-lg shadow hover:scale-105 hover:shadow-lg transition-all duration-200 animate-pop"
-                            >
-                              {uploading ? <span className="flex items-center gap-2"><BsSend className="animate-spin" /> Sending...</span> : <span className="flex items-center gap-2"><BsSend /> Send Reply</span>}
-                            </Button>
-                          </div>
-                        </Form>
-                      </Card.Body>
-                    </Card>
-                  </Col>
-                </Row>
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
-      </Container>
-      {/* Image Zoom Modal */}
-      <Modal show={showModal} onHide={() => setShowModal(false)} centered size="lg">
-        <Modal.Body className="d-flex flex-column align-items-center justify-content-center p-0" style={{ background: '#222', borderRadius: 16 }}>
-          {modalImage && (
-            <img
-              src={modalImage}
-              alt="attachment zoom"
-              style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain', borderRadius: 12, boxShadow: '0 4px 24px rgba(0,0,0,0.25)' }}
-              className="animate-fade-in"
-            />
-          )}
-        </Modal.Body>
-      </Modal>
-      <style>{`
-        @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        .animate-pop { animation: popIn 0.5s cubic-bezier(.68,-0.55,.27,1.55); }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .animate-fade-in { animation: fadeIn 0.5s; }
-      `}</style>
+                    <label htmlFor="file-upload" className="cursor-pointer">
+                      <div className="text-blue-600 hover:text-blue-700">
+                        <BsImage className="mx-auto mb-2" size={24} />
+                        Click to upload images
+                      </div>
+                      <p className="text-sm text-gray-500 mt-1">or drag and drop files here</p>
+                      <p className="text-xs text-gray-400">PNG, JPG up to 10MB</p>
+                    </label>
+                    {imageFiles.length > 0 && (
+                      <div className="mt-2 text-green-600 flex items-center justify-center gap-2">
+                        <BsImage /> {imageFiles.length} files selected
+                      </div>
+                    )}
+                  </div>
+                </Form.Group>
+                <div className="flex justify-end">
+                  <Button
+                    type="submit"
+                    variant="success"
+                    disabled={!reply || !reply.trim() || uploading}
+                    className="flex items-center gap-2 px-4 py-2"
+                  >
+                    <BsSend />
+                    {uploading ? "Sending..." : "Send Reply"}
+                  </Button>
+                </div>
+              </Form>
+            </div>
+          </div>
+
+          {/* Right Sidebar */}
+          <div className="space-y-6">
+            {/* Quick Actions */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
+              <div className="space-y-3">
+                {ticket.status === "open" && (
+                  <Button
+                    variant="danger"
+                    onClick={handleCloseTicket}
+                    disabled={closing}
+                    className="w-full flex items-center justify-center gap-2"
+                  >
+                    <BsXCircle />
+                    {closing ? "Closing..." : "Close Ticket"}
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Ticket Information */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold mb-4">Ticket Information</h2>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <p className="text-sm text-gray-500">Ticket ID:</p>
+                  <p className="font-medium">{ticket._id}</p>
+                </div>
+                <div className="flex justify-between">
+                  <p className="text-sm text-gray-500">Type:</p>
+                  <p className="font-medium capitalize">{ticket.type}</p>
+                </div>
+                <div className="flex justify-between">
+                  <p className="text-sm text-gray-500">Status:</p>
+                  <p className="font-medium capitalize">{ticket.status}</p>
+                </div>
+                <div className="flex justify-between">
+                  <p className="text-sm text-gray-500">Created:</p>
+                  <p className="font-medium">{new Date(ticket.createdAt).toLocaleDateString()}</p>
+                </div>
+                <div className="flex justify-between">
+                  <p className="text-sm text-gray-500">Last Updated:</p>
+                  <p className="font-medium">{new Date(ticket.updatedAt || ticket.createdAt).toLocaleDateString()}</p>
+                </div>
+                <div className="flex justify-between">
+                  <p className="text-sm text-gray-500">Assigned Unit:</p>
+                  <p className="font-medium">{ticket.assignedUnit || 'Not assigned'}</p>
+                </div>
+                <div className="flex justify-between">
+                  <p className="text-sm text-gray-500">Assigned To:</p>
+                  <p className="font-medium">{ticket.assignedTo?.name || 'Not assigned'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Image Zoom Modal */}
+        <Modal show={showModal} onHide={() => setShowModal(false)} centered size="lg">
+          <Modal.Body className="d-flex flex-column align-items-center justify-content-center p-0" style={{ background: '#222', borderRadius: 16 }}>
+            {modalImage && (
+              <img
+                src={modalImage}
+                alt="attachment zoom"
+                style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain', borderRadius: 12, boxShadow: '0 4px 24px rgba(0,0,0,0.25)' }}
+              />
+            )}
+          </Modal.Body>
+        </Modal>
+      </div>
     </div>
   );
 };

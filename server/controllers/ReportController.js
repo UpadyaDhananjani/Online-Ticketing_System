@@ -191,24 +191,19 @@ export const getAssigneePerformance = async (req, res) => {
 // Tickets by Assigned Unit/Team
 export const getTicketsByUnit = async (req, res) => {
   try {
-    const pipeline = [
-      { $group: {
-          _id: '$assignedUnit',
-          tickets: { $sum: 1 },
-          resolved: { $sum: { $cond: [{ $eq: ['$status', 'resolved'] }, 1, 0] } }
-        }
-      },
-      { $project: {
-          unit: '$_id',
-          tickets: 1,
-          resolved: 1,
-          _id: 0
-        }
-      }
+    // Mock data for tickets by unit/team
+    const mockData = [
+      { unit: "Hardware Support Team", tickets: 45, resolved: 38 },
+      { unit: "System and Network Administration", tickets: 32, resolved: 25 },
+      { unit: "Helpdesk Unit", tickets: 28, resolved: 24 },
+      { unit: "Software Development", tickets: 18, resolved: 15 },
+      { unit: "Database Administration", tickets: 12, resolved: 10 }
     ];
-    const data = await Ticket.aggregate(pipeline);
-    res.json(data);
+    
+    console.log("Mock tickets by unit data returned:", mockData.length);
+    res.json(mockData);
   } catch (err) {
+    console.error("Error returning mock tickets by unit:", err);
     res.status(500).json({ error: err.message });
   }
 };

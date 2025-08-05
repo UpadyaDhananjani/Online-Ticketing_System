@@ -1,4 +1,3 @@
-// client/src/admin/adminTicketReply.jsx
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import { Editor } from 'primereact/editor';
 import { useParams } from "react-router-dom";
@@ -344,7 +343,7 @@ function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-3 gap-6">
-          {/* Message History and Reply Section */}
+          {/* Message/Reply */}
           <div className="col-span-2 space-y-6">
             {/* Message History */}
             <div className="bg-white rounded-lg shadow-sm p-6">
@@ -392,10 +391,10 @@ function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
                     type="submit"
                     variant="success"
                     onClick={handleSubmit}
+                    onClick={handleSubmit}
                     disabled={!reply || !reply.trim() || uploading}
                     className="transition-transform duration-200 hover:scale-105 hover:shadow-lg flex items-center gap-2"
                   >
-                    <i className="bi bi-send-fill mr-1"></i>
                     {uploading ? "Uploading..." : "Send Reply"}
                   </Button>
                 </div>
@@ -403,7 +402,7 @@ function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
             </div>
           </div>
 
-          {/* Right Sidebar */}
+          {/* Sidebar */}
           <div className="space-y-6">
             {/* Quick Actions */}
             <div className="bg-white rounded-lg shadow-sm p-6">
