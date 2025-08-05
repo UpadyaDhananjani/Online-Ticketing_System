@@ -1,9 +1,9 @@
 // client/src/admin/adminTicketReply.jsx
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import { Editor } from 'primereact/editor';
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { toast } from 'react-toastify';
-import { BsArrowRepeat, BsExclamationTriangle, BsPrinter, BsGeoAlt, BsCheckCircle } from "react-icons/bs";
+import { BsArrowRepeat, BsExclamationTriangle, BsPrinter, BsGeoAlt, BsCheckCircle, BsArrowLeft, BsImage } from "react-icons/bs";
 
 import {
     sendTicketReply,
@@ -25,7 +25,8 @@ function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
     const [uploading, setUploading] = useState(false);
     const [localStatus, setLocalStatus] = useState("");
     const [messages, setMessages] = useState([]);
-    const quillRef = useRef(null);
+    const editorRef = useRef(null);
+    const fileInputRef = useRef(null);
 
     const [showReassignDropdown, setShowReassignDropdown] = useState(false);
     const [units, setUnits] = useState([]);
@@ -36,6 +37,7 @@ function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
     const [loadingUsers, setLoadingUsers] = useState(false);
 
     const { id: urlTicketId } = useParams();
+    const navigate = useNavigate();
     const currentTicketId = ticketId || urlTicketId;
 
     useEffect(() => {
@@ -139,9 +141,12 @@ function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
             await sendTicketReply(ticketDetails._id, formData);
             setReply("");
             setImageFiles([]);
-            if (quillRef.current && quillRef.current.getEditor()) {
-                quillRef.current.getEditor().setText('');
+            // Clear the file input
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
             }
+            // Clear the editor content properly for PrimeReact Editor
+            // PrimeReact Editor doesn't have getEditor() method, just set the state to empty
 
             setLocalStatus("in progress");
             if (onStatusChange) onStatusChange("in progress");
@@ -245,15 +250,48 @@ function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
             setLoadingUnits(true);
             try {
                 const res = await getPublicUnits();
-                const data = res.data ?? [];
-                console.log("Units fetched:", data);
-                setUnits(data || []);
+                console.log("Units API response:", res);
+                
+                // Extract units from the API response structure
+                let unitsData = [];
+                if (res.units && Array.isArray(res.units)) {
+                    // Map objects to just the names for the dropdown
+                    unitsData = res.units.map(unit => unit.name || unit._id || unit);
+                } else if (res.data && res.data.units && Array.isArray(res.data.units)) {
+                    unitsData = res.data.units.map(unit => unit.name || unit._id || unit);
+                } else if (Array.isArray(res)) {
+                    unitsData = res;
+                } else if (res.data && Array.isArray(res.data)) {
+                    unitsData = res.data;
+                } else {
+                    console.warn("Unexpected API response format, using fallback units");
+                    unitsData = [
+                        'System and Network Administration',
+                        'Asyhub Unit',
+                        'Statistics Unit',
+                        'Audit Unit',
+                        'Functional Unit',
+                        'Helpdesk Unit'
+                    ];
+                }
+                
+                console.log("Units extracted:", unitsData);
+                setUnits(unitsData);
                 setUsersInUnit([]);
                 setSelectedUnit(null);
             } catch (error) {
                 console.error("Error fetching units:", error);
-                toast.error("Failed to load units for reassign.");
-                setUnits([]);
+                // Use fallback units in case of error
+                const fallbackUnits = [
+                    'System and Network Administration',
+                    'Asyhub Unit',
+                    'Statistics Unit',
+                    'Audit Unit',
+                    'Functional Unit',
+                    'Helpdesk Unit'
+                ];
+                setUnits(fallbackUnits);
+                toast.error("Failed to load units from server, using default units.");
             } finally {
                 setLoadingUnits(false);
             }
@@ -262,23 +300,42 @@ function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
     };
 
     const handleUnitSelect = async (unit) => {
+        console.log("Unit selected:", unit);
         setSelectedUnit(unit);
         setShowReassignDropdown(false);
         setShowUserModal(true);
 
         setLoadingUsers(true);
         try {
-            const res = await getAdminUsersByUnit(unit.name);
-            const usersArray = res.data ?? [];
-            setUsersInUnit(usersArray || []);
-        } catch (error) {
-                console.error("Error loading users for unit:", error);
-                toast.error(`Failed to load users for ${unit.name}.`);
-                setUsersInUnit([]);
-            } finally {
-                setLoadingUsers(false);
+            console.log("Fetching users for unit:", unit);
+            const res = await getAdminUsersByUnit(unit);
+            console.log("Users API response:", res);
+            
+            // Extract users from the API response structure
+            let usersArray = [];
+            if (res.users && Array.isArray(res.users)) {
+                usersArray = res.users;
+            } else if (res.data && res.data.users && Array.isArray(res.data.users)) {
+                usersArray = res.data.users;
+            } else if (Array.isArray(res)) {
+                usersArray = res;
+            } else if (res.data && Array.isArray(res.data)) {
+                usersArray = res.data;
+            } else {
+                console.warn("Unexpected users API response format:", res);
+                usersArray = [];
             }
-        };
+            
+            console.log("Users extracted:", usersArray);
+            setUsersInUnit(usersArray);
+        } catch (error) {
+            console.error("Error loading users for unit:", error);
+            toast.error(`Failed to load users for ${unit}.`);
+            setUsersInUnit([]);
+        } finally {
+            setLoadingUsers(false);
+        }
+    };
 
     const handleUserReassign = async (user) => {
         const isConfirmed = window.confirm(`Are you sure you want to reassign this ticket to ${user.name} (${user.email})?`);
@@ -341,6 +398,15 @@ function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
     return (
         <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
+        {/* Back Button */}
+        <button
+          onClick={() => navigate('/admin/tickets')}
+          className="flex items-center px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors duration-200 shadow-sm"
+        >
+          <BsArrowLeft className="w-4 h-4 mr-2" />
+          Back to All Tickets
+        </button>
+
         {/* Ticket Header */}
         <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="flex justify-between items-start">
@@ -380,14 +446,54 @@ function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
         <div className="grid grid-cols-3 gap-6">
           {/* Message History and Reply Section */}
           <div className="col-span-2 space-y-6">
+            {/* Ticket Description */}
+            {ticketDetails?.description && (
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h2 className="text-lg font-semibold mb-4">Initial Request</h2>
+                <div className="prose prose-sm max-w-none">
+                  <p className="text-gray-700">{ticketDetails.description}</p>
+                </div>
+                {ticketDetails.attachments && ticketDetails.attachments.length > 0 && (
+                  <div className="mt-4">
+                    <h5 className="font-semibold mb-2 flex items-center gap-2">
+                      <BsImage className="text-blue-400" /> Initial Attachments
+                    </h5>
+                    <div className="flex flex-wrap gap-3">
+                      {ticketDetails.attachments.map((url, idx) => (
+                        <a
+                          key={idx}
+                          href={`http://localhost:4000${url}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block"
+                        >
+                          {url.match(/\.(jpg|jpeg|png)$/i) ? (
+                            <img
+                              src={`http://localhost:4000${url}`}
+                              alt={`attachment-${idx}`}
+                              className="w-20 h-20 object-cover rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                            />
+                          ) : (
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">
+                              📎 {url.split('/').pop()}
+                            </span>
+                          )}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Message History */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h2 className="text-lg font-semibold mb-4 flex items-center justify-between">
                 Message History
-                <span className="text-sm text-gray-500">{ticketDetails?.messages?.length || 0} messages</span>
+                <span className="text-sm text-gray-500">{messages?.length || 0} messages</span>
               </h2>
               <div className="space-y-4">
-                {ticketDetails?.messages?.map((message, index) => (
+                {messages?.map((message, index) => (
                   <div key={index} className={`p-4 rounded-lg ${
                     message.authorRole === 'admin' ? 'bg-green-50' : 'bg-blue-50'
                   }`}>
@@ -396,7 +502,7 @@ function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                           message.authorRole === 'admin' ? 'bg-green-500' : 'bg-blue-500'
                         } text-white font-medium`}>
-                          {message.author?.name?.charAt(0) || 'U'}
+                          {message.authorRole === 'admin' ? 'A' : (message.author?.name?.charAt(0) || 'U')}
                         </div>
                         <div className="ml-3">
                           <p className="font-medium">{message.author?.name}</p>
@@ -408,7 +514,18 @@ function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
                     {message.attachments?.length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-2">
                         {message.attachments.map((attachment, i) => (
-                          <a key={i} href={attachment} className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-700 hover:bg-gray-200">
+                          <a 
+                            key={i} 
+                            href={`http://localhost:4000${attachment}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            download
+                            className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-700 hover:bg-gray-200"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(`http://localhost:4000${attachment}`, '_blank');
+                            }}
+                          >
                             📎 Download
                           </a>
                         ))}
@@ -426,7 +543,8 @@ function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
                 value={reply}
                 onTextChange={(e) => setReply(e.htmlValue)}
                 className="mb-4"
-                modules={modules}
+                ref={editorRef}
+                style={{ height: '200px' }}
               />
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center mb-4">
                 <input
@@ -434,10 +552,10 @@ function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
                   multiple
                   onChange={handleImageChange}
                   className="hidden"
-                  ref={quillRef}
+                  ref={fileInputRef}
                 />
                 <button
-                  onClick={() => quillRef.current?.click()}
+                  onClick={() => fileInputRef.current?.click()}
                   className="text-blue-600 hover:text-blue-700"
                 >
                   Click to upload
@@ -463,6 +581,7 @@ function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
                   <Button
                     type="submit"
                     variant="success"
+                    onClick={handleSubmit}
                     disabled={!reply || !reply.trim() || uploading}
                     className="transition-transform duration-200 hover:scale-105 hover:shadow-lg flex items-center gap-2"
                   >
@@ -480,18 +599,23 @@ function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
               <div className="space-y-3">
-                <Button className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center justify-center">
+                <Button 
+                  onClick={handleResolve}
+                  disabled={localStatus === "resolved"}
+                  className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center justify-center disabled:opacity-50"
+                >
                   <BsCheckCircle className="mr-2" /> Mark as Resolved
                 </Button>
-                <Button className="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 flex items-center justify-center">
+                <Button 
+                  onClick={() => handleReassignClick(true)}
+                  className="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 flex items-center justify-center"
+                >
                   <BsArrowRepeat className="mr-2" /> Reassign Ticket
                 </Button>
                 <Button className="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center justify-center">
                   ⚡ Escalate Priority
                 </Button>
-                <Button className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center justify-center">
-                  📚 Add to Knowledge Base
-                </Button>
+                
               </div>
             </div>
 
@@ -503,7 +627,12 @@ function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
                   <p className="text-sm text-gray-500">Assigned Unit</p>
                   <div className="flex items-center justify-between mt-1">
                     <p className="font-medium">{ticketDetails?.assignedUnit}</p>
-                    <button className="text-blue-600 text-sm hover:text-blue-700">Change</button>
+                    <button 
+                      onClick={() => handleReassignClick(true)}
+                      className="text-blue-600 text-sm hover:text-blue-700"
+                    >
+                      Change
+                    </button>
                   </div>
                 </div>
                 <div>
@@ -515,7 +644,12 @@ function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
                       </div>
                       <p className="ml-2 font-medium">{ticketDetails?.assignedTo?.name}</p>
                     </div>
-                    <button className="text-blue-600 text-sm hover:text-blue-700">Change</button>
+                    <button 
+                      onClick={() => handleReassignClick(true)}
+                      className="text-blue-600 text-sm hover:text-blue-700"
+                    >
+                      Change
+                    </button>
                   </div>
                 </div>
               </div>
@@ -549,6 +683,107 @@ function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
             </div>
           </div>
         </div>
+
+        {/* Reassign Dropdown Modal */}
+        {showReassignDropdown && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold mb-4">Select Unit for Reassignment</h3>
+              
+              {/* Debug information */}
+              <div className="mb-4 p-2 bg-gray-100 rounded text-sm">
+                <strong>Debug:</strong> Units count: {units.length} | 
+                Loading: {loadingUnits ? 'Yes' : 'No'}
+                {units.length > 0 && (
+                  <div className="mt-1">
+                    Units: {JSON.stringify(units)}
+                  </div>
+                )}
+              </div>
+              
+              {loadingUnits ? (
+                <div className="text-center py-4">Loading units...</div>
+              ) : units.length === 0 ? (
+                <div className="text-center py-4">
+                  <p className="text-red-500">No units available</p>
+                  <p className="text-sm text-gray-500 mt-1">Please check the API connection</p>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {units.map((unit, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleUnitSelect(unit)}
+                      className="w-full text-left p-3 hover:bg-gray-100 border rounded-md transition-colors"
+                    >
+                      {unit}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className="flex justify-end mt-4 space-x-2">
+                <button
+                  onClick={() => setShowReassignDropdown(false)}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* User Selection Modal */}
+        {showUserModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold mb-4">
+                Select User from {selectedUnit}
+              </h3>
+              {loadingUsers ? (
+                <div className="text-center py-4">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="sr-only">Loading users...</span>
+                  </div>
+                  <p className="mt-2">Loading users...</p>
+                </div>
+              ) : usersInUnit.length === 0 ? (
+                <div className="text-center py-4">
+                  <p className="text-gray-500">No users found in this unit.</p>
+                  <p className="text-sm text-gray-400 mt-1">Try selecting a different unit.</p>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {usersInUnit.map((user) => (
+                    <button
+                      key={user._id}
+                      onClick={() => handleUserReassign(user)}
+                      className="w-full text-left p-3 hover:bg-gray-100 border rounded-md transition-colors"
+                    >
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-medium mr-3">
+                          {user.name?.charAt(0) || 'U'}
+                        </div>
+                        <div>
+                          <p className="font-medium">{user.name}</p>
+                          <p className="text-sm text-gray-500">{user.email}</p>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className="flex justify-end mt-4 space-x-2">
+                <button
+                  onClick={handleUserModalClose}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
     );

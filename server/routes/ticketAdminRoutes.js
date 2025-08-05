@@ -12,7 +12,8 @@ import {
   reassignTicket,
   getAdminTicketById,
   getAdminTicketsSummary,
-   getRecentTickets
+  getRecentTickets,
+  getAdminUsersByUnit
 } from '../controllers/ticketAdminController.js';
 
 import {
@@ -56,6 +57,9 @@ router.get('/summary', getAdminTicketsSummary);
 
 // Get all tickets for admin dashboard
 router.get('/', getAllTickets);
+
+// Get users by unit for reassignment
+router.get('/users/:unit', getAdminUsersByUnit);
 
 // Get a single ticket by ID (admin only)
 router.get('/:id', getAdminTicketById);

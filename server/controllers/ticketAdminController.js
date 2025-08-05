@@ -1,13 +1,36 @@
 // server/controllers/ticketAdminController.js
 
 import Ticket from '../models/ticketModel.js';
-import userModel from '../models/userModel.js'; // Assuming userModel is needed for populating assignedTo/user details
+import User from '../models/userModel.js'; // Correct import name
 
 // Helper to normalize status for consistent filtering/display
 const normalizeStatus = (status) => {
     if (!status) return null;
-    return status.toLowerCase().replace(/-/g, ' ');
+    return status.toLowerCase().trim();
 };
+
+// @desc    Get users by unit for admin (for reassignment)
+// @route   GET /api/admin/tickets/users/:unit
+// @access  Admin
+export const getAdminUsersByUnit = async (req, res) => {
+    try {
+        const { unit } = req.params;
+        console.log("Admin fetching users for unit:", unit);
+        
+        // Decode the unit name in case it's URL encoded
+        const decodedUnit = decodeURIComponent(unit);
+        
+        const users = await User.find({ unit: decodedUnit }).select('_id name email unit');
+        console.log("Found users for admin:", users);
+        
+        res.json({ success: true, users });
+    } catch (error) {
+        console.error("Error fetching users by unit for admin:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+
 
 // @desc    Get all tickets for admin dashboard
 // @route   GET /api/admin/tickets
@@ -62,12 +85,7 @@ export const addAdminReply = async (req, res) => {
     try {
         const { id } = req.params;
         const { content } = req.body;
-        const attachments = req.files ? req.files.map(f => ({
-            filename: f.originalname,
-            url: `/uploads/${f.filename}`, // Assuming uploads are served statically
-            mimetype: f.mimetype,
-            size: f.size
-        })) : [];
+        const attachments = req.files ? req.files.map(f => `/uploads/${f.filename}`) : [];
 
         const ticket = await Ticket.findById(id);
         if (!ticket) {
@@ -84,12 +102,16 @@ export const addAdminReply = async (req, res) => {
             authorRole: 'admin',
             content,
             attachments,
-            timestamp: new Date()
+            date: new Date()
         });
 
-        // If ticket was resolved, mark it in-progress again when admin replies
-        if (ticket.status === 'resolved' || ticket.status === 'closed') {
+        // Update ticket status when admin replies:
+        // - If ticket is 'open', change to 'in progress' (admin started working on it)
+        // - If ticket was 'resolved' or 'closed', change to 'in progress' (admin reopened work)
+        const previousStatus = ticket.status;
+        if (ticket.status === 'open' || ticket.status === 'resolved' || ticket.status === 'closed') {
             ticket.status = 'in progress';
+            console.log(`Ticket ${id} status changed from '${previousStatus}' to 'in progress' due to admin reply`);
         }
         ticket.updatedAt = new Date();
 
@@ -240,25 +262,42 @@ export const reassignTicket = async (req, res) => {
             return res.status(400).json({ message: 'User ID for reassignment is required.' });
         }
 
-        const newAssignee = await userModel.findById(userId);
+        const newAssignee = await User.findById(userId);
         if (!newAssignee) {
             return res.status(404).json({ message: 'New assignee user not found.' });
+        }
+
+        // Get the current ticket to save previous assignment data
+        const currentTicket = await Ticket.findById(id);
+        if (!currentTicket) {
+            return res.status(404).json({ message: 'Ticket not found.' });
         }
 
         const ticket = await Ticket.findByIdAndUpdate(
             id,
             {
+                // Store previous assignment for tracking
+                previousAssignedTo: currentTicket.assignedTo,
+                previousAssignedUnit: currentTicket.assignedUnit,
+                // Set new assignment
                 assignedTo: newAssignee._id,
-                assignedUnit: newAssignee.unit, // Update unit based on new assignee
-                reassigned: true, // Mark as reassigned
+                assignedUnit: newAssignee.unit,
+                // Mark as reassigned and update timestamp
+                reassigned: true,
                 updatedAt: new Date()
             },
             { new: true }
-        ).populate('user', 'name email').populate('assignedTo', 'name email');
+        ).populate('user', 'name email')
+         .populate('assignedTo', 'name email')
+         .populate('previousAssignedTo', 'name email');
 
         if (!ticket) {
             return res.status(404).json({ message: 'Ticket not found.' });
         }
+
+        console.log(`Ticket ${id} reassigned from ${currentTicket.assignedUnit || 'unassigned'} to ${newAssignee.unit}`);
+        console.log(`Previous assignee: ${currentTicket.assignedTo || 'none'}, New assignee: ${newAssignee._id}`);
+
         res.status(200).json(ticket);
     } catch (error) {
         console.error("Error reassigning ticket:", error);
@@ -271,19 +310,19 @@ export const reassignTicket = async (req, res) => {
 // @access  Admin
 export const getAdminTicketsSummary = async (req, res) => {
     try {
-        const openTickets = await Ticket.countDocuments({ status: 'open' });
-        const inProgressTickets = await Ticket.countDocuments({ status: 'in progress' });
-        const resolvedTickets = await Ticket.countDocuments({ status: 'resolved' });
+        const openCount = await Ticket.countDocuments({ status: 'open' });
+        const inProgressCount = await Ticket.countDocuments({ status: 'in progress' });
+        const resolvedCount = await Ticket.countDocuments({ status: 'resolved' });
 
-    return res.json({
-      open: openCount,
-      inProgress: inProgressCount,
-      resolved: resolvedCount,
-    });
-  } catch (err) {
-    console.error("Error fetching admin ticket summary:", err);
-    return res.status(500).json({ error: 'Failed to fetch ticket summary from server.' });
-  }
+        return res.json({
+            open: openCount,
+            inProgress: inProgressCount,
+            resolved: resolvedCount,
+        });
+    } catch (err) {
+        console.error("Error fetching admin ticket summary:", err);
+        return res.status(500).json({ error: 'Failed to fetch ticket summary from server.' });
+    }
 };
 
 

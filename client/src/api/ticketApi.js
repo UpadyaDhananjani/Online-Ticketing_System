@@ -236,7 +236,7 @@ export const deleteAdminTicket = async (ticketId) => {
 export const reassignTicket = async (ticketId, userId) => {
     try {
         const response = await axiosInstance.patch(`/admin/tickets/${ticketId}/assign`, { userId });
-        return response.data; // Explicitly return data
+        return response; // Return full response for consistency
     } catch (error) {
         throw error;
     }
@@ -267,7 +267,7 @@ export const getUsersByUnit = async (unitName) => {
 
 export const getAdminUsersByUnit = async (unitName) => {
     try {
-        const response = await axiosInstance.get(`/admin/users?unit=${encodeURIComponent(unitName)}`);
+        const response = await axiosInstance.get(`/admin/tickets/users/${encodeURIComponent(unitName)}`);
         return response.data; // Explicitly return data
     } catch (error) {
         throw error;
@@ -335,10 +335,11 @@ export const getTicketTypeDistribution = async () => {
 
 export const getTicketsByUnit = async () => {
     try {
-        const response = await axiosInstance.get(`/admin/tickets_by_unit/${encodeURIComponent(unitName)}`);
-        console.log(response.data);
-        return response.data; // Explicitly return data
+        const response = await axiosInstance.get('/admin/tickets/tickets_by_unit');
+        console.log("Tickets by Unit API Response:", response.data);
+        return response; // Return full response for consistency
     } catch (error) {
+        console.error("Tickets by Unit API Error:", error);
         throw error;
     }
 };
