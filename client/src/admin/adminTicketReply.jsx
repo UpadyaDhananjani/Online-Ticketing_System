@@ -391,7 +391,7 @@ function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
                     type="submit"
                     variant="success"
                     onClick={handleSubmit}
-                    onClick={handleSubmit}
+
                     disabled={!reply || !reply.trim() || uploading}
                     className="transition-transform duration-200 hover:scale-105 hover:shadow-lg flex items-center gap-2"
                   >
