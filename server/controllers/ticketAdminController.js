@@ -139,15 +139,18 @@ export const addAdminReply = async (req, res) => {
 export const deleteMessage = async (req, res) => {
     try {
         const { ticketId, messageId } = req.params;
+        console.log(`Delete message request received - TicketId: ${ticketId}, MessageId: ${messageId}`);
 
         const ticket = await Ticket.findById(ticketId);
         if (!ticket) {
-            return res.status(404).json({ message: 'Ticket not found.' });
+            console.log(`Ticket not found: ${ticketId}`);
+            return res.status(404).json({ success: false, message: 'Ticket not found.' });
         }
 
         const messageIndex = ticket.messages.findIndex(m => m._id.toString() === messageId);
         if (messageIndex === -1) {
-            return res.status(404).json({ message: 'Message not found.' });
+            console.log(`Message not found: ${messageId} in ticket: ${ticketId}`);
+            return res.status(404).json({ success: false, message: 'Message not found.' });
         }
 
         // Optional: Add logic to check if admin is allowed to delete this specific message
@@ -159,7 +162,8 @@ export const deleteMessage = async (req, res) => {
         ticket.updatedAt = new Date();
         await ticket.save();
 
-        res.status(200).json({ message: 'Message deleted successfully.' });
+        console.log(`Message ${messageId} deleted successfully from ticket ${ticketId}`);
+        res.status(200).json({ success: true, message: 'Message deleted successfully.' });
     } catch (error) {
         console.error("Error deleting message:", error);
         res.status(500).json({ message: 'Server error deleting message.' });
@@ -328,7 +332,11 @@ export const getAdminTicketsSummary = async (req, res) => {
 
 export const getRecentTickets = async (req, res) => {
   try {
-    const tickets = await Ticket.find().sort({ createdAt: -1 }).limit(10);
+    const tickets = await Ticket.find()
+      .populate('user', 'name email')
+      .populate('assignedTo', 'name email')
+      .sort({ createdAt: -1 })
+      .limit(10);
 
     console.log("Recent tickets fetched:", tickets.length);
     res.json(tickets);

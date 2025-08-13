@@ -195,6 +195,7 @@ function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
     setLocalStatus("resolved");
     try {
       await resolveTicket(ticketDetails._id);
+      
       if (onStatusChange) onStatusChange("resolved");
       const res = await getAdminTicketById(ticketDetails._id);
       if (res) { // Just check if res exists
@@ -218,8 +219,12 @@ function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
   };
 
   const handleDeleteMessage = async (messageId) => {
+    console.log("Delete button clicked for message:", messageId);
     const isConfirmed = window.confirm("Are you sure you want to delete this message? This action cannot be undone.");
-    if (!isConfirmed) return;
+    if (!isConfirmed) {
+      console.log("Delete cancelled by user");
+      return;
+    }
 
     const previousMessages = messages;
     setMessages(prev => prev.filter(m => m._id !== messageId));
@@ -227,8 +232,10 @@ function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
     try {
       console.log(`Attempting to delete message: ${messageId} from ticket: ${ticketDetails._id}`);
       const res = await deleteAdminMessage(ticketDetails._id, messageId);
-      if (res && res.data && res.data.success) {
-        toast.success(res.data.message || "Message deleted successfully.");
+      console.log("Delete message API response:", res);
+      
+      if (res && res.success) {
+        toast.success(res.message || "Message deleted successfully.");
         const updatedRes = await getAdminTicketById(ticketDetails._id);
         if (updatedRes) { // Just check if updatedRes exists
           const updatedTicket = updatedRes; // Directly use updatedRes
@@ -243,8 +250,9 @@ function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
           }
         }
       } else {
+        console.error("Delete failed with response:", res);
         setMessages(previousMessages);
-        toast.error(res?.data?.message || "Failed to delete message.");
+        toast.error(res?.message || "Failed to delete message.");
       }
     } catch (err) {
       setMessages(previousMessages);
@@ -523,17 +531,41 @@ function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
                     <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: message.content }} />
                     {message.attachments?.length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-2">
-                        {message.attachments.map((attachment, i) => (
-                          <a 
-                            key={i} 
-                            href={`http://localhost:4000${attachment.url}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-700 hover:bg-gray-200"
-                          >
-                            📎 {attachment.fileName}
-                          </a>
-                        ))}
+                        {message.attachments.map((attachment, i) => {
+                          // Handle both string paths and object formats
+                          let attachmentUrl, attachmentName;
+                          
+                          if (typeof attachment === 'string') {
+                            attachmentUrl = attachment;
+                            attachmentName = attachmentUrl.split('/').pop();
+                          } else if (attachment && typeof attachment === 'object') {
+                            attachmentUrl = attachment.url;
+                            attachmentName = attachment.fileName || attachment.originalName || 'Download';
+                          } else {
+                            console.warn('Unknown attachment format:', attachment);
+                            return null;
+                          }
+                          
+                          // Ensure URL starts with /
+                          if (attachmentUrl && !attachmentUrl.startsWith('/')) {
+                            attachmentUrl = '/' + attachmentUrl;
+                          }
+                          
+                          const fullUrl = `http://localhost:4000${attachmentUrl}`;
+                          
+                          return (
+                            <a 
+                              key={i} 
+                              href={fullUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors hover:shadow-sm"
+                              title={`Open ${attachmentName}`}
+                            >
+                              📎 {attachmentName}
+                            </a>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
