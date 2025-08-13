@@ -191,19 +191,61 @@ export const getAssigneePerformance = async (req, res) => {
 // Tickets by Assigned Unit/Team
 export const getTicketsByUnit = async (req, res) => {
   try {
-    // Mock data for tickets by unit/team
-    const mockData = [
-      { unit: "Hardware Support Team", tickets: 45, resolved: 38 },
-      { unit: "System and Network Administration", tickets: 32, resolved: 25 },
-      { unit: "Helpdesk Unit", tickets: 28, resolved: 24 },
-      { unit: "Software Development", tickets: 18, resolved: 15 },
-      { unit: "Database Administration", tickets: 12, resolved: 10 }
+    // Define all possible units to ensure they all appear in the chart
+    const allUnits = [
+      'System and Network Administration',
+      'Asyhub Unit',
+      'Statistics Unit',
+      'Audit Unit',
+      'Helpdesk Unit',
+      'Functional Unit'
+    ];
+
+    // Query real data from database grouped by assignedUnit
+    const pipeline = [
+      {
+        $group: {
+          _id: '$assignedUnit',
+          tickets: { $sum: 1 },
+          resolved: { 
+            $sum: { 
+              $cond: [{ $eq: ['$status', 'resolved'] }, 1, 0] 
+            } 
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          unit: '$_id',
+          tickets: 1,
+          resolved: 1
+        }
+      }
     ];
     
-    console.log("Mock tickets by unit data returned:", mockData.length);
-    res.json(mockData);
+    const dbData = await Ticket.aggregate(pipeline);
+    
+    // Create a map for quick lookup
+    const dataMap = {};
+    dbData.forEach(item => {
+      dataMap[item.unit] = item;
+    });
+    
+    // Ensure all units are included, even with 0 tickets
+    const completeData = allUnits.map(unit => ({
+      unit: unit,
+      tickets: dataMap[unit]?.tickets || 0,
+      resolved: dataMap[unit]?.resolved || 0
+    }));
+    
+    // Sort by ticket count (highest first)
+    completeData.sort((a, b) => b.tickets - a.tickets);
+    
+    console.log("Complete tickets by unit data returned:", completeData);
+    res.json(completeData);
   } catch (err) {
-    console.error("Error returning mock tickets by unit:", err);
+    console.error("Error fetching tickets by unit:", err);
     res.status(500).json({ error: err.message });
   }
 };

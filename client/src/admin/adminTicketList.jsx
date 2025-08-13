@@ -269,7 +269,9 @@ function TicketList({ refresh }) { // Removed 'onSelect' and 'token' as props
                 <tr>
                   <th className="px-4 py-3">TICKET ID</th>
                   <th className="px-4 py-3">SUBJECT</th>
-                  <th className="px-4 py-3">USER</th>
+                  <th className="px-4 py-3">REQUESTER</th>
+                  <th className="px-4 py-3">ASSIGNED TO</th>
+                  <th className="px-4 py-3">REASSIGNED TO</th>
                   <th className="px-4 py-3">CATEGORY</th>
                   <th className="px-4 py-3">PRIORITY</th>
                   <th className="px-4 py-3">STATUS</th>
@@ -288,6 +290,12 @@ function TicketList({ refresh }) { // Removed 'onSelect' and 'token' as props
                     </td>
                     <td className="px-4 py-3">{ticket.subject}</td>
                     <td className="px-4 py-3">{ticket.user?.name || "N/A"}</td>
+                    <td className="px-4 py-3">
+                      {ticket.assignedUnit || "Unassigned"}
+                    </td>
+                    <td className="px-4 py-3">
+                      {ticket.reassigned && ticket.assignedTo?.name ? ticket.assignedTo.name : "-"}
+                    </td>
                     <td className="px-4 py-3">{ticket.type}</td>
                     <td className="px-4 py-3">
                       <Badge

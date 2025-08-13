@@ -262,10 +262,10 @@ function AdminDashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white dark:bg-slate-700 rounded-lg shadow-md p-6 fade-in dark:border dark:border-slate-600 mb-8">
+      {/* <div className="bg-white dark:bg-slate-700 rounded-lg shadow-md p-6 fade-in dark:border dark:border-slate-600 mb-8">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-slate-200 mb-4">Quick Actions</h3>
         <QuickActions />
-      </div>
+      </div> */}
 
       {/* Recent Tickets Table */}
       <TableSection tickets={tickets} />
