@@ -22,7 +22,9 @@ import {
     getAvgResolutionTime,
     getTicketActivityLogs,
     getTicketStatusDistribution,
-    getTicketTypeDistribution
+    getTicketTypeDistribution,
+    getTicketPriorityDistribution, // merged in
+    getTicketTrends                // merged in
 } from '../controllers/ReportController.js';
 
 import authMiddleware from '../middleware/authMiddleware.js';
@@ -37,8 +39,6 @@ router.use(authorizeRoles('admin'));
 
 // -------------------- Admin Ticket Routes --------------------
 
-
-// Charts and analytics
 // --- REPORT ROUTES ---
 router.get('/reports/chart-image', generateReportChartImage);
 router.get('/reports/pdf', downloadReportPdf);
@@ -46,8 +46,10 @@ router.get('/assignee-performance', getAssigneePerformance);
 router.get('/tickets_by_unit', getTicketsByUnit);
 router.get('/avg-resolution-time', getAvgResolutionTime);
 router.get('/activity-logs', getTicketActivityLogs);
-router.get('/status-distribution', getTicketStatusDistribution);  // Add this route
-router.get('/type-distribution', getTicketTypeDistribution);      // Add this route
+router.get('/status-distribution', getTicketStatusDistribution);
+router.get('/type-distribution', getTicketTypeDistribution);
+router.get('/priority-distribution', getTicketPriorityDistribution);
+router.get('/trends', getTicketTrends);
 router.get('/recent', getRecentTickets); // New route for recent tickets
 
 // Summary widget for dashboard

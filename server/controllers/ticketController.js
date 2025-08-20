@@ -99,76 +99,39 @@ const updateTicket = async (req, res) => {
     }
 };
 
-// @desc    Add a reply to a ticket
-// @route   POST /api/tickets/:id/reply
+// @desc    Get tickets (user sees own, admin sees all)
+// @route   GET /api/tickets
 // @access  Private
-const addUserReply = async (req, res) => {
+const getUserTickets = async (req, res) => {
     try {
-        const { message, authorType } = req.body;
-        const ticket = await Ticket.findById(req.params.id);
-        if (!ticket) {
-            return res.status(404).json({ message: 'Ticket not found' });
-        }
+        const { user } = req;
+        const query = user.isAdmin ? {} : { $or: [{ user: user._id }, { assignedTo: user._id }] };
 
-        const reply = {
-            author: req.user._id,
-            authorType: authorType,
-            message: message,
-            timestamp: new Date()
-        };
-        ticket.messages.push(reply);
-        await ticket.save();
+        const tickets = await Ticket.find(query)
+            .populate('user', 'name email')
+            .populate('assignedTo', 'name email')
+            .sort({ createdAt: -1 });
 
-        if (req.user.isAdmin) {
-            await createNotification(
-                ticket.user,
-                `Admin replied to your ticket: '${ticket.subject}'`,
-                'admin_reply',
-                ticket._id
-            );
-        } else {
-            if (ticket.assignedTo) {
-                await createNotification(
-                    ticket.assignedTo,
-                    `User replied to ticket: '${ticket.subject}'`,
-                    'admin_reply',
-                    ticket._id
-                );
-            }
-        }
-        
-        res.status(200).json(ticket);
+        res.status(200).json(tickets);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-// @desc    Delete a message from a ticket
-// @route   DELETE /api/tickets/:ticketId/messages/:messageId
-// @access  Private
-const deleteUserMessage = async (req, res) => {
+// @desc    Update a ticket's priority
+// @route   PATCH /api/tickets/:id/priority
+// @access  Private (Admin)
+const updateTicketPriority = async (req, res) => {
     try {
-        const { ticketId, messageId } = req.params;
-        const ticket = await Ticket.findById(ticketId);
+        const { priority } = req.body;
+        const ticket = await Ticket.findById(req.params.id);
 
-        if (!ticket) {
-            return res.status(404).json({ message: 'Ticket not found' });
-        }
+        if (!ticket) return res.status(404).json({ message: 'Ticket not found' });
 
-        const messageIndex = ticket.messages.findIndex(m => m._id.toString() === messageId);
-        if (messageIndex === -1) {
-            return res.status(404).json({ message: 'Message not found' });
-        }
-
-        const message = ticket.messages[messageIndex];
-        if (message.author.toString() !== req.user._id.toString()) {
-            return res.status(403).json({ message: 'Not authorized to delete this message' });
-        }
-
-        ticket.messages.splice(messageIndex, 1);
+        ticket.priority = priority;
         await ticket.save();
 
-        res.status(200).json({ message: 'Message deleted successfully' });
+        res.status(200).json({ message: `Priority updated to ${priority}`, ticket });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
