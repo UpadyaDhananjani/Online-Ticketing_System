@@ -25,7 +25,8 @@ const createNotification = async (userId, message, type, ticketId) => {
 const createTicket = async (req, res) => {
     try {
         const { subject, type, description, priority, assignedUnit } = req.body;
-        const attachments = req.files.map(file => file.path);
+        const attachments = req.files ? req.files.map(file => file.path) : [];
+
         const newTicket = new Ticket({
             user: req.user._id,
             subject,
@@ -38,6 +39,7 @@ const createTicket = async (req, res) => {
         });
 
         const savedTicket = await newTicket.save();
+
         const admins = await User.find({ isAdmin: true });
         for (const admin of admins) {
             await createNotification(admin._id, `New ticket created: ${subject}`, 'new_ticket', savedTicket._id);
@@ -49,7 +51,7 @@ const createTicket = async (req, res) => {
     }
 };
 
-// @desc    Update a ticket (general update)
+// @desc    Update a ticket
 // @route   PUT /api/tickets/:id
 // @access  Private
 const updateTicket = async (req, res) => {
@@ -59,24 +61,29 @@ const updateTicket = async (req, res) => {
             return res.status(404).json({ message: 'Ticket not found' });
         }
 
-        const { status, assignedTo, assignedUnit } = req.body;
+        const { subject, description, status, assignedTo, assignedUnit } = req.body;
         const originalAssignedTo = ticket.assignedTo?.toString();
 
+        if (subject) ticket.subject = subject;
+        if (description) ticket.description = description;
         if (status) ticket.status = status;
         if (assignedTo) ticket.assignedTo = assignedTo;
         if (assignedUnit) ticket.assignedUnit = assignedUnit;
+        ticket.updatedAt = Date.now();
 
         const updatedTicket = await ticket.save();
 
-        if (assignedTo && originalAssignedTo !== assignedTo) {
+        // Notify old assignee if reassigned
+        if (assignedTo && originalAssignedTo && originalAssignedTo !== assignedTo) {
             await createNotification(
                 originalAssignedTo,
-                `Ticket '${updatedTicket.subject}' has been reassigned to a new user.`,
+                `Ticket '${updatedTicket.subject}' has been reassigned to another user.`,
                 'reassigned',
                 updatedTicket._id
             );
         }
 
+        // Notify user if closed/resolved
         if (status === 'resolved' || status === 'closed') {
             await createNotification(
                 updatedTicket.user,
@@ -167,43 +174,6 @@ const deleteUserMessage = async (req, res) => {
     }
 };
 
-// @desc    Update a ticket's priority
-// @route   PATCH /api/tickets/:id/priority
-// @access  Private (Admin)
-const updateTicketPriority = async (req, res) => {
-    try {
-        const { priority } = req.body;
-        const ticket = await Ticket.findById(req.params.id);
-
-        if (!ticket) {
-            return res.status(404).json({ message: 'Ticket not found' });
-        }
-
-        ticket.priority = priority;
-        await ticket.save();
-
-        res.status(200).json({ message: `Priority updated to ${priority}`, ticket });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
-
-// @desc    Get tickets for a user or all tickets for admin
-// @route   GET /api/tickets
-// @access  Private
-const getUserTickets = async (req, res) => {
-    try {
-        const { user } = req;
-        const query = user.isAdmin ? {} : { user: user._id };
-        const tickets = await Ticket.find(query)
-            .populate('user', 'name email')
-            .populate('assignedTo', 'name email');
-        res.status(200).json(tickets);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
-
 // @desc    Get a single ticket by ID
 // @route   GET /api/tickets/:id
 // @access  Private
@@ -214,9 +184,8 @@ const getTicketById = async (req, res) => {
             .populate('assignedTo', 'name email')
             .populate('messages.author', 'name email');
 
-        if (!ticket) {
-            return res.status(404).json({ message: 'Ticket not found' });
-        }
+        if (!ticket) return res.status(404).json({ message: 'Ticket not found' });
+
         res.status(200).json(ticket);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -233,6 +202,7 @@ const getRecentTickets = async (req, res) => {
             .limit(10)
             .populate('user', 'name email')
             .populate('assignedTo', 'name email');
+
         res.status(200).json(tickets);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -245,9 +215,8 @@ const getRecentTickets = async (req, res) => {
 const deleteTicket = async (req, res) => {
     try {
         const ticket = await Ticket.findById(req.params.id);
-        if (!ticket) {
-            return res.status(404).json({ message: 'Ticket not found' });
-        }
+        if (!ticket) return res.status(404).json({ message: 'Ticket not found' });
+
         await ticket.remove();
         res.status(200).json({ message: 'Ticket removed' });
     } catch (error) {
@@ -261,12 +230,12 @@ const deleteTicket = async (req, res) => {
 const closeTicket = async (req, res) => {
     try {
         const ticket = await Ticket.findById(req.params.id);
-        if (!ticket) {
-            return res.status(404).json({ message: 'Ticket not found' });
-        }
+        if (!ticket) return res.status(404).json({ message: 'Ticket not found' });
+
         if (ticket.status === 'closed') {
             return res.status(400).json({ message: 'Ticket is already closed' });
         }
+
         ticket.status = 'closed';
         await ticket.save();
 
@@ -289,12 +258,12 @@ const closeTicket = async (req, res) => {
 const reopenTicket = async (req, res) => {
     try {
         const ticket = await Ticket.findById(req.params.id);
-        if (!ticket) {
-            return res.status(404).json({ message: 'Ticket not found' });
-        }
+        if (!ticket) return res.status(404).json({ message: 'Ticket not found' });
+
         if (ticket.status !== 'closed') {
             return res.status(400).json({ message: 'Ticket is not closed' });
         }
+
         ticket.status = 'reopened';
         await ticket.save();
 
@@ -330,7 +299,6 @@ const getTicketSummary = async (req, res) => {
     }
 };
 
-
 export {
     createTicket,
     getUserTickets,
@@ -338,10 +306,8 @@ export {
     closeTicket,
     reopenTicket,
     getTicketById,
-    addUserReply,
     getRecentTickets,
     deleteTicket,
-    deleteUserMessage,
     getTicketSummary,
-    updateTicketPriority, // <-- Add this to the export list
+    updateTicketPriority
 };

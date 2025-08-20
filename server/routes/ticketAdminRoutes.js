@@ -37,6 +37,7 @@ router.use(authorizeRoles('admin'));
 
 // -------------------- Admin Ticket Routes --------------------
 
+
 // Charts and analytics
 // --- REPORT ROUTES ---
 router.get('/reports/chart-image', generateReportChartImage);
@@ -45,8 +46,8 @@ router.get('/assignee-performance', getAssigneePerformance);
 router.get('/tickets_by_unit', getTicketsByUnit);
 router.get('/avg-resolution-time', getAvgResolutionTime);
 router.get('/activity-logs', getTicketActivityLogs);
-router.get('/status-distribution', getTicketStatusDistribution);
-router.get('/type-distribution', getTicketTypeDistribution);
+router.get('/status-distribution', getTicketStatusDistribution);  // Add this route
+router.get('/type-distribution', getTicketTypeDistribution);      // Add this route
 router.get('/recent', getRecentTickets); // New route for recent tickets
 
 // Summary widget for dashboard

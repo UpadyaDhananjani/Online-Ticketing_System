@@ -75,6 +75,12 @@ function TicketList({ refresh }) { // Removed 'onSelect' and 'token' as props
     getAdminTickets()
       .then((res) => {
         const fetchedTickets = res.data ?? [];
+        console.log("AdminTicketList - All fetched tickets:", fetchedTickets);
+        
+        // Debug reassigned tickets specifically
+        const reassignedTickets = fetchedTickets.filter(t => t.reassigned);
+        console.log("AdminTicketList - Reassigned tickets:", reassignedTickets);
+        
         setTickets(fetchedTickets);
         setLoading(false);
       })
@@ -267,14 +273,16 @@ function TicketList({ refresh }) { // Removed 'onSelect' and 'token' as props
             >
               <thead>
                 <tr>
-                  <th className="px-4 py-3">TICKET ID</th>
                   <th className="px-4 py-3">SUBJECT</th>
+                  <th className="px-4 py-3">TYPE</th>
+                  <th className="px-4 py-3">ASSIGNED UNIT</th>
                   <th className="px-4 py-3">REQUESTER</th>
                   <th className="px-4 py-3">ASSIGNED TO</th>
-                  <th className="px-4 py-3">REASSIGNED TO</th>
-                  <th className="px-4 py-3">CATEGORY</th>
                   <th className="px-4 py-3">PRIORITY</th>
+                  <th className="px-4 py-3">REASSIGNED UNIT</th>
+                  <th className="px-4 py-3">REASSIGNED TO</th>
                   <th className="px-4 py-3">STATUS</th>
+                  <th className="px-4 py-3">LAST UPDATE</th>
                 </tr>
               </thead>
               <tbody>
@@ -285,18 +293,11 @@ function TicketList({ refresh }) { // Removed 'onSelect' and 'token' as props
                     style={{ cursor: "pointer" }}
                     className="border-bottom"
                   >
-                    <td className="px-4 py-3 text-secondary">
-                      {`ICT-${String(ticket._id).slice(-4).padStart(3, "0")}`}
-                    </td>
                     <td className="px-4 py-3">{ticket.subject}</td>
-                    <td className="px-4 py-3">{ticket.user?.name || "N/A"}</td>
-                    <td className="px-4 py-3">
-                      {ticket.assignedUnit || "Unassigned"}
-                    </td>
-                    <td className="px-4 py-3">
-                      {ticket.reassigned && ticket.assignedTo?.name ? ticket.assignedTo.name : "-"}
-                    </td>
                     <td className="px-4 py-3">{ticket.type}</td>
+                    <td className="px-4 py-3">{ticket.assignedUnit || "Unassigned"}</td>
+                    <td className="px-4 py-3">{ticket.user?.name || "N/A"}</td>
+                    <td className="px-4 py-3">{ticket.assignedTo?.name || "—"}</td>
                     <td className="px-4 py-3">
                       <Badge
                         bg={priorityStyles[ticket.priority]?.className}
@@ -306,12 +307,21 @@ function TicketList({ refresh }) { // Removed 'onSelect' and 'token' as props
                       </Badge>
                     </td>
                     <td className="px-4 py-3">
+                      {ticket.reassigned && ticket.reassignedUnit ? ticket.reassignedUnit : "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      {ticket.reassigned && ticket.reassignedTo?.name ? ticket.reassignedTo.name : "—"}
+                    </td>
+                    <td className="px-4 py-3">
                       <Badge
                         bg={statusStyles[ticket.status]?.className}
                         style={{ color: statusStyles[ticket.status]?.color }}
                       >
                         {ticket.status}
                       </Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      {new Date(ticket.updatedAt).toLocaleDateString()}
                     </td>
                   </tr>
                 ))}

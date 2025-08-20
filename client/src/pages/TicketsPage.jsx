@@ -3,7 +3,7 @@
 
 import React, { useState, useContext } from 'react';
 import TicketList from '../components/TicketList';
-import { Tabs, Tab } from 'react-bootstrap';
+import { Tabs, Tab, Container } from 'react-bootstrap';
 import { BsSend, BsInbox, BsArrowRepeat, BsBellFill } from 'react-icons/bs';
 import { AppContent } from '../context/AppContext';
 
@@ -15,18 +15,19 @@ function TicketsPage({ token, filter }) {
   const [refresh, setRefresh] = useState(0);
 
   return (
-    <div>
-      <Tabs
-        id="tickets-tabs"
-        activeKey={tabKey}
-        onSelect={k => setTabKey(k)}
-        className="mb-3 custom-tabs"
-        transition
-        mountOnEnter
-        unmountOnExit
-        variant="pills"
-        style={{ maxWidth: 900, margin: '0 auto' }}
-      >
+    <Container className="mt-4">
+      <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+        <Tabs
+          id="tickets-tabs"
+          activeKey={tabKey}
+          onSelect={k => setTabKey(k)}
+          className="mb-3 custom-tabs"
+          transition
+          mountOnEnter
+          unmountOnExit
+          variant="pills"
+          style={{ maxWidth: 900, margin: '0 auto' }}
+        >
         <Tab
           eventKey="created"
           title={
@@ -104,7 +105,8 @@ function TicketsPage({ token, filter }) {
           to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
-    </div>
+      </div>
+    </Container>
   );
 }
 

@@ -484,7 +484,7 @@ function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
         {/* Initial Request Section */}
         {ticketDetails?.description && (
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-lg font-semibold mb-4">Initial Request</h2>
+            <h2 className="text-lg font-semibold mb-4">Description</h2>
             <div className="bg-blue-50 p-4 rounded-lg">
               <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: ticketDetails.description }} />
             </div>
@@ -665,35 +665,75 @@ function TicketReply({ ticketId, onBack, onStatusChange, onTicketUpdate }) {
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h2 className="text-lg font-semibold mb-4">Assignment Details</h2>
               <div className="space-y-4">
+                {/* Original Assignment */}
                 <div>
-                  <p className="text-sm text-gray-500">Assigned Unit</p>
-                  <div className="flex items-center justify-between mt-1">
-                    <p className="font-medium">{ticketDetails?.assignedUnit || 'Asyhub Unit'}</p>
-                    <button 
-                      onClick={() => handleReassignClick(true)}
-                      className="text-blue-600 text-sm hover:text-blue-700"
-                    >
-                      Change
-                    </button>
+                  <p className="text-sm text-gray-500">Original Assigned Unit</p>
+                  <div className="mt-1">
+                    <p className="font-medium">{ticketDetails?.assignedUnit || 'Unassigned'}</p>
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Assigned To</p>
-                  <div className="flex items-center justify-between mt-1">
+                  <p className="text-sm text-gray-500">Original Assigned To</p>
+                  <div className="mt-1">
                     <div className="flex items-center">
                       <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-medium">
                         {ticketDetails?.assignedTo?.name?.charAt(0) || 'N'}
                       </div>
-                      <p className="ml-2 font-medium">{ticketDetails?.assignedTo?.name || 'Nisuu'}</p>
+                      <p className="ml-2 font-medium">{ticketDetails?.assignedTo?.name || 'Unassigned'}</p>
                     </div>
-                    <button 
-                      onClick={() => handleReassignClick(true)}
-                      className="text-blue-600 text-sm hover:text-blue-700"
-                    >
-                      Change
-                    </button>
                   </div>
                 </div>
+
+                {/* Show Change button only if ticket hasn't been reassigned yet */}
+                {!ticketDetails?.reassigned && (
+                  <div className="pt-2">
+                    <button 
+                      onClick={() => handleReassignClick(true)}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors"
+                    >
+                      Reassign Ticket
+                    </button>
+                  </div>
+                )}
+
+                {/* Reassignment Information - Only show if ticket has been reassigned */}
+                {ticketDetails?.reassigned && (
+                  <>
+                    <hr className="my-4" />
+                    <div className="bg-yellow-50 p-3 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-sm font-semibold text-yellow-800">
+                          🔄 Reassigned To
+                        </h3>
+                        <button 
+                          onClick={() => handleReassignClick(true)}
+                          className="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700 transition-colors"
+                        >
+                          Change Assignment
+                        </button>
+                      </div>
+                      <div className="space-y-2">
+                        <div>
+                          <p className="text-sm text-gray-600">Current Unit</p>
+                          <p className="font-medium text-yellow-800">
+                            {ticketDetails?.reassignedUnit || 'Not specified'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Current Assignee</p>
+                          <div className="flex items-center mt-1">
+                            <div className="w-6 h-6 rounded-full bg-yellow-500 text-white flex items-center justify-center font-medium text-xs">
+                              {ticketDetails?.reassignedTo?.name?.charAt(0) || 'U'}
+                            </div>
+                            <p className="ml-2 font-medium text-yellow-800">
+                              {ticketDetails?.reassignedTo?.name || 'Unit assignment only'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 

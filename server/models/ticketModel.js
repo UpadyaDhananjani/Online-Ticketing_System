@@ -90,6 +90,23 @@ const ticketSchema = new Schema({
         ref: 'User', 
         required: false 
     },
+    reassignedTo: { 
+        type: Schema.Types.ObjectId, 
+        ref: 'User', 
+        required: false 
+    },
+    reassignedUnit: {
+        type: String,
+        enum: [
+            'System and Network Administration',
+            'Asyhub Unit',
+            'Statistics Unit',
+            'Audit Unit',
+            'Helpdesk Unit',
+            'Functional Unit'
+        ],
+        required: false
+    },
     previousAssignedUnit: { 
         type: String 
     },
