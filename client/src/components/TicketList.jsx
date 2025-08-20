@@ -3,17 +3,24 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Badge, Button } from 'react-bootstrap';
+import { Badge, Button, Container, Table, Form } from 'react-bootstrap';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { BsTrash } from 'react-icons/bs';
 
 const statusColors = {
-  open: "success",
-  closed: "danger",
-  resolved: "primary",
-  reopened: "warning",
-  "in progress": "info"
+  'open': { className: 'bg-danger-subtle text-danger' },
+  'in progress': { className: 'bg-warning-subtle text-warning' },
+  'resolved': { className: 'bg-success-subtle text-success' },
+  'closed': { className: 'bg-secondary-subtle text-secondary' },
+  'reopened': { className: 'bg-danger-subtle text-danger' }
+};
+
+const priorityColors = {
+  'Critical': { className: 'bg-danger text-white' },
+  'High': { className: 'bg-warning text-dark' },
+  'Medium': { className: 'bg-info text-white' },
+  'Normal': { className: 'bg-secondary text-white' }
 };
 
 function TicketList({ filter, mode = 'created', userId, onOpenReceivedCountChange, refresh }) { 
@@ -68,14 +75,24 @@ function TicketList({ filter, mode = 'created', userId, onOpenReceivedCountChang
   }, [tickets, mode, userId, onOpenReceivedCountChange]);
 
   // Selection logic
+  const toggleSelect = (ticketId) => {
+    setSelected(prev => 
+      prev.includes(ticketId) 
+        ? prev.filter(id => id !== ticketId) 
+        : [...prev, ticketId]
+    );
+  };
+
+  const toggleSelectAll = (checked) => {
+    if (checked) {
+      setSelected(filteredTickets.map(ticket => ticket._id));
+    } else {
+      setSelected([]);
+    }
+  };
+
   const isAllSelected = filteredTickets.length > 0 && selected.length === filteredTickets.length;
-  const toggleSelectAll = () => {
-    if (isAllSelected) setSelected([]);
-    else setSelected(filteredTickets.map(t => t._id));
-  };
-  const toggleSelect = (id) => {
-    setSelected(sel => sel.includes(id) ? sel.filter(x => x !== id) : [...sel, id]);
-  };
+  const isIndeterminate = selected.length > 0 && selected.length < filteredTickets.length;
 
   // Delete selected tickets
   const handleDeleteSelected = async () => {
@@ -111,145 +128,133 @@ function TicketList({ filter, mode = 'created', userId, onOpenReceivedCountChang
   }
 
   return (
-    <div style={{ maxWidth: '100%', width: '100%', margin: '30px auto', marginLeft: '10px', marginRight: '10px' }}>
-      {mode === 'created' && selected.length > 0 && (
-        <div className="mb-3 flex items-center gap-3">
-          <Button variant="danger" className="flex items-center gap-2 shadow hover:scale-105 transition" onClick={handleDeleteSelected}>
-            <BsTrash /> Delete Selected
-          </Button>
-          <span className="text-gray-500 text-sm">{selected.length} selected</span>
-        </div>
-      )}
-      <h2 style={{ textAlign: 'center', marginBottom: 20 }}>
-        {mode === 'created' ? 'My Created Tickets' : 'Tickets Assigned to Me'}
-      </h2>
-      <table style={{
-        width: '100%',
-        borderCollapse: 'collapse',
-        background: '#fff',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-        borderRadius: 8,
-        overflow: 'hidden'
-      }}>
-        <thead style={{ background: '#f5f6fa' }}>
-          <tr>
-            {mode === 'created' && (
-              <th style={thStyle}>
-                <input type="checkbox" checked={isAllSelected} onChange={toggleSelectAll} />
-              </th>
-            )}
-            <th style={thStyle}><i className="bi bi-card-text me-1"></i>Subject</th>
-            <th style={thStyle}><i className="bi bi-tag me-1"></i>Type</th>
-            <th style={thStyle}><i className="bi bi-diagram-3 me-1"></i>Assigned Unit</th>
-            {mode === 'created' ? (
-              <th style={thStyle}><i className="bi bi-person me-1"></i>Assigned To</th>
-            ) : (
-              <th style={thStyle}><i className="bi bi-person me-1"></i>Requester</th>
-            )}
-            <th style={thStyle}><i className="bi bi-person-badge me-1"></i>Assigned To</th>
-            <th style={thStyle}><i className="bi bi-info-circle me-1"></i>Status</th>
-            <th style={thStyle}><i className="bi bi-calendar me-1"></i>Created</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredTickets.length === 0 ? (
+    <Container className="mt-4">
+      <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+        {mode === 'created' && selected.length > 0 && (
+          <div className="mb-3 flex items-center gap-3">
+            <Button variant="danger" className="flex items-center gap-2 shadow hover:scale-105 transition" onClick={handleDeleteSelected}>
+              <BsTrash /> Delete Selected
+            </Button>
+            <span className="text-gray-500 text-sm">{selected.length} selected</span>
+          </div>
+        )}
+        
+        <h2 className="mb-4 text-primary">
+          <i className="bi bi-list-ul me-2"></i>
+          {mode === 'created' ? 'Tickets Created' : mode === 'received' ? 'Tickets Received' : 'Tickets Reassigned to Me'}
+        </h2>
+
+        <style>
+          {`
+            .bg-danger-subtle {
+              background-color: #fff5f5;
+            }
+            .bg-warning-subtle {
+              background-color: #fffbeb;
+            }
+            .bg-success-subtle {
+              background-color: #f0fdf4;
+            }
+            .bg-secondary-subtle {
+              background-color: #f3f4f6;
+            }
+            .rounded-pill {
+              border-radius: 9999px;
+            }
+            .table td {
+              color: #374151;
+              font-size: 0.875rem;
+            }
+          `}
+        </style>
+
+        <Table striped bordered hover responsive className="shadow-sm rounded" style={{ width: '100%' }}>
+          <thead style={{ background: "#f5f6fa" }}>
             <tr>
-              <td colSpan={mode === 'created' ? 8 : 7} style={{ textAlign: 'center', padding: 20, color: '#888' }}>
-                No tickets found.
-              </td>
+              {mode === 'created' && (
+                <th>
+                  <Form.Check
+                    type="checkbox"
+                    checked={isAllSelected}
+                    ref={(input) => {
+                      if (input) input.indeterminate = isIndeterminate;
+                    }}
+                    onChange={(e) => toggleSelectAll(e.target.checked)}
+                  />
+                </th>
+              )}
+              <th>Subject</th>
+              <th>Type</th>
+              <th>Assigned Unit</th>
+              {mode === 'created' ? (
+                <th>Assigned To</th>
+              ) : (
+                <th>Requester</th>
+              )}
+              <th>Assigned To</th>
+              <th>Priority</th>
+              <th style={{ minWidth: 130, width: 150 }}><i className="bi bi-info-circle me-1"></i>Status</th>
+              <th>Created</th>
             </tr>
-          ) : (
-            filteredTickets.map(ticket => (
-              <tr
-                key={ticket._id}
-                style={{
-                  borderBottom: '1px solid #eee',
-                  background: ticket.status === 'open' ? '#e6ffe6' : undefined,
-                  cursor: 'pointer',
-                  transition: 'background 0.2s'
-                }}
-                onClick={() => navigate(`/tickets/${ticket._id}`)}
-                onMouseOver={e => e.currentTarget.style.background = '#f0f4ff'}
-                onMouseOut={e => e.currentTarget.style.background = ticket.status === 'open' ? '#e6ffe6' : ''}
-              >
-                {mode === 'created' && (
-                  <td style={tdStyle}>
-                    <input
-                      type="checkbox"
-                      checked={selected.includes(ticket._id)}
-                      onClick={e => e.stopPropagation()}
-                      onChange={() => toggleSelect(ticket._id)}
-                    />
-                  </td>
-                )}
-                <td style={tdStyle}>
-                  <i className="bi bi-card-text me-2 text-primary"></i>
-                  {ticket.subject}
-                </td>
-                <td style={tdStyle}>
-                  <Badge bg="info" text="dark" className="text-capitalize">
-                    <i className="bi bi-tag me-1"></i>
-                    {ticket.type ? ticket.type.charAt(0).toUpperCase() + ticket.type.slice(1) : '—'}
-                  </Badge>
-                </td>
-                <td style={tdStyle}>
-                  <Badge bg="secondary" className="text-capitalize">
-                    <i className="bi bi-diagram-3 me-1"></i>
-                    {ticket.assignedUnit || '—'}
-                  </Badge>
-                </td>
-                <td style={tdStyle}>
-                  {mode === 'created'
-                    ? (ticket.assignedTo?.name
-                        ? `${ticket.assignedTo.name}${ticket.assignedTo.email ? ' (' + ticket.assignedTo.email + ')' : ''}`
-                        : (ticket.assignedTo || '—'))
-                    : (ticket.user?.name
-                        ? `${ticket.user.name}${ticket.user.email ? ' (' + ticket.user.email + ')' : ''}`
-                        : (ticket.user || '—'))}
-                </td>
-                <td style={tdStyle}>
-                  <Badge bg="info" className="text-capitalize px-3 py-2 rounded-xl flex items-center gap-1">
-                    <i className="bi bi-person me-1"></i>
-                    {ticket.assignedTo && typeof ticket.assignedTo === 'object' && ticket.assignedTo.name
-                      ? ticket.assignedTo.name
-                      : '—'}
-                  </Badge>
-                </td>
-                <td style={tdStyle}>
-                  <Badge
-                    bg={statusColors[ticket.status] || "secondary"}
-                    className="px-3 py-2 text-capitalize"
-                  >
-                    <i className="bi bi-info-circle me-1"></i>
-                    {ticket.status}
-                  </Badge>
-                </td>
-                <td style={tdStyle}>
-                  <i className="bi bi-calendar me-2 text-secondary"></i>
-                  {ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : '-'}
+          </thead>
+          <tbody>
+            {filteredTickets.length === 0 ? (
+              <tr>
+                <td colSpan={mode === 'created' ? 9 : 8} style={{ textAlign: 'center', padding: 20, color: '#888' }}>
+                  No tickets found.
                 </td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
+            ) : (
+              filteredTickets.map(ticket => (
+                <tr
+                  key={ticket._id}
+                  style={{
+                    cursor: "pointer",
+                  }}
+                  onClick={() => navigate(`/tickets/${ticket._id}`)}
+                  onMouseOver={(e) => (e.currentTarget.style.background = "#f0f4ff")}
+                  onMouseOut={(e) => (e.currentTarget.style.background = "")}
+                >
+                  {mode === 'created' && (
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <Form.Check
+                        type="checkbox"
+                        checked={selected.includes(ticket._id)}
+                        onChange={() => toggleSelect(ticket._id)}
+                      />
+                    </td>
+                  )}
+                  <td>{ticket.subject}</td>
+                  <td>{ticket.type}</td>
+                  <td>{ticket.assignedUnit || "—"}</td>
+                  <td>
+                    {mode === 'created'
+                      ? (ticket.assignedTo?.name || "—")
+                      : (ticket.user?.name || "N/A")}
+                  </td>
+                  <td>{ticket.assignedTo?.name || "—"}</td>
+                  <td style={{ verticalAlign: 'middle' }}>
+                    <Badge pill className={priorityColors[ticket.priority]?.className || 'bg-secondary text-white'}>
+                      {ticket.priority || 'Normal'}
+                    </Badge>
+                  </td>
+                  <td style={{ verticalAlign: 'middle' }}>
+                    <span className={`px-3 py-1 rounded-pill ${statusColors[ticket.status.toLowerCase()]?.className}`}>
+                      {ticket.status}
+                    </span>
+                  </td>
+                  <td>
+                    {ticket.createdAt
+                      ? new Date(ticket.createdAt).toLocaleString()
+                      : "N/A"}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </Table>
+      </div>
+    </Container>
   );
 }
-
-const thStyle = {
-  padding: '12px 10px',
-  background: '#f5f6fa',
-  fontWeight: 600,
-  fontSize: 16,
-  borderBottom: '2px solid #e1e1e1',
-  textAlign: 'left'
-};
-
-const tdStyle = {
-  padding: '10px 8px',
-  fontSize: 15,
-  verticalAlign: 'middle'
-};
-
 export default TicketList;

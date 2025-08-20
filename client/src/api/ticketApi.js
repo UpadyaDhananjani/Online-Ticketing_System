@@ -30,8 +30,6 @@ axiosInstance.interceptors.request.use(
 );
 
 // Response Interceptor: Logs incoming responses
-// IMPORTANT CHANGE HERE: Interceptor now just logs and passes the FULL response object.
-// Individual API functions will then extract .data if needed.
 axiosInstance.interceptors.response.use(
     response => {
         console.log('API Response:', {
@@ -236,12 +234,30 @@ export const deleteAdminTicket = async (ticketId) => {
 export const reassignTicket = async (ticketId, userId) => {
     try {
         const response = await axiosInstance.patch(`/admin/tickets/${ticketId}/assign`, { userId });
-        return response.data; // Explicitly return data
+        return response; // Return full response for consistency
     } catch (error) {
         throw error;
     }
 };
 
+// =======================================================
+// --- NEW FUNCTION: Update Ticket Priority (for admins) ---
+// =======================================================
+/**
+ * Updates the priority of a specific ticket.
+ * @param {string} ticketId - The ID of the ticket to update.
+ * @param {string} newPriority - The new priority level ('Low', 'Normal', 'High', 'Critical').
+ * @returns {Promise<object>} A promise that resolves to the updated ticket object.
+ * @throws {Error} If the API call fails.
+ */
+export const updateTicketPriority = async (ticketId, newPriority) => {
+    try {
+        const response = await axiosInstance.put(`/admin/tickets/${ticketId}/priority`, { priority: newPriority });
+        return response.data; // Explicitly return data
+    } catch (error) {
+        throw error;
+    }
+};
 
 // =======================================================
 // --- PUBLIC / GENERAL APIs ---
@@ -267,7 +283,7 @@ export const getUsersByUnit = async (unitName) => {
 
 export const getAdminUsersByUnit = async (unitName) => {
     try {
-        const response = await axiosInstance.get(`/admin/users?unit=${encodeURIComponent(unitName)}`);
+        const response = await axiosInstance.get(`/admin/tickets/users/${encodeURIComponent(unitName)}`);
         return response.data; // Explicitly return data
     } catch (error) {
         throw error;
@@ -333,12 +349,23 @@ export const getTicketTypeDistribution = async () => {
     }
 };
 
-export const getTicketsByUnit = async () => {
+export const getTicketPriorityDistribution = async () => {
     try {
-        const response = await axiosInstance.get(`/admin/tickets_by_unit/${encodeURIComponent(unitName)}`);
-        console.log(response.data);
+        const response = await axiosInstance.get('/admin/tickets/priority-distribution');
         return response.data; // Explicitly return data
     } catch (error) {
+        throw error;
+    }
+};
+
+// Corrected function to accept unitName as a parameter
+export const getTicketsByUnit = async (unitName) => {
+    try {
+        const response = await axiosInstance.get('/admin/tickets/tickets_by_unit');
+        console.log("Tickets by Unit API Response:", response.data);
+        return response; // Return full response for consistency
+    } catch (error) {
+        console.error("Tickets by Unit API Error:", error);
         throw error;
     }
 };

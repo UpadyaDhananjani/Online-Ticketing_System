@@ -19,11 +19,21 @@ import { useNavigate } from "react-router-dom";
 
 // Update the statusColors constant
 const statusColors = {
-  'open': { className: 'bg-danger-subtle text-danger' },
-  'in progress': { className: 'bg-warning-subtle text-warning' },
-  'resolved': { className: 'bg-success-subtle text-success' },
-  'closed': { className: 'bg-secondary-subtle text-secondary' },
-  'reopened': { className: 'bg-danger-subtle text-danger' }
+    'open': { className: 'bg-danger-subtle text-danger' },
+    'in progress': { className: 'bg-warning-subtle text-warning' },
+    'resolved': { className: 'bg-success-subtle text-success' },
+    'closed': { className: 'bg-secondary-subtle text-secondary' },
+    'reopened': { className: 'bg-danger-subtle text-danger' }
+};
+
+// =========================================================
+// ADDED: New constant for priority colors
+// =========================================================
+const priorityColors = {
+    'Critical': { className: 'bg-danger text-white' },
+    'High': { className: 'bg-warning text-dark' },
+    'Medium': { className: 'bg-info text-white' },
+    'Normal': { className: 'bg-secondary text-white' }
 };
 
 const UNIT_OPTIONS = [
@@ -53,6 +63,17 @@ const TYPE_OPTIONS = [
     "service",
 ];
 
+// =========================================================
+// ADDED: New constant for priority options
+// =========================================================
+const PRIORITY_OPTIONS = [
+    "All",
+    "Critical",
+    "High",
+    "Medium",
+    "Normal",
+];
+
 // Added displayStatusFilter prop for the dropdown and header text
 function AllTickets({ onSelect, refresh, initialStatusFilter = "all", displayStatusFilter = "All" }) {
     // Debugging: Log prop on component render/update
@@ -72,6 +93,10 @@ function AllTickets({ onSelect, refresh, initialStatusFilter = "all", displaySta
 
     // statusFilter state for the dropdown, initialized with the display prop
     const [statusFilter, setStatusFilter] = useState(displayStatusFilter);
+    // =========================================================
+    // ADDED: New state for priority filter
+    // =========================================================
+    const [priorityFilter, setPriorityFilter] = useState("All");
 
     const [typeFilter, setTypeFilter] = useState("All");
     const [selectedTickets, setSelectedTickets] = useState(new Set());
@@ -100,6 +125,11 @@ function AllTickets({ onSelect, refresh, initialStatusFilter = "all", displaySta
             .then((response) => {
                 const fetchedTickets = response.data ?? [];
                 console.log("AllTickets: Raw fetched tickets from API:", fetchedTickets);
+                
+                // Debug reassigned tickets specifically
+                const reassignedTickets = fetchedTickets.filter(t => t.reassigned);
+                console.log("AllTickets - Reassigned tickets:", reassignedTickets);
+                
                 setTickets(fetchedTickets);
                 setLoading(false);
             })
@@ -124,8 +154,8 @@ function AllTickets({ onSelect, refresh, initialStatusFilter = "all", displaySta
         const ticketStatusLower = ticket.status.toLowerCase();
 
         console.log(`--- Filtering Ticket ID: ${ticket._id}, Subject: ${ticket.subject} ---`);
-        console.log(`  Ticket Status (normalized): '${ticketStatusLower}'`);
-        console.log(`  Current Filter Value (for logic): '${currentFilterValueForLogic}'`);
+        console.log(`  Ticket Status (normalized): '${ticketStatusLower}'`);
+        console.log(`  Current Filter Value (for logic): '${currentFilterValueForLogic}'`);
 
         const unitMatch =
             unitFilter === "All" || ticket.assignedUnit === unitFilter;
@@ -134,16 +164,20 @@ function AllTickets({ onSelect, refresh, initialStatusFilter = "all", displaySta
         // CRITICAL FIX: Explicitly check if the filter value for logic is "all"
         if (currentFilterValueForLogic === "all") {
             statusMatch = true; // If the filter is "all", match all statuses
-            console.log("  Status filter is 'all' (logic), matching ALL tickets.");
+            console.log("  Status filter is 'all' (logic), matching ALL tickets.");
         } else {
             statusMatch = ticketStatusLower === currentFilterValueForLogic;
-            console.log(`  Status filter is '${currentFilterValueForLogic}', comparing to ticket status '${ticketStatusLower}'. Match: ${statusMatch}`);
+            console.log(`  Status filter is '${currentFilterValueForLogic}', comparing to ticket status '${ticketStatusLower}'. Match: ${statusMatch}`);
         }
         
         const typeMatch = typeFilter === "All" || ticket.type === typeFilter;
+        // =========================================================
+        // ADDED: Priority filter logic
+        // =========================================================
+        const priorityMatch = priorityFilter === "All" || ticket.priority === priorityFilter;
 
-        console.log(`  Final Matches for Ticket ID ${ticket._id}: unit=${unitMatch}, status=${statusMatch}, type=${typeMatch}`);
-        return unitMatch && statusMatch && typeMatch;
+        console.log(`  Final Matches for Ticket ID ${ticket._id}: unit=${unitMatch}, status=${statusMatch}, type=${typeMatch}, priority=${priorityMatch}`);
+        return unitMatch && statusMatch && typeMatch && priorityMatch; // ADDED: priorityMatch to the return
     });
 
     // Debugging: Log filtered tickets after filtering
@@ -304,6 +338,24 @@ function AllTickets({ onSelect, refresh, initialStatusFilter = "all", displaySta
                             ))}
                         </Form.Select>
                     </Col>
+                    {/* ========================================================= */}
+                    {/* ADDED: New filter dropdown for priority */}
+                    {/* ========================================================= */}
+                    <Col xs={12} md={4} lg={3}>
+                        <Form.Select
+                            value={priorityFilter}
+                            onChange={(e) => setPriorityFilter(e.target.value)}
+                            className="mb-2"
+                        >
+                            {PRIORITY_OPTIONS.map((priority) => (
+                                <option key={priority} value={priority}>
+                                    {priority === "All"
+                                        ? "All Priorities"
+                                        : priority.charAt(0).toUpperCase() + priority.slice(1)}
+                                </option>
+                            ))}
+                        </Form.Select>
+                    </Col>
                 </Row>
 
                 {loading && <Spinner animation="border" />}
@@ -352,6 +404,10 @@ function AllTickets({ onSelect, refresh, initialStatusFilter = "all", displaySta
                                     <th>Assigned Unit</th>
                                     <th>Requester</th>
                                     <th>Assigned To</th>
+                                    {/* ========================================================= */}
+                                    {/* ADDED: New header for Priority */}
+                                    {/* ========================================================= */}
+                                    <th>Priority</th>
                                     <th>Reassigned Unit</th>
                                     <th>Reassigned To</th>
                                     <th style={{ minWidth: 130, width: 150 }}><i className="bi bi-info-circle me-1"></i>Status</th>
@@ -383,8 +439,16 @@ function AllTickets({ onSelect, refresh, initialStatusFilter = "all", displaySta
                                         <td>{ticket.assignedUnit || "—"}</td>
                                         <td>{ticket.user?.name || "N/A"}</td>
                                         <td>{ticket.assignedTo?.name || "—"}</td>
-                                        <td>{ticket.reassigned ? (ticket.previousAssignedUnit || "—") : "—"}</td>
-                                        <td>{ticket.reassigned ? (ticket.previousAssignedTo?.name || "—") : "—"}</td>
+                                        {/* ========================================================= */}
+                                        {/* ADDED: New cell for Priority */}
+                                        {/* ========================================================= */}
+                                        <td style={{ verticalAlign: 'middle' }}>
+                                            <Badge pill className={priorityColors[ticket.priority]?.className || 'bg-secondary text-white'}>
+                                                {ticket.priority || 'Normal'}
+                                            </Badge>
+                                        </td>
+                                        <td>{ticket.reassigned && ticket.reassignedUnit ? ticket.reassignedUnit : "—"}</td>
+                                        <td>{ticket.reassigned && ticket.reassignedTo?.name ? ticket.reassignedTo.name : "—"}</td>
                                         <td style={{ verticalAlign: 'middle' }}>
                                             <span className={`px-3 py-1 rounded-pill ${statusColors[ticket.status.toLowerCase()]?.className}`}>
                                                 {ticket.status}
