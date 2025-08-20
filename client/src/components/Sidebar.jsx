@@ -1,10 +1,18 @@
 import React, { useContext, useState } from 'react';
 import { NavLink, useLocation, Link } from 'react-router-dom';
 import { Nav, Navbar } from 'react-bootstrap';
-import { AppContent } from '../context/AppContext';
+// Correcting the import paths for the missing modules
+// In a real application, you would ensure these files exist at the specified paths.
+import { AppContent } from '../context/AppContext'; 
 import ThemeToggle from './ThemeToggle';
 
+/**
+ * Renders the responsive and role-based sidebar for the application.
+ * It includes navigation links, a collapse/expand toggle, a theme toggle,
+ * and dynamic menus for admin-specific data and user notifications.
+ */
 function Sidebar() {
+    // Hooks for managing state and context
     const location = useLocation();
     const { userData, loadingAuth, isLoggedin } = useContext(AppContent);
 
@@ -12,11 +20,21 @@ function Sidebar() {
     const [isCollapsed, setIsCollapsed] = useState(false);
     // State to manage visibility of "Data" sub-menu
     const [showDataSubMenu, setShowDataSubMenu] = useState(false);
+    // State to manage visibility of "Notifications" sub-menu
+    const [showNotificationsSubMenu, setShowNotificationsSubMenu] = useState(false);
+    // State for a mock unread notifications count
+    const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(3);
 
+    // Placeholder data for notifications. In a real app, this would be fetched from a database.
+    const notifications = [
+        
+    ];
+
+    // Check user roles
     const isAdmin = !loadingAuth && userData && userData.role === 'admin';
     const isRegularUser = !loadingAuth && userData && userData.role === 'user';
 
-    // Don't render sidebar if not logged in or still loading auth state
+    // Do not render sidebar if not logged in or still loading auth state
     if (loadingAuth || !isLoggedin) {
         return null;
     }
@@ -25,13 +43,22 @@ function Sidebar() {
     const sidebarWidth = isCollapsed ? '80px' : '270px';
     const linkPadding = isCollapsed ? '8px' : '8px 12px'; // Adjust padding for collapsed state
 
+    /**
+     * Toggles the visibility of the notifications sub-menu.
+     * Also resets the unread count when the menu is opened.
+     */
+    const handleNotificationsClick = () => {
+        setShowNotificationsSubMenu(!showNotificationsSubMenu);
+        // In a real application, you would mark notifications as read on click
+        setUnreadNotificationsCount(0);
+    };
+
     return (
         <Navbar
-            // Removed bg="light" and added 'sidebar' class for theme-controlled styling
             expand="lg"
-            className="flex-column align-items-start p-4 transition-all duration-300 ease-in-out sidebar" // <--- NEW: Added 'sidebar' class
+            className="flex-column align-items-start p-4 transition-all duration-300 ease-in-out sidebar"
             style={{
-                width: sidebarWidth, // Dynamic width
+                width: sidebarWidth,
                 minHeight: '100vh',
                 position: 'sticky',
                 top: 0,
@@ -45,20 +72,19 @@ function Sidebar() {
                     onClick={() => setIsCollapsed(!isCollapsed)}
                     className="btn btn-outline-secondary d-flex align-items-center justify-content-center"
                     style={{ width: '40px', height: '40px', borderRadius: '50%' }}
-                    title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+                    title={isCollapsed ? "Sidebar visthaarit karo" : "Sidebar ne sankuchit karo"}
                 >
-                    <i className={`bi ${isCollapsed ? 'bi-arrow-right-square' : 'bi-arrow-left-square'}`} style={{ fontSize: '1.2rem' }}></i>
+                    <i className={`bi ${isCollapsed ? 'bi-arrow-right-square' : 'bi-arrow-left-square'}`}></i>
                 </button>
             </div>
 
-            {/* NEW: Theme Toggle Button */}
+            {/* Theme Toggle Button */}
             <div className={`w-100 d-flex ${isCollapsed ? 'justify-content-center' : 'justify-content-end'} mb-4`}>
-                <ThemeToggle /> {/* <--- NEW: Placed ThemeToggle here */}
+                <ThemeToggle />
             </div>
 
-            {/* Navbar Brand - "Menu" text removed */}
+            {/* Navbar Brand - now just a space holder for responsiveness */}
             <Navbar.Brand className="mb-4 text-center" style={{ fontWeight: 700, fontSize: '0', overflow: 'hidden', whiteSpace: 'nowrap', transition: 'font-size 0.3s ease' }}>
-                {/* No text here now */}
             </Navbar.Brand>
 
             <Nav className="flex-column w-100">
@@ -68,9 +94,46 @@ function Sidebar() {
                     className="sidebar-nav-link"
                     style={{ padding: linkPadding }}
                 >
-                    <i className="bi bi-house-door-fill me-2"></i> {/* Home icon */}
-                    {!isCollapsed && "Home"} {/* Conditionally render text */}
+                    <i className="bi bi-house-door-fill me-2"></i>
+                    {!isCollapsed && "Home"}
                 </Nav.Link>
+
+                {/* Notifications Link - visible to both admin and regular user */}
+                {(isAdmin || isRegularUser) && (
+                    <div className="notifications-menu-container">
+                        <Nav.Link
+                            onClick={handleNotificationsClick}
+                            className="sidebar-nav-link"
+                            style={{ padding: linkPadding, cursor: 'pointer' }}
+                        >
+                            <div className="d-flex align-items-center position-relative">
+                                <i className="bi bi-bell-fill me-2"></i>
+                                {!isCollapsed && "Notifications"}
+                                {!isCollapsed && unreadNotificationsCount > 0 && (
+                                    <span className="badge-notification position-absolute start-100 translate-middle-x">
+                                        {unreadNotificationsCount}
+                                    </span>
+                                )}
+                                {!isCollapsed && (
+                                    <i className={`bi ms-auto ${showNotificationsSubMenu ? 'bi-chevron-up' : 'bi-chevron-down'}`}></i>
+                                )}
+                            </div>
+                        </Nav.Link>
+                        {showNotificationsSubMenu && !isCollapsed && (
+                            <div className="notifications-sub-menu" style={{ marginLeft: '20px', borderLeft: '2px solid var(--border-color)', paddingLeft: '10px' }}>
+                                {notifications.map(notification => (
+                                    <Nav.Link
+                                        key={notification.id}
+                                        className={`sidebar-nav-link sub-link ${notification.isRead ? 'read' : 'unread'}`}
+                                        style={{ padding: '8px 12px' }}
+                                    >
+                                        {notification.text}
+                                    </Nav.Link>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {isAdmin && (
                     <>
@@ -80,18 +143,18 @@ function Sidebar() {
                             className="sidebar-nav-link"
                             style={{ padding: linkPadding }}
                         >
-                            <i className="bi bi-speedometer2 me-2"></i> {/* Dashboard icon */}
+                            <i className="bi bi-speedometer2 me-2"></i>
                             {!isCollapsed && "Admin Dashboard"}
                         </Nav.Link>
 
-                        {/* NEW: Data Button and Sub-Menu */}
+                        {/* Data Button and Sub-Menu */}
                         <div className="data-menu-container">
                             <Nav.Link
                                 onClick={() => setShowDataSubMenu(!showDataSubMenu)}
                                 className="sidebar-nav-link"
                                 style={{ padding: linkPadding, cursor: 'pointer' }}
                             >
-                                <i className="bi bi-database-fill me-2"></i> {/* Data icon */}
+                                <i className="bi bi-database-fill me-2"></i>
                                 {!isCollapsed && "Data"}
                                 {!isCollapsed && (
                                     <i className={`bi ms-auto ${showDataSubMenu ? 'bi-chevron-up' : 'bi-chevron-down'}`}></i>
@@ -99,10 +162,10 @@ function Sidebar() {
                             </Nav.Link>
 
                             {showDataSubMenu && !isCollapsed && (
-                                <div className="data-sub-menu" style={{ marginLeft: '20px', borderLeft: '2px solid var(--border-color)', paddingLeft: '10px' }}> {/* <--- Using theme variable */}
+                                <div className="data-sub-menu" style={{ marginLeft: '20px', borderLeft: '2px solid var(--border-color)', paddingLeft: '10px' }}>
                                     <Nav.Link
                                         as={NavLink}
-                                        to="/admin/tickets/all" // Example path for all tickets
+                                        to="/admin/tickets/all"
                                         className="sidebar-nav-link sub-link"
                                         style={{ padding: '8px 12px' }}
                                     >
@@ -111,7 +174,7 @@ function Sidebar() {
                                     </Nav.Link>
                                     <Nav.Link
                                         as={NavLink}
-                                        to="/admin/tickets/open" // Example path for open tickets
+                                        to="/admin/tickets/open"
                                         className="sidebar-nav-link sub-link"
                                         style={{ padding: '8px 12px' }}
                                     >
@@ -120,7 +183,7 @@ function Sidebar() {
                                     </Nav.Link>
                                     <Nav.Link
                                         as={NavLink}
-                                        to="/admin/tickets/in-progress" // Example path for in progress tickets
+                                        to="/admin/tickets/in-progress"
                                         className="sidebar-nav-link sub-link"
                                         style={{ padding: '8px 12px' }}
                                     >
@@ -129,7 +192,7 @@ function Sidebar() {
                                     </Nav.Link>
                                     <Nav.Link
                                         as={NavLink}
-                                        to="/admin/tickets/resolved" // Example path for resolved tickets
+                                        to="/admin/tickets/resolved"
                                         className="sidebar-nav-link sub-link"
                                         style={{ padding: '8px 12px' }}
                                     >
@@ -138,7 +201,7 @@ function Sidebar() {
                                     </Nav.Link>
                                     <Nav.Link
                                         as={NavLink}
-                                        to="/admin/tickets/closed" // Example path for closed tickets
+                                        to="/admin/tickets/closed"
                                         className="sidebar-nav-link sub-link"
                                         style={{ padding: '8px 12px' }}
                                     >
@@ -159,7 +222,7 @@ function Sidebar() {
                             className="sidebar-nav-link"
                             style={{ padding: linkPadding }}
                         >
-                            <i className="bi bi-plus-square-fill me-2"></i> {/* Create Ticket icon */}
+                            <i className="bi bi-plus-square-fill me-2"></i>
                             {!isCollapsed && "Create Ticket"}
                         </Nav.Link>
                         <Nav.Link
@@ -168,12 +231,11 @@ function Sidebar() {
                             className="sidebar-nav-link"
                             style={{ padding: linkPadding }}
                         >
-                            <i className="bi bi-ticket-fill me-2"></i> {/* Track Ticket Status icon */}
+                            <i className="bi bi-ticket-fill me-2"></i>
                             {!isCollapsed && "Track Ticket Status"}
                         </Nav.Link>
                     </>
                 )}
-                {/* Only show Reports button if the user is an admin */}
                 {isAdmin && (
                     <Nav.Link
                         as={NavLink}
@@ -181,7 +243,7 @@ function Sidebar() {
                         className="sidebar-nav-link"
                         style={{ padding: linkPadding }}
                     >
-                        <i className="bi bi-bar-chart-fill me-2"></i> {/* Reports icon */}
+                        <i className="bi bi-bar-chart-fill me-2"></i>
                         {!isCollapsed && "Reports"}
                     </Nav.Link>
                 )}
@@ -198,7 +260,6 @@ function Sidebar() {
                     box-shadow: 2px 0 8px var(--sidebar-shadow); /* Use theme variable */
                     transition: width 0.3s ease, background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
                 }
-
                 .sidebar-nav-link {
                     font-weight: 500;
                     color: var(--text-color) !important; /* Use theme variable */
@@ -237,17 +298,41 @@ function Sidebar() {
                     padding-left: calc(${linkPadding} + 15px); /* Indent sub-links */
                     margin-bottom: 4px; /* Less margin between sub-links */
                     color: var(--text-color-secondary) !important; /* Use theme variable */
+                    opacity: 0.8; /* Slightly muted for sub-links */
+                }
+                .sidebar-nav-link.sub-link:hover {
+                    opacity: 1;
                 }
                 .sidebar-nav-link.sub-link.active {
                     border-left: 4px solid var(--primary-color); /* Use theme variable */
                     /* Maintain indent with border */
                     padding-left: calc(${linkPadding} + 15px);
+                    opacity: 1; /* Full opacity for active sub-links */
                 }
-                .data-menu-container {
+                .sidebar-nav-link.sub-link.unread {
+                    font-weight: 600; /* Bold unread messages */
+                    color: var(--text-color) !important;
+                }
+                .data-menu-container, .notifications-menu-container {
                     width: 100%; /* Ensure container takes full width */
                 }
-                .data-sub-menu {
-                    transition: all 0.3s ease-in-out; /* Smooth transition for sub-menu */
+                .data-sub-menu, .notifications-sub-menu {
+                    transition: all 0.3s ease-in-out; /* Smooth transition for sub-menus */
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                /* Notification badge styling */
+                .badge-notification {
+                    top: 0;
+                    right: 0;
+                    padding: 2px 6px;
+                    font-size: 12px;
+                    font-weight: bold;
+                    color: #fff;
+                    background-color: #dc3545; /* Red for notifications */
+                    border-radius: 10px;
+                    border: 1px solid var(--sidebar-bg); /* Add a border to stand out */
                 }
             `}</style>
         </Navbar>

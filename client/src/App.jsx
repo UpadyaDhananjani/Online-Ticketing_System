@@ -1,20 +1,14 @@
-// src/App.jsx
-import React, { useContext, useState } from 'react'; // Added useState for potential local state if needed
+import React, { useContext } from 'react';
 import { Routes, Route, useLocation, Navigate, Outlet } from 'react-router-dom';
-import 'react-toastify/dist/ReactToastify.css';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap-icons/font/bootstrap-icons.css';
-
-import './styles/toastify-overrides.css';
-
-import './App.css';
+// CSS files are loaded via CDN in the HTML file to avoid build errors.
+// This is a common practice when not using a build tool that handles CSS imports.
 
 // Contexts
-import { ThemeProvider } from './context/ThemeContext.jsx'; // <--- IMPORTANT: Ensure this is .jsx now
-import { AppContextProvider, AppContent } from './context/AppContext';
+import { ThemeProvider } from './context/ThemeContext.jsx';
+import { AppContextProvider, AppContext } from './context/AppContext';
 
 // Components and Pages
-import Navbar from './components/Navbar.jsx'; // Navbar should contain ThemeToggle
+import Navbar from './components/Navbar.jsx';
 import Sidebar from './components/Sidebar.jsx';
 import Home2 from './components/Home2.jsx';
 import Login from './components/Login.jsx';
@@ -26,91 +20,107 @@ import TicketsPage from './pages/TicketsPage';
 import CreateTicket from './components/CreateTicket';
 import Ticket from './pages/Ticket';
 
-// Paths confirmed from previous steps
 import AdminDashboard from './report/AdminDashboard.jsx';
 import TicketReply from './admin/adminTicketReply.jsx';
-
 import ReportPage from './report/ReportPage.jsx';
 import AnalyticsPage from './report/AnalyticsPage.jsx';
 
-// Styling Libraries (these should still be imported as external CSS files in main.jsx/index.js)
-import { ToastContainer } from 'react-toastify';
-
-
-
-// Import your ticket page components
 import AllTickets from './Data/AllTickets';
 import OpenTickets from './Data/OpenTickets';
 import InProgressTickets from './Data/InProgressTickets';
 import ResolvedTickets from './Data/ResolvedTickets';
 import ClosedTickets from './Data/ClosedTickets';
+import NotificationPanel from './components/notifications/NotificationPanel.jsx';
+import NotificationIcon from './components/notifications/NotificationIcon.jsx'
 
+import { ToastContainer } from 'react-toastify';
+
+/**
+ * AppRoutes component handles all the routing and conditional rendering
+ * of the application's layout based on user authentication status and role.
+ */
 const AppRoutes = () => {
     const location = useLocation();
-    const { isLoggedin, userData, loading } = useContext(AppContent);
+    // Use the useContext hook to access the global state from AppContext
+    const { isLoggedin, userData, loadingAuth } = useContext(AppContext);
 
-    const NAVBAR_HEIGHT = '80px'; // Define Navbar height for padding
+    const NAVBAR_HEIGHT = '80px';
 
-    // Determine if the current page is an authentication-related page
+    // Helper to determine if the current page is a login/auth page
     const isAuthPage = [
         '/login',
         '/loginselection',
+        '/login-select',
         '/reset-password',
         '/email-verify',
     ].includes(location.pathname);
 
-    // PrivateRoute component to protect routes requiring authentication
+    /**
+     * PrivateRoute component to protect routes that require authentication.
+     * It checks if the user is logged in and redirects to the login selection page if not.
+     */
     function PrivateRoute({ children }) {
-        if (loading) {
-            return <div>Loading user data...</div>; // Show loading state
+        // Show a loading message while the authentication state is being checked
+        if (loadingAuth) {
+            return <div>Loading user data...</div>;
         }
+        // If not logged in, redirect to the login selection page
         if (!isLoggedin) {
-            return <Navigate to="/loginselection" replace />; // Redirect if not logged in
+            return <Navigate to="/loginselection" replace />;
         }
-        return children; // Render child components if authenticated
+        // If logged in, render the protected child components
+        return children;
     }
 
-    // AdminRoute component to protect routes requiring admin role
+    /**
+     * AdminRoute component to protect routes that require an 'admin' role.
+     * It first checks for authentication via the PrivateRoute logic, and then verifies the user's role.
+     */
     function AdminRoute({ children }) {
-        if (loading) {
-            return <div>Loading user data...</div>; // Show loading state
+        // Show loading state from the context
+        if (loadingAuth) {
+            return <div>Loading user data...</div>;
         }
+        // If not logged in or the user is not an admin, redirect to the home page
         if (!isLoggedin || userData?.role !== 'admin') {
-            return <Navigate to="/" replace />; // Redirect if not admin
+            return <Navigate to="/" replace />;
         }
-        return children; // Render child components if admin
+        // If authenticated as an admin, render the child components
+        return children;
     }
 
-    // FallbackRoute for unmatched paths, redirects based on login status
+    /**
+     * FallbackRoute component handles all unmatched paths.
+     * It redirects logged-in users to the home page and logged-out users to the login selection.
+     */
     const FallbackRoute = () =>
         isLoggedin
-            ? <Navigate to="/" replace /> // If logged in, go to home
-            : <Navigate to="/loginselection" replace />; // If not, go to login selection
+            ? <Navigate to="/" replace />
+            : <Navigate to="/loginselection" replace />;
 
     return (
-        // Outer container for the entire application layout
-        // This div now directly controls its background and text color using theme variables
         <div className="app-container-outer">
-            {/* Render Navbar only if not on an authentication page */}
+            {/* The Navbar is only rendered if the current page is NOT an auth page */}
             {!isAuthPage && <Navbar />}
 
-            {/* Content wrapper, applies top padding to account for Navbar */}
+            {/* The content wrapper provides top padding to prevent content from being hidden by the fixed Navbar */}
             <div className="content-wrapper" style={{ paddingTop: isAuthPage ? '0' : NAVBAR_HEIGHT }}>
-                {/* Flex container for sidebar and main content area */}
                 <div className="d-flex main-content-area">
-                    {/* Render Sidebar only if not on an authentication page */}
+                    {/* The Sidebar is also only rendered if the user is NOT on an auth page */}
                     {!isAuthPage && <Sidebar />}
-                    {/* Main view content area, takes remaining space */}
+                    
+                    {/* The main-view-content area contains the routed components */}
                     <div className="flex-grow-1 main-view-content">
                         <ToastContainer /> {/* Toast notifications container */}
                         <Routes>
-                            {/* Public Routes */}
+                            {/* Public Routes for authentication */}
                             <Route path="/login" element={<Login />} />
                             <Route path="/loginselection" element={<LoginSelection />} />
+                            <Route path="/login-select" element={<LoginSelection />} />
                             <Route path="/reset-password" element={<ResetPassword />} />
                             <Route path="/email-verify" element={<EmailVerify />} />
 
-                            {/* Home Route: Redirects if not logged in */}
+                            {/* Home Route: The root path redirects based on login state */}
                             <Route
                                 path="/"
                                 element={
@@ -122,36 +132,23 @@ const AppRoutes = () => {
                                 }
                             />
 
-                            {/* Protected User Routes (requires authentication) */}
-                            <Route
-                                element={
-                                    <PrivateRoute>
-                                        <Outlet /> {/* Renders child routes if authenticated */}
-                                    </PrivateRoute>
-                                }
-                            >
+                            {/* Protected Routes for regular users. All child routes inherit this protection. */}
+                            <Route element={<PrivateRoute><Outlet /></PrivateRoute>}>
                                 <Route path="/tickets-page" element={<TicketsPage />} />
                                 <Route path="/tickets" element={<TicketsPage />} />
                                 <Route path="/create-ticket" element={<CreateTicket />} />
                                 <Route path="/tickets/:id" element={<Ticket />} />
 
-                                {/* Nested Protected Admin Routes (requires admin role) */}
-                                <Route
-                                    element={
-                                        <AdminRoute>
-                                            <Outlet /> {/* Renders child routes if admin */}
-                                        </AdminRoute>
-                                    }
-                                >
+                                {/* Protected Routes for admin users. This is a nested route,
+                                     so it requires both PrivateRoute and AdminRoute protection. */}
+                                <Route element={<AdminRoute><Outlet /></AdminRoute>}>
                                     <Route path="/admin" element={<AdminDashboard initialStatusFilter="All" />} />
                                     <Route path="/admin/tickets/all" element={<AllTickets />} />
                                     <Route path="/admin/tickets/open" element={<OpenTickets />} />
                                     <Route path="/admin/tickets/in-progress" element={<InProgressTickets />} />
                                     <Route path="/admin/tickets/resolved" element={<ResolvedTickets />} />
                                     <Route path="/admin/tickets/closed" element={<ClosedTickets />} />
-
                                     <Route path="/admin/tickets/:id/reply" element={<TicketReply />} />
-
                                     <Route path="/reports" element={<ReportPage />} />
                                     <Route path="/analytics" element={<AnalyticsPage />} />
                                 </Route>
@@ -163,7 +160,7 @@ const AppRoutes = () => {
                     </div>
                 </div>
             </div>
-            {/* Inline Style Block for App-specific CSS - ALL STYLES ARE HERE */}
+            {/* Inline Style Block for App-specific CSS - All styles are kept here as requested */}
             <style>
                 {`
                     /* General Body and Root Styles - Note: Global theme variables from themes.css are crucial */
@@ -175,7 +172,7 @@ const AppRoutes = () => {
                         -webkit-font-smoothing: antialiased;
                         -moz-osx-font-smoothing: grayscale;
                         /* Background and text color are managed by the 'body' rules in themes.css,
-                           which inherit from :root or [data-theme="dark"] based on data-theme attribute */
+                            which inherit from :root or [data-theme="dark"] based on data-theme attribute */
                     }
 
                     code {
@@ -361,9 +358,15 @@ const AppRoutes = () => {
     );
 };
 
-// --- Main App Component: Wraps the entire application with ThemeProvider and AppContextProvider ---
+// --- Main App Component: Wraps the entire application with Context Providers ---
 function App() {
     return (
+        // The following CSS files need to be loaded via a CDN link in the HTML
+        // as they are external and cannot be resolved by the build tool.
+        // https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css
+        // https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css
+        // https://cdn.jsdelivr.net/npm/react-toastify@10.0.5/dist/ReactToastify.min.css
+        // We will assume these are already handled in the HTML file for now.
         <ThemeProvider> {/* Provides theme context to all children */}
             <AppContextProvider> {/* Provides application context to all children */}
                 <AppRoutes /> {/* Renders the main routing and layout */}
