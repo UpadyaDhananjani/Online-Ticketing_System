@@ -125,6 +125,11 @@ function AllTickets({ onSelect, refresh, initialStatusFilter = "all", displaySta
             .then((response) => {
                 const fetchedTickets = response.data ?? [];
                 console.log("AllTickets: Raw fetched tickets from API:", fetchedTickets);
+                
+                // Debug reassigned tickets specifically
+                const reassignedTickets = fetchedTickets.filter(t => t.reassigned);
+                console.log("AllTickets - Reassigned tickets:", reassignedTickets);
+                
                 setTickets(fetchedTickets);
                 setLoading(false);
             })
@@ -442,8 +447,8 @@ function AllTickets({ onSelect, refresh, initialStatusFilter = "all", displaySta
                                                 {ticket.priority || 'Normal'}
                                             </Badge>
                                         </td>
-                                        <td>{ticket.reassigned ? (ticket.previousAssignedUnit || "—") : "—"}</td>
-                                        <td>{ticket.reassigned ? (ticket.previousAssignedTo?.name || "—") : "—"}</td>
+                                        <td>{ticket.reassigned && ticket.reassignedUnit ? ticket.reassignedUnit : "—"}</td>
+                                        <td>{ticket.reassigned && ticket.reassignedTo?.name ? ticket.reassignedTo.name : "—"}</td>
                                         <td style={{ verticalAlign: 'middle' }}>
                                             <span className={`px-3 py-1 rounded-pill ${statusColors[ticket.status.toLowerCase()]?.className}`}>
                                                 {ticket.status}

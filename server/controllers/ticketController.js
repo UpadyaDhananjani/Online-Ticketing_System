@@ -73,32 +73,40 @@ export const createTicket = async (req, res) => {
 
 // Get all tickets
 export const getUserTickets = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const { mode } = req.query;
-    let query = {
-      $or: [
-        { user: userId },
-        { assignedTo: userId }
-      ]
-    };
-    if (mode === 'reassigned') {
-      query = {
-        reassigned: true,
-        assignedTo: userId
-      };
-    }
-    const tickets = await Ticket.find(query)
-      .populate('user', 'name email')
-      .populate('assignedTo', 'name email')
-      .sort({ createdAt: -1 });
-    res.json(tickets);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// Update/Edit a ticket
+  try {
+    const userId = req.user._id;
+    const { mode } = req.query;
+    
+    let query = {};
+    
+    if (mode === 'reassigned') {
+      // Show tickets that were reassigned TO the current user
+      query = {
+        reassigned: true,
+        assignedTo: userId
+      };
+    } else {
+      // Default behavior: show tickets created by user OR assigned to user
+      query = {
+        $or: [
+          { user: userId },
+          { assignedTo: userId }
+        ]
+      };
+    }
+    
+    const tickets = await Ticket.find(query)
+      .populate('user', 'name email')
+      .populate('assignedTo', 'name email')
+      .populate('reassignedTo', 'name email')
+      .populate('previousAssignedTo', 'name email')
+      .sort({ createdAt: -1 });
+      
+    res.json(tickets);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};// Update/Edit a ticket
 export const updateTicket = async (req, res) => {
   try {
     const { id } = req.params;

@@ -349,6 +349,15 @@ export const getTicketTypeDistribution = async () => {
     }
 };
 
+export const getTicketPriorityDistribution = async () => {
+    try {
+        const response = await axiosInstance.get('/admin/tickets/priority-distribution');
+        return response.data; // Explicitly return data
+    } catch (error) {
+        throw error;
+    }
+};
+
 // Corrected function to accept unitName as a parameter
 export const getTicketsByUnit = async (unitName) => {
     try {

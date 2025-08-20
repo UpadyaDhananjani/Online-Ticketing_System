@@ -24,7 +24,9 @@ import {
   getAvgResolutionTime,
   getTicketActivityLogs,
   getTicketStatusDistribution,  // Add this import
-  getTicketTypeDistribution    // Add this import
+  getTicketTypeDistribution,    // Add this import
+  getTicketPriorityDistribution, // Add this import
+  getTicketTrends               // Add this import
 } from '../controllers/ReportController.js';
 
 import authMiddleware from '../middleware/authMiddleware.js';
@@ -50,6 +52,8 @@ router.get('/avg-resolution-time', getAvgResolutionTime);
 router.get('/activity-logs', getTicketActivityLogs);
 router.get('/status-distribution', getTicketStatusDistribution);  // Add this route
 router.get('/type-distribution', getTicketTypeDistribution);      // Add this route
+router.get('/priority-distribution', getTicketPriorityDistribution); // Add this route
+router.get('/trends', getTicketTrends);                          // Add trends route
 router.get('/recent', getRecentTickets); // New route for recent tickets
 
 // Summary widget for dashboard

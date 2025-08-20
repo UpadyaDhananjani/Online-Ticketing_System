@@ -41,7 +41,19 @@ export const getAllTickets = async (req, res) => {
         const tickets = await Ticket.find({})
             .populate('user', 'name email') // Populate original user
             .populate('assignedTo', 'name email') // Populate assigned admin/user
+            .populate('reassignedTo', 'name email') // Populate reassigned admin/user
             .sort({ createdAt: -1 }); // Sort by most recent
+        
+        console.log("getAllTickets - Sample ticket data:", tickets[0] ? {
+            _id: tickets[0]._id,
+            subject: tickets[0].subject,
+            assignedUnit: tickets[0].assignedUnit,
+            assignedTo: tickets[0].assignedTo?.name,
+            reassignedUnit: tickets[0].reassignedUnit,
+            reassignedTo: tickets[0].reassignedTo?.name,
+            reassigned: tickets[0].reassigned
+        } : 'No tickets found');
+        
         res.status(200).json(tickets);
     } catch (error) {
         console.error("Error fetching all tickets for admin:", error);
@@ -58,6 +70,7 @@ export const getAdminTicketById = async (req, res) => {
         const ticket = await Ticket.findById(req.params.id)
             .populate('user', 'name email')
             .populate('assignedTo', 'name email')
+            .populate('reassignedTo', 'name email')
             .populate({
                 path: 'messages.author', // Populate the author of each message
                 select: 'name email role' // Select relevant fields
@@ -280,12 +293,15 @@ export const reassignTicket = async (req, res) => {
         const ticket = await Ticket.findByIdAndUpdate(
             id,
             {
-                // Store previous assignment for tracking
+                // Store previous assignment data before updating
                 previousAssignedTo: currentTicket.assignedTo,
                 previousAssignedUnit: currentTicket.assignedUnit,
-                // Set new assignment
+                // Update current assignment to the new assignee
                 assignedTo: newAssignee._id,
                 assignedUnit: newAssignee.unit,
+                // Store the NEW assignment in reassigned fields for tracking
+                reassignedTo: newAssignee._id,
+                reassignedUnit: newAssignee.unit,
                 // Mark as reassigned and update timestamp
                 reassigned: true,
                 updatedAt: new Date()
@@ -293,6 +309,7 @@ export const reassignTicket = async (req, res) => {
             { new: true }
         ).populate('user', 'name email')
          .populate('assignedTo', 'name email')
+         .populate('reassignedTo', 'name email')
          .populate('previousAssignedTo', 'name email');
 
         if (!ticket) {
@@ -301,6 +318,11 @@ export const reassignTicket = async (req, res) => {
 
         console.log(`Ticket ${id} reassigned from ${currentTicket.assignedUnit || 'unassigned'} to ${newAssignee.unit}`);
         console.log(`Previous assignee: ${currentTicket.assignedTo || 'none'}, New assignee: ${newAssignee._id}`);
+        console.log(`Updated ticket reassigned fields:`, {
+            reassignedTo: ticket.reassignedTo,
+            reassignedUnit: ticket.reassignedUnit,
+            reassigned: ticket.reassigned
+        });
 
         res.status(200).json(ticket);
     } catch (error) {
