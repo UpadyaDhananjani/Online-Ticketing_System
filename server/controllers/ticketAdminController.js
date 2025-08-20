@@ -1,7 +1,29 @@
-// server/controllers/ticketAdminController.js
-
 import Ticket from '../models/ticketModel.js';
 import User from '../models/userModel.js'; // Correct import name
+import multer from 'multer';
+import path from 'path';
+
+// Multer setup
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/'); // Ensure this folder exists
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + path.extname(file.originalname));
+    }
+});
+
+export const upload = multer({
+    storage,
+    fileFilter: (req, file, cb) => {
+        const ext = path.extname(file.originalname).toLowerCase();
+        if (['.jpg', '.jpeg', '.png'].includes(ext)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only jpg, jpeg, png files are allowed'));
+        }
+    }
+});
 
 // Helper to normalize status for consistent filtering/display
 const normalizeStatus = (status) => {
@@ -9,9 +31,9 @@ const normalizeStatus = (status) => {
     return status.toLowerCase().trim();
 };
 
-// @desc    Get users by unit for admin (for reassignment)
-// @route   GET /api/admin/tickets/users/:unit
-// @access  Admin
+// @desc    Get users by unit for admin (for reassignment)
+// @route   GET /api/admin/tickets/users/:unit
+// @access  Admin
 export const getAdminUsersByUnit = async (req, res) => {
     try {
         const { unit } = req.params;
@@ -30,11 +52,9 @@ export const getAdminUsersByUnit = async (req, res) => {
     }
 };
 
-
-
-// @desc    Get all tickets for admin dashboard
-// @route   GET /api/admin/tickets
-// @access  Admin
+// @desc    Get all tickets for admin dashboard
+// @route   GET /api/admin/tickets
+// @access  Admin
 export const getAllTickets = async (req, res) => {
     try {
         // Admins can see all tickets, regardless of assignment
@@ -49,9 +69,9 @@ export const getAllTickets = async (req, res) => {
     }
 };
 
-// @desc    Get a single ticket by ID for admin
-// @route   GET /api/admin/tickets/:id
-// @access  Admin
+// @desc    Get a single ticket by ID for admin
+// @route   GET /api/admin/tickets/:id
+// @access  Admin
 export const getAdminTicketById = async (req, res) => {
     console.log("Get Admin Ticket By ID Request:", req.params.id);
     try {
@@ -77,10 +97,9 @@ export const getAdminTicketById = async (req, res) => {
     }
 };
 
-
-// @desc    Add a reply to a ticket (admin)
-// @route   POST /api/admin/tickets/:id/reply
-// @access  Admin
+// @desc    Add a reply to a ticket (admin)
+// @route   POST /api/admin/tickets/:id/reply
+// @access  Admin
 export const addAdminReply = async (req, res) => {
     try {
         const { id } = req.params;
@@ -133,9 +152,9 @@ export const addAdminReply = async (req, res) => {
     }
 };
 
-// @desc    Delete a message from a ticket (admin)
-// @route   DELETE /api/admin/tickets/:ticketId/messages/:messageId
-// @access  Admin
+// @desc    Delete a message from a ticket (admin)
+// @route   DELETE /api/admin/tickets/:ticketId/messages/:messageId
+// @access  Admin
 export const deleteMessage = async (req, res) => {
     try {
         const { ticketId, messageId } = req.params;
@@ -155,7 +174,7 @@ export const deleteMessage = async (req, res) => {
 
         // Optional: Add logic to check if admin is allowed to delete this specific message
         // e.g., if (ticket.messages[messageIndex].author.toString() !== req.user._id.toString() && req.user.role !== 'superadmin') {
-        //     return res.status(403).json({ message: 'Not authorized to delete this message.' });
+        //     return res.status(403).json({ message: 'Not authorized to delete this message.' });
         // }
 
         ticket.messages.splice(messageIndex, 1);
@@ -170,9 +189,9 @@ export const deleteMessage = async (req, res) => {
     }
 };
 
-// @desc    Resolve a ticket
-// @route   PATCH /api/admin/tickets/:id/resolve
-// @access  Admin
+// @desc    Resolve a ticket
+// @route   PATCH /api/admin/tickets/:id/resolve
+// @access  Admin
 export const resolveTicket = async (req, res) => {
     try {
         const { id } = req.params;
@@ -192,9 +211,9 @@ export const resolveTicket = async (req, res) => {
     }
 };
 
-// @desc    Mark ticket as open
-// @route   PATCH /api/admin/tickets/:id/open
-// @access  Admin
+// @desc    Mark ticket as open
+// @route   PATCH /api/admin/tickets/:id/open
+// @access  Admin
 export const markTicketOpen = async (req, res) => {
     try {
         const { id } = req.params;
@@ -214,9 +233,9 @@ export const markTicketOpen = async (req, res) => {
     }
 };
 
-// @desc    Mark ticket as in progress
-// @route   PATCH /api/admin/tickets/:id/in-progress
-// @access  Admin
+// @desc    Mark ticket as in progress
+// @route   PATCH /api/admin/tickets/:id/in-progress
+// @access  Admin
 export const markTicketInProgress = async (req, res) => {
     try {
         const { id } = req.params;
@@ -236,9 +255,9 @@ export const markTicketInProgress = async (req, res) => {
     }
 };
 
-// @desc    Delete a ticket (admin)
-// @route   DELETE /api/admin/tickets/:id
-// @access  Admin
+// @desc    Delete a ticket (admin)
+// @route   DELETE /api/admin/tickets/:id
+// @access  Admin
 export const deleteTicket = async (req, res) => {
     try {
         const { id } = req.params;
@@ -254,9 +273,9 @@ export const deleteTicket = async (req, res) => {
     }
 };
 
-// @desc    Reassign a ticket to another user/admin
-// @route   PATCH /api/admin/tickets/:id/assign
-// @access  Admin
+// @desc    Reassign a ticket to another user/admin
+// @route   PATCH /api/admin/tickets/:id/assign
+// @access  Admin
 export const reassignTicket = async (req, res) => {
     try {
         const { id } = req.params;
@@ -309,9 +328,9 @@ export const reassignTicket = async (req, res) => {
     }
 };
 
-// @desc    Get summary counts for admin dashboard (open, in progress, resolved)
-// @route   GET /api/admin/tickets/summary
-// @access  Admin
+// @desc    Get summary counts for admin dashboard (open, in progress, resolved)
+// @route   GET /api/admin/tickets/summary
+// @access  Admin
 export const getAdminTicketsSummary = async (req, res) => {
     try {
         const openCount = await Ticket.countDocuments({ status: 'open' });
@@ -329,74 +348,17 @@ export const getAdminTicketsSummary = async (req, res) => {
     }
 };
 
-
 export const getRecentTickets = async (req, res) => {
-  try {
-    const tickets = await Ticket.find()
-      .populate('user', 'name email')
-      .populate('assignedTo', 'name email')
-      .sort({ createdAt: -1 })
-      .limit(10);
+    try {
+        const tickets = await Ticket.find()
+            .populate('user', 'name email')
+            .populate('assignedTo', 'name email')
+            .sort({ createdAt: -1 })
+            .limit(10);
 
-    console.log("Recent tickets fetched:", tickets.length);
-    res.json(tickets);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+        console.log("Recent tickets fetched:", tickets.length);
+        res.json(tickets);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 };
-
-// export const getRecentTickets = async (req, res) => {
-//   try {
-//     // Mock data for recent tickets
-//     const mockTickets = [
-//       {
-//         _id: "ICT-2024-001",
-//         subject: "Printer not working",
-//         user: {
-//           name: "Sarah Johnson",
-//           email: "sarah.j@company.com"
-//         },
-//         type: "Hardware",
-//         priority: "High",
-//         status: "Open",
-//         assignedUnit: "Hardware Support Team",
-//         createdAt: "2024-02-01T09:30:00Z",
-//         updatedAt: "2024-02-01T09:30:00Z"
-//       },
-//       {
-//         _id: "ICT-2024-002",
-//         subject: "Email server down",
-//         user: {
-//           name: "Mike Chen",
-//           email: "mike.c@company.com"
-//         },
-//         type: "Network",
-//         priority: "Critical",
-//         status: "In Progress",
-//         assignedUnit: "System and Network Administration",
-//         createdAt: "2024-02-01T10:15:00Z",
-//         updatedAt: "2024-02-01T10:45:00Z"
-//       },
-//       {
-//         _id: "ICT-2024-003",
-//         subject: "Software installation",
-//         user: {
-//           name: "Lisa Wong",
-//           email: "lisa.w@company.com"
-//         },
-//         type: "Software",
-//         priority: "Medium",
-//         status: "Resolved",
-//         assignedUnit: "Helpdesk Unit",
-//         createdAt: "2024-02-01T11:00:00Z",
-//         updatedAt: "2024-02-01T14:30:00Z"
-//       }
-//     ];
-
-//     console.log("Mock recent tickets returned:", mockTickets.length);
-//     res.json(mockTickets);
-//   } catch (err) {
-//     console.error("Error returning mock tickets:", err);
-//     res.status(500).json({ error: err.message });
-//   }
-// };
