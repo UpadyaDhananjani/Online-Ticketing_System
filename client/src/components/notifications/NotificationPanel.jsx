@@ -1,68 +1,12 @@
 // src/components/notifications/NotificationPanel.jsx
-import React, { useState, useEffect, useContext } from 'react';
-import { AppContext } from '../../context/AppContext.jsx';
-import axios from 'axios';
-import { Spinner, ListGroup } from 'react-bootstrap';
-import { BsBellFill } from 'react-icons/bs';
+import React from 'react';
+import { useNotifications } from '../../context/NotificationContext.jsx';
+import { Spinner, ListGroup, Button, Badge } from 'react-bootstrap';
+import { BsBellFill, BsCheck2All, BsCircleFill } from 'react-icons/bs';
 import { formatDistanceToNow } from 'date-fns';
 
-const NotificationPanel = () => {
-    const [notifications, setNotifications] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const { token } = useContext(AppContext);
-
-    const fetchNotifications = async () => {
-        try {
-            setLoading(true);
-            const res = await axios.get('/api/notifications', {
-                headers: {
-                    // Send the authorization token with the request
-                    'Authorization': `Bearer ${token}`
-                },
-                withCredentials: true
-            });
-            // Update the notifications state with the fetched data
-            setNotifications(res.data);
-            setLoading(false);
-        } catch (err) {
-            console.error("Failed to fetch notifications:", err);
-            setError("Failed to load notifications. Please try again later.");
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        if (!token) {
-            // If there's no token, we can't fetch notifications, so we stop here.
-            setLoading(false);
-            return;
-        }
-
-        // Fetch notifications on component mount
-        fetchNotifications();
-
-        // Set up a polling interval to fetch new notifications every 10 seconds.
-        const intervalId = setInterval(fetchNotifications, 10000);
-
-        // Clean up the interval when the component unmounts to prevent memory leaks.
-        return () => clearInterval(intervalId);
-    }, [token]);
-
-    const handleMarkAsRead = async (id) => {
-        try {
-            await axios.put(`/api/notifications/${id}/read`, {}, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-                withCredentials: true
-            });
-            // Immediately update the UI without waiting for the next fetch
-            setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));
-        } catch (err) {
-            console.error("Failed to mark notification as read:", err);
-        }
-    };
+const NotificationPanel = ({ onClose }) => {
+    const { notifications, loading, markOneAsRead, markAllAsRead, unreadCount } = useNotifications();
 
     if (loading) {
         return (
@@ -74,38 +18,120 @@ const NotificationPanel = () => {
         );
     }
 
-    if (error) {
-        return <div className="text-center text-danger mt-3">{error}</div>;
-    }
-
     if (notifications.length === 0) {
         return (
-            <div className="text-center text-muted mt-3">
+            <div className="text-center text-muted mt-3 p-3">
                 <BsBellFill size={32} />
-                <p>No new notifications.</p>
+                <p className="mt-2">No notifications yet.</p>
             </div>
         );
     }
 
     return (
-        <ListGroup variant="flush">
-            {notifications.map(notification => (
-                <ListGroup.Item
-                    key={notification._id}
-                    action
-                    onClick={() => handleMarkAsRead(notification._id)}
-                    className={`d-flex justify-content-between align-items-center ${!notification.isRead ? 'bg-light font-weight-bold' : ''}`}
-                >
-                    <div>
-                        {notification.message}
-                        <div className="text-muted small">
-                            {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+        <div>
+            {/* Header with close button and mark all as read button */}
+            <div className="d-flex justify-content-between align-items-center p-3 border-bottom">
+                <h6 className="mb-0 fw-bold">Notifications</h6>
+                <div className="d-flex gap-2">
+                    {unreadCount > 0 && (
+                        <Button 
+                            variant="outline-primary" 
+                            size="sm"
+                            onClick={markAllAsRead}
+                            className="d-flex align-items-center gap-1"
+                        >
+                            <BsCheck2All />
+                            Mark all read
+                        </Button>
+                    )}
+                    {onClose && (
+                        <Button 
+                            variant="outline-secondary" 
+                            size="sm"
+                            onClick={onClose}
+                            aria-label="Close"
+                        >
+                            <i className="bi bi-x-lg"></i>
+                        </Button>
+                    )}
+                </div>
+            </div>
+            
+            {unreadCount > 0 && (
+                <div className="px-3 py-2 bg-light">
+                    <small className="text-muted">
+                        {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}
+                    </small>
+                </div>
+            )}
+            
+            {/* Notifications list */}
+            <ListGroup variant="flush" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                {notifications.map(notification => (
+                    <ListGroup.Item
+                        key={notification._id}
+                        action
+                        onClick={() => !notification.isRead && markOneAsRead(notification._id)}
+                        className={`d-flex justify-content-between align-items-start ${!notification.isRead ? 'bg-light' : ''}`}
+                        style={{ cursor: notification.isRead ? 'default' : 'pointer' }}
+                    >
+                        <div className="flex-grow-1">
+                            <div className="d-flex align-items-start gap-2">
+                                {!notification.isRead && (
+                                    <BsCircleFill 
+                                        size={8} 
+                                        className="text-primary mt-1" 
+                                        style={{ minWidth: '8px' }}
+                                    />
+                                )}
+                                <div className={!notification.isRead ? 'fw-bold' : ''}>
+                                    {notification.message}
+                                </div>
+                            </div>
+                            <div className="text-muted small mt-1">
+                                {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                            </div>
+                            {notification.type && (
+                                <Badge 
+                                    bg={getNotificationTypeBadge(notification.type)} 
+                                    className="mt-1"
+                                    style={{ fontSize: '0.7rem' }}
+                                >
+                                    {formatNotificationType(notification.type)}
+                                </Badge>
+                            )}
                         </div>
-                    </div>
-                </ListGroup.Item>
-            ))}
-        </ListGroup>
+                    </ListGroup.Item>
+                ))}
+            </ListGroup>
+        </div>
     );
+};
+
+// Helper function to get badge color for notification type
+const getNotificationTypeBadge = (type) => {
+    switch (type) {
+        case 'new_ticket': return 'primary';
+        case 'admin_reply': return 'success';
+        case 'user_reply': return 'info';
+        case 'reassigned': return 'warning';
+        case 'resolved': return 'success';
+        case 'closed': return 'secondary';
+        default: return 'light';
+    }
+};
+
+// Helper function to format notification type for display
+const formatNotificationType = (type) => {
+    const typeMap = {
+        'new_ticket': 'New Ticket',
+        'admin_reply': 'Admin Reply',
+        'user_reply': 'User Reply',
+        'reassigned': 'Reassigned',
+        'resolved': 'Resolved',
+        'closed': 'Closed'
+    };
+    return typeMap[type] || type;
 };
 
 export default NotificationPanel;
