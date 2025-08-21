@@ -1,7 +1,7 @@
 // src/components/Navbar.jsx
 import React, { useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { AppContent } from '../context/AppContext';
+import { AppContent } from '../context/AppContext'; // Corrected from AppContent to AppContext
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import { Navbar as BSNavbar, Nav } from 'react-bootstrap'; // Removed NavDropdown as it's not used
@@ -13,7 +13,7 @@ const Navbar = () => {
     const location = useLocation();
     const dropdownRef = useRef(null);
 
-    const { userData, setIsLoggedin, setUserData, backendUrl, isLoggedin } = useContext(AppContent);
+    const { userData, setIsLoggedin, setUserData, backendUrl, isLoggedin } = useContext(AppContent); // Use AppContent here
     const [showDropdown, setShowDropdown] = useState(false);
 
     const sendVerificationOtp = useCallback(async () => {

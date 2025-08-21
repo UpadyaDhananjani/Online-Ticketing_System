@@ -47,17 +47,31 @@ function TicketsByUnitChart() {
 
   useEffect(() => {
     getTicketsByUnit()
-      .then(raw => {
-        console.log("Tickets By Unit API Data:", raw);
-        setData(raw.data || []);
+      .then(response => {
+        console.log("Tickets By Unit API Response:", response);
+        console.log("Tickets By Unit API Data:", response.data);
+        // Transform the data to match the chart expectations
+        const rawData = response.data || [];
+        const transformedData = rawData.map(item => ({
+          unit: item.unit || 'Unknown',
+          tickets: item.count || 0
+        }));
+        console.log("Transformed Data:", transformedData);
+        setData(transformedData);
       })
-      .catch(() => setData([]));
+      .catch(error => {
+        console.error("Error fetching tickets by unit:", error);
+        setData([]);
+      });
   }, []);
 
   return (
     <div style={{ width: "100%", height: 300 }}>
       {data.length === 0 ? (
-        <div className="text-center text-gray-500 py-8">No unit/team ticket data available.</div>
+        <div className="text-center text-gray-500 py-8">
+          <div>No unit/team ticket data available.</div>
+          <small className="text-muted">Check console for API response details</small>
+        </div>
       ) : (
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 60 }}>
@@ -71,7 +85,10 @@ function TicketsByUnitChart() {
               tick={<CustomTick />}
             />
             <YAxis />
-            <Tooltip />
+            <Tooltip 
+              formatter={(value, name) => [value, 'Tickets']}
+              labelFormatter={(label) => `Unit: ${label}`}
+            />
             <Bar dataKey="tickets">
               {data.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />

@@ -28,6 +28,7 @@ import { BsCheck2Circle } from "react-icons/bs";
 
 import TicketsByUnitChart from "./TicketsByUnitChart";
 import AssigneePerformanceTable from "./AssigneePerformanceTable";
+import PriorityChart from "./PriorityChart";
 
 // Register Chart.js components
 ChartJS.register(
@@ -65,7 +66,6 @@ function AdminDashboard() {
   });
   const [tickets, setTickets] = useState([]);
   const [categoryData, setCategoryData] = useState({ labels: [], datasets: [] });
-  const [priorityData, setPriorityData] = useState({ labels: [], datasets: [] });
   const [teamPerformance, setTeamPerformance] = useState([]);
 
   useEffect(() => {
@@ -82,20 +82,6 @@ function AdminDashboard() {
             "#ef4444", "#f59e0b", "#3b82f6", "#8b5cf6", "#10b981", "#f97316"
           ],
           hoverOffset: 20,
-        }]
-      });
-    }).catch(console.error);
-
-    // Fetch priority distribution
-    getTicketStatusDistribution().then(data => {
-      setPriorityData({
-        labels: data.map(d => d.priority),
-        datasets: [{
-          label: "Tickets",
-          data: data.map(d => d.count),
-          backgroundColor: [
-            "#10b981", "#f59e0b", "#ef4444", "#7c2d12"
-          ],
         }]
       });
     }).catch(console.error);
@@ -161,12 +147,6 @@ function AdminDashboard() {
     scales: {
       y: { beginAtZero: true }
     },
-  };
-
-  const priorityOptions = {
-    responsive: true,
-    plugins: { legend: { display: false } },
-    scales: { y: { beginAtZero: true } },
   };
 
   const categoryOptions = {
@@ -257,7 +237,7 @@ function AdminDashboard() {
           <TicketsByUnitChart />
         </ChartCard>
         <ChartCard title="Priority Distribution">
-          <Bar data={priorityData} options={priorityOptions} />
+          <PriorityChart />
         </ChartCard>
       </div>
 
