@@ -224,76 +224,127 @@ const reopenTicket = asyncHandler(async (req, res) => {
     res.status(200).json(ticket);
 });
 
-// @desc    Get a summary of tickets by status
-// @route   GET /api/tickets/summary
-// @access  Public
-const getTicketSummary = asyncHandler(async (req, res) => {
-    const summary = await Ticket.aggregate([
-        {
-            $group: {
-                _id: '$status',
-                count: { $sum: 1 },
+// @desc    Get a summary of tickets by status
+// @route   GET /api/tickets/summary
+// @access  Public
+const getTicketSummary = async (req, res) => {
+    try {
+        const summary = await Ticket.aggregate([
+            {
+                $group: {
+                    _id: '$status',
+                    count: { $sum: 1 },
+                },
             },
-        },
-    ]);
-    res.status(200).json(summary);
-});
-
-// @desc    Add a reply to a ticket
-// @route   POST /api/tickets/:id/replies
-// @access  Private
-const addUserReply = asyncHandler(async (req, res) => {
-    const { text } = req.body;
-    const ticket = await Ticket.findById(req.params.id);
-
-    if (!ticket) {
-        res.status(404);
-        throw new Error('Ticket not found');
+        ]);
+        res.status(200).json(summary);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
+};
 
-    const newReply = {
-        text,
-        user: req.user.id,
-    };
+// @desc    Add a user reply to a ticket
+// @route   POST /api/tickets/:id/reply
+// @access  Private
+const addUserReply = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { content } = req.body;
+        const attachments = req.files ? req.files.map(file => file.path) : [];
 
-    ticket.replies.push(newReply);
-    await ticket.save();
+        const ticket = await Ticket.findById(id);
+        if (!ticket) {
+            return res.status(404).json({ message: 'Ticket not found' });
+        }
 
-    res.status(201).json(ticket.replies);
-});
+        // Ensure messages array exists
+        if (!ticket.messages) {
+            ticket.messages = [];
+        }
 
-// @desc    Delete a message from a ticket
+        ticket.messages.push({
+            author: req.user._id,
+            authorRole: 'user',
+            content,
+            attachments,
+            date: new Date()
+        });
+
+        // Update ticket status if it's closed or resolved
+        const previousStatus = ticket.status;
+        if (ticket.status === 'closed' || ticket.status === 'resolved') {
+            ticket.status = 'reopened';
+            console.log(`Ticket ${id} status changed from '${previousStatus}' to 'reopened' due to user reply`);
+        }
+
+        ticket.updatedAt = new Date();
+        await ticket.save();
+
+        // Create notification for admins
+        const admins = await User.find({ isAdmin: true });
+        for (const admin of admins) {
+            await createNotification(
+                admin._id,
+                `New reply on ticket: ${ticket.subject}`,
+                'user_reply',
+                ticket._id
+            );
+        }
+
+        // Populate the updated ticket for response
+        const updatedTicket = await Ticket.findById(id)
+            .populate('user', 'name email')
+            .populate('assignedTo', 'name email')
+            .populate('reassignedTo', 'name email')
+            .populate({
+                path: 'messages.author',
+                select: 'name email'
+            });
+
+        res.status(200).json(updatedTicket);
+    } catch (error) {
+        console.error("Error adding user reply:", error);
+        res.status(500).json({ message: 'Server error adding reply.' });
+    }
+};
+
+// @desc    Delete a user message
 // @route   DELETE /api/tickets/:ticketId/messages/:messageId
 // @access  Private
-const deleteUserMessage = asyncHandler(async (req, res) => {
-    const { ticketId, messageId } = req.params;
+const deleteUserMessage = async (req, res) => {
+    try {
+        const { ticketId, messageId } = req.params;
+        const userId = req.user._id;
 
-    const ticket = await Ticket.findById(ticketId);
-    if (!ticket) {
-        res.status(404);
-        throw new Error('Ticket not found');
+        const ticket = await Ticket.findById(ticketId);
+        if (!ticket) {
+            return res.status(404).json({ success: false, message: 'Ticket not found' });
+        }
+
+        // Find the message
+        const messageIndex = ticket.messages.findIndex(msg => msg._id.toString() === messageId);
+        if (messageIndex === -1) {
+            return res.status(404).json({ success: false, message: 'Message not found' });
+        }
+
+        const message = ticket.messages[messageIndex];
+
+        // Check if user owns the message or is admin
+        if (message.author.toString() !== userId.toString() && !req.user.isAdmin) {
+            return res.status(403).json({ success: false, message: 'Not authorized to delete this message' });
+        }
+
+        // Remove the message
+        ticket.messages.splice(messageIndex, 1);
+        ticket.updatedAt = new Date();
+        await ticket.save();
+
+        res.status(200).json({ success: true, message: 'Message deleted successfully' });
+    } catch (error) {
+        console.error("Error deleting user message:", error);
+        res.status(500).json({ success: false, message: 'Server error deleting message.' });
     }
-
-    const messageIndex = ticket.messages.findIndex(
-        (msg) => msg._id.toString() === messageId
-    );
-
-    if (messageIndex === -1) {
-        res.status(404);
-        throw new Error('Message not found');
-    }
-
-    // Optional: Check if the logged-in user is the one who created the message
-    if (ticket.messages[messageIndex].author.toString() !== req.user.id) {
-        res.status(401);
-        throw new Error('Not authorized to delete this message');
-    }
-
-    ticket.messages.splice(messageIndex, 1);
-    await ticket.save();
-
-    res.status(200).json({ message: 'Message deleted successfully' });
-});
+};
 
 export {
     createTicket,
@@ -307,5 +358,5 @@ export {
     getTicketSummary,
     updateTicketPriority,
     addUserReply,
-    deleteUserMessage // <-- The missing export has been added here
+    deleteUserMessage
 };

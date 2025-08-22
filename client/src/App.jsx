@@ -6,6 +6,7 @@ import { Routes, Route, useLocation, Navigate, Outlet } from 'react-router-dom';
 // Contexts
 import { ThemeProvider } from './context/ThemeContext.jsx';
 import { AppContextProvider, AppContext } from './context/AppContext';
+import { NotificationProvider } from './context/NotificationContext.jsx';
 
 // Components and Pages
 import Navbar from './components/Navbar.jsx';
@@ -369,7 +370,9 @@ function App() {
         // We will assume these are already handled in the HTML file for now.
         <ThemeProvider> {/* Provides theme context to all children */}
             <AppContextProvider> {/* Provides application context to all children */}
-                <AppRoutes /> {/* Renders the main routing and layout */}
+                <NotificationProvider> {/* Provides notification context to all children */}
+                    <AppRoutes /> {/* Renders the main routing and layout */}
+                </NotificationProvider>
             </AppContextProvider>
         </ThemeProvider>
     );

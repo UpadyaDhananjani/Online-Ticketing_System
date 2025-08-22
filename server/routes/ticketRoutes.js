@@ -7,10 +7,10 @@ import {
     closeTicket,
     reopenTicket,
     getTicketById,
-    addUserReply,
     getRecentTickets,
     getTicketSummary,
     updateTicketPriority,
+    addUserReply,
     deleteUserMessage,
 } from '../controllers/ticketController.js';
 

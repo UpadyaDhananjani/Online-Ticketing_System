@@ -5,6 +5,8 @@ import { Nav, Navbar } from 'react-bootstrap';
 // In a real application, you would ensure these files exist at the specified paths.
 import { AppContent } from '../context/AppContext'; 
 import ThemeToggle from './ThemeToggle';
+import NotificationIcon from './notifications/NotificationIcon';
+import NotificationPanel from './notifications/NotificationPanel';
 
 /**
  * Renders the responsive and role-based sidebar for the application.
@@ -20,15 +22,8 @@ function Sidebar() {
     const [isCollapsed, setIsCollapsed] = useState(false);
     // State to manage visibility of "Data" sub-menu
     const [showDataSubMenu, setShowDataSubMenu] = useState(false);
-    // State to manage visibility of "Notifications" sub-menu
-    const [showNotificationsSubMenu, setShowNotificationsSubMenu] = useState(false);
-    // State for a mock unread notifications count
-    const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(3);
-
-    // Placeholder data for notifications. In a real app, this would be fetched from a database.
-    const notifications = [
-        
-    ];
+    // State to manage visibility of "Notifications" panel
+    const [showNotificationPanel, setShowNotificationPanel] = useState(false);
 
     // Check user roles
     const isAdmin = !loadingAuth && userData && userData.role === 'admin';
@@ -44,13 +39,10 @@ function Sidebar() {
     const linkPadding = isCollapsed ? '8px' : '8px 12px'; // Adjust padding for collapsed state
 
     /**
-     * Toggles the visibility of the notifications sub-menu.
-     * Also resets the unread count when the menu is opened.
+     * Toggles the visibility of the notifications panel.
      */
     const handleNotificationsClick = () => {
-        setShowNotificationsSubMenu(!showNotificationsSubMenu);
-        // In a real application, you would mark notifications as read on click
-        setUnreadNotificationsCount(0);
+        setShowNotificationPanel(!showNotificationPanel);
     };
 
     return (
@@ -107,31 +99,15 @@ function Sidebar() {
                             style={{ padding: linkPadding, cursor: 'pointer' }}
                         >
                             <div className="d-flex align-items-center position-relative">
-                                <i className="bi bi-bell-fill me-2"></i>
-                                {!isCollapsed && "Notifications"}
-                                {!isCollapsed && unreadNotificationsCount > 0 && (
-                                    <span className="badge-notification position-absolute start-100 translate-middle-x">
-                                        {unreadNotificationsCount}
-                                    </span>
-                                )}
+                                <NotificationIcon 
+                                    isCollapsed={isCollapsed}
+                                    onClick={handleNotificationsClick}
+                                />
                                 {!isCollapsed && (
-                                    <i className={`bi ms-auto ${showNotificationsSubMenu ? 'bi-chevron-up' : 'bi-chevron-down'}`}></i>
+                                    <i className={`bi ms-auto ${showNotificationPanel ? 'bi-chevron-up' : 'bi-chevron-down'}`}></i>
                                 )}
                             </div>
                         </Nav.Link>
-                        {showNotificationsSubMenu && !isCollapsed && (
-                            <div className="notifications-sub-menu" style={{ marginLeft: '20px', borderLeft: '2px solid var(--border-color)', paddingLeft: '10px' }}>
-                                {notifications.map(notification => (
-                                    <Nav.Link
-                                        key={notification.id}
-                                        className={`sidebar-nav-link sub-link ${notification.isRead ? 'read' : 'unread'}`}
-                                        style={{ padding: '8px 12px' }}
-                                    >
-                                        {notification.text}
-                                    </Nav.Link>
-                                ))}
-                            </div>
-                        )}
                     </div>
                 )}
 
@@ -248,6 +224,23 @@ function Sidebar() {
                     </Nav.Link>
                 )}
             </Nav>
+
+            {/* Notification Panel */}
+            {showNotificationPanel && !isCollapsed && (
+                <div className="notification-panel-container" style={{ 
+                    position: 'absolute',
+                    top: '0',
+                    left: '100%',
+                    width: '400px',
+                    height: '100vh',
+                    zIndex: 1000,
+                    backgroundColor: 'var(--bs-body-bg)',
+                    boxShadow: '2px 0 8px rgba(0,0,0,0.1)',
+                    borderLeft: '1px solid var(--bs-border-color)'
+                }}>
+                    <NotificationPanel onClose={() => setShowNotificationPanel(false)} />
+                </div>
+            )}
 
             <style>{`
                 /* Ensure Bootstrap icons are loaded (though typically done in main.jsx/index.js) */
