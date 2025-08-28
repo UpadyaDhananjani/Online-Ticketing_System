@@ -15,8 +15,8 @@ import publicRoutes from './routes/publicRoutes.js';
 import adminRouter from "./routes/adminRoutes.js";
 import notificationRoutes from './routes/notificationRoutes.js'; // <-- NEW
 
-// Import authMiddleware here since you're using it directly in this file
-import authMiddleware from './middleware/authMiddleware.js';
+// Import middleware
+import { protect, admin } from './middleware/authMiddleware.js';
 
 // Initialize environment variables
 dotenv.config();
@@ -38,10 +38,16 @@ app.use(cookieParser());
 // 3. CORS Configuration (Crucial for cross-origin requests with cookies)
 app.use(cors({
     origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'],
-    credentials: true // This must be true for cookies to be sent/received cross-origin
+    credentials: true, // This must be true for cookies to be sent/received cross-origin
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+// Import ticket stats routes
+import ticketStatsRouter from './routes/ticketStatsRoutes.js';
+
 app.use('/api/admin', adminRouter);
+app.use('/api/admin/tickets', ticketStatsRouter);
 
 // --- Server initialization ---
 app.listen(port, () => console.log(`Server started on PORT:${port}`));
@@ -57,8 +63,8 @@ app.use('/api/tickets', ticketRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/public', publicRoutes);
 
-// Authentication check endpoint - now correctly protected by authMiddleware
-app.get('/api/auth/is-auth', authMiddleware, (req, res) => {
+// Authentication check endpoint - now correctly protected
+app.get('/api/auth/is-auth', protect, (req, res) => {
     res.json({ success: true, message: "User is authenticated.", userId: req.user._id });
 });
 

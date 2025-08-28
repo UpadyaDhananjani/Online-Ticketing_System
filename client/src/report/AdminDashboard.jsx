@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import {
-  Bar,
-  Doughnut,
-  Line
-} from "react-chartjs-2";
+import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import { BsGraphUp, BsPrinter, BsCheck2Circle } from 'react-icons/bs';
+import { Button, Container, Row, Col } from "react-bootstrap";
+import { Bar, Doughnut, Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -15,16 +15,16 @@ import {
   ArcElement,
   LineElement,
   PointElement,
-  Filler,
+  Filler
 } from "chart.js";
 import {
   getTicketStatusDistribution,
   getTicketTypeDistribution,
   getRecentTickets,
-  getAssigneePerformance
+  getAssigneePerformance,
+  getAdminTicketsSummary
 } from "../api/ticketApi";
-import { Container, Row, Col } from "react-bootstrap";
-import { BsCheck2Circle } from "react-icons/bs";
+import { downloadAdminReport } from "../api/reportApi";
 
 import TicketsByUnitChart from "./TicketsByUnitChart";
 import AssigneePerformanceTable from "./AssigneePerformanceTable";
@@ -94,17 +94,19 @@ function AdminDashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await fetch("/api/tickets/summary");
-        if (!res.ok) return;
-        const data = await res.json();
-        setStats({
-          openTickets: data.open || 0,
-          inProgressTickets: data.inProgress || 0,
-          resolvedToday: data.resolved || 0,
-          avgResponseTime: data.avgResponseTime || 0,
-        });
-      } catch {
-        // Silent catch or add error handling as needed
+        const summaryData = await getAdminTicketsSummary();
+        console.log('Ticket stats response:', summaryData);
+        
+        if (summaryData) {
+          setStats({
+            openTickets: summaryData.open || 0,
+            inProgressTickets: summaryData.inProgress || 0,
+            resolvedToday: summaryData.resolved || 0,
+            avgResponseTime: summaryData.avgResponseTime || 0,
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching ticket stats:', error);
       }
     };
 
@@ -170,6 +172,30 @@ function AdminDashboard() {
               <h1 className="text-2xl font-bold">Admin Dashboard</h1>
               <p className="text-blue-200 dark:text-slate-300 text-sm">ICT Helpdesk Management System</p>
             </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link to="/analytics">
+              <Button variant="light">
+                <BsGraphUp className="me-2" />
+                Analytics
+              </Button>
+            </Link>
+            <Button 
+              variant="outline-light" 
+              onClick={async () => {
+                try {
+                  toast.info('Generating comprehensive report...');
+                  await downloadAdminReport();
+                  toast.success('Report downloaded successfully!');
+                } catch (error) {
+                  console.error('Error downloading report:', error);
+                  toast.error('Failed to download report. Please try again.');
+                }
+              }}
+            >
+              <BsPrinter className="me-2" />
+              Download Report
+            </Button>
           </div>
         </div>
       </header>

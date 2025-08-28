@@ -39,7 +39,7 @@ export const generateReportChartImage = async (req, res) => {
 };
 
 // Download comprehensive PDF report with all charts and tables
-export const downloadReportPdf = async (req, res) => {
+export const generateTicketReport = async (req, res) => {
   try {
     // Gather all data needed for comprehensive report
     const openCount = await Ticket.countDocuments({ status: 'open' });

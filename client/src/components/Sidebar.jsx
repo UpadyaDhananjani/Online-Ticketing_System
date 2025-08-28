@@ -24,6 +24,8 @@ function Sidebar() {
     const [showDataSubMenu, setShowDataSubMenu] = useState(false);
     // State to manage visibility of "Notifications" panel
     const [showNotificationPanel, setShowNotificationPanel] = useState(false);
+    // State to manage visibility of "Management" sub-menu
+    const [showManagementSubMenu, setShowManagementSubMenu] = useState(false);
 
     // Check user roles
     const isAdmin = !loadingAuth && userData && userData.role === 'admin';
@@ -187,6 +189,46 @@ function Sidebar() {
                                 </div>
                             )}
                         </div>
+
+                        {/* Management Section */}
+                        <div className="management-menu-container">
+                            <Nav.Link
+                                onClick={() => setShowManagementSubMenu(!showManagementSubMenu)}
+                                className="sidebar-nav-link"
+                                style={{ padding: linkPadding, cursor: 'pointer' }}
+                            >
+                                <i className="bi bi-gear-fill me-2"></i>
+                                {!isCollapsed && "Management"}
+                                {!isCollapsed && (
+                                    <i className={`bi ms-auto ${showManagementSubMenu ? 'bi-chevron-up' : 'bi-chevron-down'}`}></i>
+                                )}
+                            </Nav.Link>
+
+                            {showManagementSubMenu && !isCollapsed && (
+                                <div className="management-sub-menu" style={{ marginLeft: '20px', borderLeft: '2px solid var(--border-color)', paddingLeft: '10px' }}>
+                                    <Nav.Link
+                                        as={NavLink}
+                                        to="/admin/users"
+                                        className="sidebar-nav-link sub-link"
+                                        style={{ padding: '8px 12px' }}
+                                    >
+                                        <i className="bi bi-people-fill me-2"></i>
+                                        All Users
+                                    </Nav.Link>
+                                    {/* Add other management links here */}
+                                </div>
+                            )}
+                        </div>
+
+                        <Nav.Link
+                            as={NavLink}
+                            to="/reports"
+                            className="sidebar-nav-link"
+                            style={{ padding: linkPadding }}
+                        >
+                            <i className="bi bi-bar-chart-fill me-2"></i>
+                            {!isCollapsed && "Reports"}
+                        </Nav.Link>
                     </>
                 )}
 
@@ -211,17 +253,6 @@ function Sidebar() {
                             {!isCollapsed && "Track Ticket Status"}
                         </Nav.Link>
                     </>
-                )}
-                {isAdmin && (
-                    <Nav.Link
-                        as={NavLink}
-                        to="/reports"
-                        className="sidebar-nav-link"
-                        style={{ padding: linkPadding }}
-                    >
-                        <i className="bi bi-bar-chart-fill me-2"></i>
-                        {!isCollapsed && "Reports"}
-                    </Nav.Link>
                 )}
             </Nav>
 

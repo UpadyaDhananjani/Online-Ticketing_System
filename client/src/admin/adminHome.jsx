@@ -10,10 +10,7 @@ import {
     BsCalendar,
     BsPlusCircle,
     BsCheck2Circle,
-    BsPeopleFill, // These icons are no longer strictly needed if the section is removed, but keeping imports for safety
-    BsCpuFill,
-    BsBarChartFill,
-    BsClipboardCheck,
+    BsPeopleFill, 
     BsGearFill,
     BsHeadset,
     BsArrowRepeat

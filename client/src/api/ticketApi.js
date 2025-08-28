@@ -5,7 +5,7 @@ import axios from 'axios';
 const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api';
 
 // Create a pre-configured Axios instance for all API calls
-const axiosInstance = axios.create({
+export const axiosInstance = axios.create({
     baseURL: API_URL,
     withCredentials: true, // Crucial for sending HTTP-only cookies (like your JWT token)
 });
@@ -300,8 +300,8 @@ export const deleteAdminUser = async (userId) => {
 };
 
 // --- ADMIN REPORT APIs ---
-export const getAdminReportChartImageUrl = () => `${API_URL}/admin/tickets/reports/chart-image`;
-export const getAdminReportPdfUrl = () => `${API_URL}/admin/tickets/reports/pdf`;
+export const getAdminReportChartImageUrl = () => `${API_URL}/admin/tickets/report/chart`;
+export const getAdminReportPdfUrl = () => `${API_URL}/admin/tickets/report/download`;
 
 export const getAdminTicketsSummary = async () => {
     try {

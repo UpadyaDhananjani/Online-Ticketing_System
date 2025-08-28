@@ -31,10 +31,13 @@ import OpenTickets from './Data/OpenTickets';
 import InProgressTickets from './Data/InProgressTickets';
 import ResolvedTickets from './Data/ResolvedTickets';
 import ClosedTickets from './Data/ClosedTickets';
+import AllUsersList from './admin/AllUsersList.jsx';  // Fixed: Added .jsx extension and closing quote
 import NotificationPanel from './components/notifications/NotificationPanel.jsx';
 import NotificationIcon from './components/notifications/NotificationIcon.jsx'
+// Make sure the import path is correct
 
 import { ToastContainer } from 'react-toastify';
+
 
 /**
  * AppRoutes component handles all the routing and conditional rendering
@@ -116,7 +119,7 @@ const AppRoutes = () => {
                         <Routes>
                             {/* Public Routes for authentication */}
                             <Route path="/login" element={<Login />} />
-                            <Route path="/loginselection" element={<LoginSelection />} />
+                            {/* <Route path="/loginselection" element={<LoginSelection />} /> */}
                             <Route path="/login-select" element={<LoginSelection />} />
                             <Route path="/reset-password" element={<ResetPassword />} />
                             <Route path="/email-verify" element={<EmailVerify />} />
@@ -152,6 +155,7 @@ const AppRoutes = () => {
                                     <Route path="/admin/tickets/:id/reply" element={<TicketReply />} />
                                     <Route path="/reports" element={<ReportPage />} />
                                     <Route path="/analytics" element={<AnalyticsPage />} />
+                                    <Route path="/admin/users" element={<AllUsersList />} />
                                 </Route>
                             </Route>
 
