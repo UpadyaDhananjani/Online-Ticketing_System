@@ -86,6 +86,9 @@ const Login = () => {
       }
 
       if (res.data.success) {
+        // Store the token
+        localStorage.setItem('token', res.data.token);
+        
         toast.success(res.data.message);
         setIsLoggedin(true);
         setUserData(res.data.userData);
@@ -151,7 +154,7 @@ const Login = () => {
             src={assets.logo}
             alt="Logo"
             className="auth-form-logo"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/')} 
           />
 
           <h2 className="auth-form-title">

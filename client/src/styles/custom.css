@@ -1,0 +1,44 @@
+.bg-info-subtle {
+  background-color: rgba(0, 97, 242, 0.1) !important;
+}
+
+.text-info {
+  color: #0061f2 !important;
+}
+
+/* Table styles */
+.table {
+  font-size: 0.875rem;
+}
+
+.table > :not(caption) > * > * {
+  padding: 0.75rem;
+}
+
+.table tbody tr:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Form styles */
+.form-select-sm {
+  font-size: 0.875rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
+/* Badge styles */
+.badge {
+  font-weight: 500;
+  font-size: 0.875rem;
+  padding: 0.35rem 0.85rem;
+}
+
+/* Button styles */
+.btn-sm {
+  font-size: 0.875rem;
+}
+
+/* Shadow styles */
+.shadow-sm {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}

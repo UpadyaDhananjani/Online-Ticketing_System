@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+// src/components/tickets/CreateTicket.jsx
+import React, { useState, useEffect, useContext } from 'react';
 import { Container, Row, Col, Form, Button, Card } from 'react-bootstrap';
-
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-
 import axios from 'axios';
 import { BsCardText, BsChatDots, BsTag, BsDiagram3, BsPerson, BsImage, BsCheckCircle } from 'react-icons/bs';
-
+import useNotifications from '/src/hooks/useNotifications.js';
+import { AppContext } from '../context/AppContext.jsx'; // Corrected path
 
 const UNIT_OPTIONS = [
     "System and Network Administration",
@@ -28,6 +28,10 @@ function CreateTicket() {
     const [errors, setErrors] = useState({});
     const [submitting, setSubmitting] = useState(false);
     const navigate = useNavigate();
+    const { createNotification } = useNotifications();
+    
+    // Use the useContext hook to get the token from your AppContext
+    const { token } = useContext(AppContext);
 
     useEffect(() => {
         if (!assignedUnit) {
@@ -91,12 +95,20 @@ function CreateTicket() {
         try {
             const res = await axios.post('/api/tickets', formData, {
                 headers: {
-                    'Content-Type': 'multipart/form-data'
+                    'Content-Type': 'multipart/form-data',
+                    'Authorization': `Bearer ${token}` 
                 },
                 withCredentials: true
             });
             if (res.status === 201) {
                 toast.success(<span className="flex items-center gap-2"><BsCheckCircle className="text-green-500" /> Ticket created successfully!</span>);
+
+                createNotification(
+                    `Your new ticket #${res.data.ticketId} has been created.`,
+                    'new_ticket',
+                    res.data._id
+                );
+
                 navigate('/tickets');
             } else {
                 toast.error(res.data.error || "Failed to create ticket.");
@@ -115,10 +127,9 @@ function CreateTicket() {
         >
             <Row className="w-100 justify-content-center">
                 <Col xs={12}>
-                    {/* Added 'hover-effect' class for interactive 3D lift */}
                     <Card className="shadow-lg border-0 animate-pop hover-effect" style={{ borderRadius: 20, width: '100%', animation: 'popIn 0.6s cubic-bezier(.68,-0.55,.27,1.55)' }}>
                         <Card.Body className="p-5">
-                            <Card.Title className="mb-4 text-center font-bold text-2xl flex items-center justify-center gap-2">
+                            <Card.Title className="mb-4 text-center font-bold text-2xl flex items-center justify-content-center gap-2">
                                 <BsCardText className="text-blue-500" size={28} /> Create Ticket
                             </Card.Title>
                             <Form onSubmit={handleSubmit} className="space-y-4">
@@ -219,7 +230,7 @@ function CreateTicket() {
                                         variant="primary"
                                         type="submit"
                                         size="lg"
-                                        className="transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-lg flex items-center justify-center gap-2"
+                                        className="transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-lg flex items-center justify-content-center gap-2"
                                         disabled={submitting}
                                     >
                                         {submitting ? (
