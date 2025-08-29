@@ -1,0 +1,208 @@
+/* src/themes.css */
+
+/* Light Theme (Default) */
+:root {
+  --background-color: #f8f9fa;
+  --text-color: #212529;
+  --primary-color: #007bff;
+  --primary-color-hover: #0056b3;
+  --secondary-color: #6c757d;
+  --accent-color: #28a745;
+
+  --sidebar-bg: #e9ecef;
+  --sidebar-border: #dee2e6;
+  --sidebar-shadow: rgba(0, 0, 0, 0.1);
+
+  --card-background: #ffffff;
+  --card-background-light: #f1f1f1;
+  --border-color: #dee2e6;
+
+  /* Shadow Variables for 3D effect */
+  --shadow-color-rgb: 0, 0, 0;
+  --shadow-opacity-sm: 0.15;
+  --shadow-opacity-md: 0.3;
+  --shadow-opacity-lg: 0.2;
+  --shadow-elevation-1: 0 10px 20px rgba(var(--shadow-color-rgb), var(--shadow-opacity-sm));
+  --shadow-elevation-2: 0 25px 50px rgba(var(--shadow-color-rgb), var(--shadow-opacity-md));
+  --shadow-elevation-3: 0 50px 100px rgba(var(--shadow-color-rgb), var(--shadow-opacity-lg));
+
+  --shadow-hover-opacity-sm: 0.3;
+  --shadow-hover-opacity-md: 0.5;
+  --shadow-hover-opacity-lg: 0.3;
+  --shadow-elevation-hover-1: 0 15px 30px rgba(var(--shadow-color-rgb), var(--shadow-hover-opacity-sm));
+  --shadow-elevation-hover-2: 0 40px 80px rgba(var(--shadow-color-rgb), var(--shadow-hover-opacity-md));
+  --shadow-elevation-hover-3: 0 80px 160px rgba(var(--shadow-color-rgb), var(--shadow-hover-opacity-lg));
+  --shadow-color: rgba(0, 0, 0, 0.15);
+
+  --active-link-background: #e0e7f1;
+
+  /* Table specific colors - LIGHT MODE */
+  --table-bg: #ffffff;
+  --table-header-bg: #e9ecef;
+  --table-border-color: #dee2e6;
+  --table-row-even-bg: #ffffff;
+  --table-row-odd-bg: #f8f9fa;
+  --table-hover-bg: #e2e6ea;
+  --table-text-color: #212529;
+
+  /* Status colors */
+  --status-open-bg: #fee2e2;
+  --status-open-border: #fca5a5;
+  --status-open-text: #ef4444;
+
+  --status-inprogress-bg: #fffbe6;
+  --status-inprogress-border: #fcd34d;
+  --status-inprogress-text: #f59e0b;
+
+  --status-resolved-bg: #dcfce7;
+  --status-resolved-border: #86efad;
+  --status-resolved-text: #22c55e;
+
+  --status-closed-bg: #f8f9fa;
+  --status-closed-border: #e9ecef;
+  --status-closed-text: #6c757d;
+
+  /* Text colors */
+  --heading-color: #212529;
+  --text-muted-color: #6c757d;
+  --link-color: #007bff;
+  --link-hover-color: #0056b3;
+
+  /* Variables for deeper 3D effect + Transparency */
+  --primary-color-rgb: 0, 123, 255;
+  --card-transparent-bg: rgba(255, 255, 255, 0.5);
+  --card-inset-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.05);
+  --card-transparent-border-color: rgba(255, 255, 255, 0.4);
+
+  --input-bg-gradient-start: #eff2f5;
+  --input-bg-gradient-end: #d7dae0;
+  --input-inset-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.15);
+  --input-border-focus: rgba(var(--primary-color-rgb), 0.4);
+  --input-focus-outline-color: #004d99;
+
+  --button-gradient-start: #007bff;
+  --button-gradient-end: #0056b3;
+  --button-outer-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  --button-inset-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -4px 0 rgba(0, 0, 0, 0.25);
+  --button-hover-gradient-start: #0056b3;
+  --button-hover-gradient-end: #004085;
+  --button-active-gradient-start: #004085;
+  --button-active-gradient-end: #002752;
+  --button-active-outer-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* Dark Theme */
+[data-theme="dark"] {
+  --background-color: #1a1a1a;
+  --text-color: #f8f9fa;
+  --primary-color: #61dafb;
+  --primary-color-hover: #21a1f1;
+  --secondary-color: #b0bec5;
+  --accent-color: #90ee90;
+
+  --sidebar-bg: #212121;
+  --sidebar-border: #343a40;
+  --sidebar-shadow: rgba(0, 0, 0, 0.4);
+
+  --card-background: rgba(43, 43, 43, 0.8);
+  --card-background-light: #3a3a3a;
+  --border-color: #444444;
+
+  /* Shadow Variables for 3D effect (Dark Mode) */
+  --shadow-color-rgb: 0, 0, 0;
+  --shadow-opacity-sm: 0.35;
+  --shadow-opacity-md: 0.6;
+  --shadow-opacity-lg: 0.4;
+  --shadow-elevation-1: 0 10px 20px rgba(var(--shadow-color-rgb), var(--shadow-opacity-sm));
+  --shadow-elevation-2: 0 25px 50px rgba(var(--shadow-color-rgb), var(--shadow-opacity-md));
+  --shadow-elevation-3: 0 50px 100px rgba(var(--shadow-color-rgb), var(--shadow-opacity-lg));
+
+  --shadow-hover-opacity-sm: 0.5;
+  --shadow-hover-opacity-md: 0.8;
+  --shadow-hover-opacity-lg: 0.6;
+  --shadow-elevation-hover-1: 0 15px 30px rgba(var(--shadow-color-rgb), var(--shadow-hover-opacity-sm));
+  --shadow-elevation-hover-2: 0 40px 80px rgba(var(--shadow-color-rgb), var(--shadow-hover-opacity-md));
+  --shadow-elevation-hover-3: 0 80px 160px rgba(var(--shadow-color-rgb), var(--shadow-hover-opacity-lg));
+  --shadow-color: rgba(0, 0, 0, 0.6);
+
+  --active-link-background: #3a3a3a;
+
+  /* Table specific colors - DARK MODE */
+  --table-bg: #2b2b2b;
+  --table-header-bg: #1a1a1a;
+  --table-border-color: #444444;
+  --table-row-even-bg: #2b2b2b;
+  --table-row-odd-bg: #3a3a3a;
+  --table-hover-bg: #4c4c4c;
+  --table-text-color: #f8f9fa;
+
+  /* Status colors (dark mode adjustments) */
+  --status-open-bg: #450a0a;
+  --status-open-border: #dc2626;
+  --status-open-text: #fca5a5;
+
+  --status-inprogress-bg: #422006;
+  --status-inprogress-border: #d97706;
+  --status-inprogress-text: #fcd34d;
+
+  --status-resolved-bg: #064e3b;
+  --status-resolved-border: #16a34a;
+  --status-resolved-text: #86efad;
+
+  --status-closed-bg: #3a3a3a;
+  --status-closed-border: #555;
+  --status-closed-text: #adb5bd;
+
+  /* Text colors (dark mode adjustments) */
+  --heading-color: #f8f9fa;
+  --text-muted-color: #adb5bd;
+  --link-color: #61dafb;
+  --link-hover-color: #21a1f1;
+
+  /* Variables for deeper 3D effect + Transparency */
+  --primary-color-rgb: 97, 218, 251;
+  --card-transparent-bg: rgba(30, 30, 30, 0.85);
+  --card-inset-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.3);
+  --card-transparent-border-color: rgba(68, 68, 68, 0.7);
+
+  --input-bg-gradient-start: rgba(25, 25, 25, 0.95);
+  --input-bg-gradient-end: rgba(35, 35, 35, 0.95);
+  --input-inset-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.8);
+  --input-border-focus: rgba(var(--primary-color-rgb), 0.6);
+  --input-focus-outline-color: #0077c2;
+
+  --button-gradient-start: #61dafb;
+  --button-gradient-end: #21a1f1;
+  --button-outer-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
+  --button-inset-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -5px 0 rgba(0, 0, 0, 0.5);
+  --button-hover-gradient-start: #21a1f1;
+  --button-hover-gradient-end: #0e84d4;
+  --button-active-gradient-start: #0e84d4;
+  --button-active-gradient-end: #075b8a;
+  --button-active-outer-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.8);
+}
+
+[data-theme="dark"] {
+  /* Table specific colors - DARK MODE */
+  --table-bg: #2b2b2b;
+  --table-header-bg: #1a1a1a;
+  --table-border-color: #444;
+  --table-row-even-bg: #2b2b2b;
+  --table-row-odd-bg: #3a3a3a;
+  --table-hover-bg: #4c4c4c;
+  --table-text-color: #f8f9fa;
+
+  /* Status colors (dark mode) */
+  --status-open-bg: #450a0a;
+  --status-open-border: #dc2626;
+  --status-open-text: #fca5a5;
+  --status-inprogress-bg: #422006;
+  --status-inprogress-border: #d97706;
+  --status-inprogress-text: #fcd34d;
+  --status-resolved-bg: #064e3b;
+  --status-resolved-border: #16a34a;
+  --status-resolved-text: #86efac;
+  --status-closed-bg: #3a3a3a;
+  --status-closed-border: #555;
+  --status-closed-text: #adb5bd;
+}

@@ -5,7 +5,7 @@ import axios from 'axios';
 const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api';
 
 // Create a pre-configured Axios instance for all API calls
-const axiosInstance = axios.create({
+export const axiosInstance = axios.create({
     baseURL: API_URL,
     withCredentials: true, // Crucial for sending HTTP-only cookies (like your JWT token)
 });
@@ -30,8 +30,6 @@ axiosInstance.interceptors.request.use(
 );
 
 // Response Interceptor: Logs incoming responses
-// IMPORTANT CHANGE HERE: Interceptor now just logs and passes the FULL response object.
-// Individual API functions will then extract .data if needed.
 axiosInstance.interceptors.response.use(
     response => {
         console.log('API Response:', {
@@ -236,12 +234,30 @@ export const deleteAdminTicket = async (ticketId) => {
 export const reassignTicket = async (ticketId, userId) => {
     try {
         const response = await axiosInstance.patch(`/admin/tickets/${ticketId}/assign`, { userId });
-        return response.data; // Explicitly return data
+        return response; // Return full response for consistency
     } catch (error) {
         throw error;
     }
 };
 
+// =======================================================
+// --- NEW FUNCTION: Update Ticket Priority (for admins) ---
+// =======================================================
+/**
+ * Updates the priority of a specific ticket.
+ * @param {string} ticketId - The ID of the ticket to update.
+ * @param {string} newPriority - The new priority level ('Low', 'Normal', 'High', 'Critical').
+ * @returns {Promise<object>} A promise that resolves to the updated ticket object.
+ * @throws {Error} If the API call fails.
+ */
+export const updateTicketPriority = async (ticketId, newPriority) => {
+    try {
+        const response = await axiosInstance.put(`/admin/tickets/${ticketId}/priority`, { priority: newPriority });
+        return response.data; // Explicitly return data
+    } catch (error) {
+        throw error;
+    }
+};
 
 // =======================================================
 // --- PUBLIC / GENERAL APIs ---
@@ -267,7 +283,7 @@ export const getUsersByUnit = async (unitName) => {
 
 export const getAdminUsersByUnit = async (unitName) => {
     try {
-        const response = await axiosInstance.get(`/admin/users?unit=${encodeURIComponent(unitName)}`);
+        const response = await axiosInstance.get(`/admin/tickets/users/${encodeURIComponent(unitName)}`);
         return response.data; // Explicitly return data
     } catch (error) {
         throw error;
@@ -284,8 +300,8 @@ export const deleteAdminUser = async (userId) => {
 };
 
 // --- ADMIN REPORT APIs ---
-export const getAdminReportChartImageUrl = () => `${API_URL}/admin/tickets/reports/chart-image`;
-export const getAdminReportPdfUrl = () => `${API_URL}/admin/tickets/reports/pdf`;
+export const getAdminReportChartImageUrl = () => `${API_URL}/admin/tickets/report/chart`;
+export const getAdminReportPdfUrl = () => `${API_URL}/admin/tickets/report/download`;
 
 export const getAdminTicketsSummary = async () => {
     try {
@@ -308,6 +324,7 @@ export const getAvgResolutionTime = async () => {
 export const getAssigneePerformance = async () => {
     try {
         const response = await axiosInstance.get('/admin/tickets/assignee-performance');
+        console.log('%cAssignee Performance API Data:',"background: #222; color: #bada55", response.data);
         return response.data; // Explicitly return data
     } catch (error) {
         throw error;
@@ -332,11 +349,23 @@ export const getTicketTypeDistribution = async () => {
     }
 };
 
-export const getTicketsByUnit = async (unitName) => {
+export const getTicketPriorityDistribution = async () => {
     try {
-        const response = await axiosInstance.get(`/admin/tickets/by-unit/${encodeURIComponent(unitName)}`);
+        const response = await axiosInstance.get('/admin/tickets/priority-distribution');
         return response.data; // Explicitly return data
     } catch (error) {
+        throw error;
+    }
+};
+
+// Corrected function to accept unitName as a parameter
+export const getTicketsByUnit = async (unitName) => {
+    try {
+        const response = await axiosInstance.get('/admin/tickets/tickets_by_unit');
+        console.log("Tickets by Unit API Response:", response.data);
+        return response; // Return full response for consistency
+    } catch (error) {
+        console.error("Tickets by Unit API Error:", error);
         throw error;
     }
 };
@@ -344,6 +373,16 @@ export const getTicketsByUnit = async (unitName) => {
 export const getActivityLogs = async () => {
     try {
         const response = await axiosInstance.get('/admin/activity-logs');
+        return response.data; // Explicitly return data
+    } catch (error) {
+        throw error;
+    }
+};
+
+export const getRecentTickets = async () => {
+    try {
+        const response = await axiosInstance.get('/admin/tickets/recent');
+        console.log(response.data);
         return response.data; // Explicitly return data
     } catch (error) {
         throw error;

@@ -1,10 +1,9 @@
-// server/server.js
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import path from "path";
-import connectDB from "./config/mongodb.js"; // Assuming this connects to your DB
+import connectDB from "./config/mongodb.js"; 
 
 // Route imports
 import authRouter from './routes/authRoutes.js';
@@ -14,9 +13,10 @@ import ticketAdminRoutes from './routes/ticketAdminRoutes.js';
 import uploadRoutes from "./routes/uploadRoutes.js";
 import publicRoutes from './routes/publicRoutes.js';
 import adminRouter from "./routes/adminRoutes.js";
+import notificationRoutes from './routes/notificationRoutes.js'; // <-- NEW
 
-// Import authMiddleware here since you're using it directly in this file
-import authMiddleware from './middleware/authMiddleware.js'; // <--- Ensure this import is present
+// Import middleware
+import { protect, admin } from './middleware/authMiddleware.js';
 
 // Initialize environment variables
 dotenv.config();
@@ -37,35 +37,37 @@ app.use(cookieParser());
 
 // 3. CORS Configuration (Crucial for cross-origin requests with cookies)
 app.use(cors({
-    // Only need to specify the frontend origin.
-    // If you add a Vite proxy, the browser treats requests as same-origin,
-    // but CORS is still needed for the initial page load and for general API calls
-    // that aren't proxied or for direct backend tests.
-    origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001'],
-    credentials: true // This must be true for cookies to be sent/received cross-origin
+    origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'],
+    credentials: true, // This must be true for cookies to be sent/received cross-origin
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Import ticket stats routes
+import ticketStatsRouter from './routes/ticketStatsRoutes.js';
+
+app.use('/api/admin', adminRouter);
+app.use('/api/admin/tickets', ticketStatsRouter);
+
+// --- Server initialization ---
+app.listen(port, () => console.log(`Server started on PORT:${port}`));
 
 // --- API Routes ---
 app.get('/', (req, res) => res.send("API working"));
 app.use('/api/auth', authRouter);
 app.use('/api/user', userRouter);
-app.use('/api/tickets', ticketRoutes);
+app.use('/api/notifications', notificationRoutes); // <-- NEW
+
 app.use('/api/admin/tickets', ticketAdminRoutes);
+app.use('/api/tickets', ticketRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/public', publicRoutes);
 
-// Authentication check endpoint - now correctly protected by authMiddleware
-app.get('/api/auth/is-auth', authMiddleware, (req, res) => {
-    // If authMiddleware successfully passes, it means the user is authenticated.
-    // We can send a simple success or even basic user info (though get-user-data is better for full data)
+// Authentication check endpoint - now correctly protected
+app.get('/api/auth/is-auth', protect, (req, res) => {
     res.json({ success: true, message: "User is authenticated.", userId: req.user._id });
 });
 
 // Static file serving for uploads
 const uploadsDir = path.join(process.cwd(), 'uploads');
 app.use('/uploads', express.static(uploadsDir));
-
-app.use('/api/admin', adminRouter);
-
-// --- Server initialization ---
-app.listen(port, () => console.log(`Server started on PORT:${port}`));

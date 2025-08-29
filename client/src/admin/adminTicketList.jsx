@@ -12,14 +12,23 @@ import {
 } from "react-bootstrap";
 import { getAdminTickets, deleteAdminTicket } from "../api/ticketApi";
 import { toast } from "react-toastify";
-import { BsArrowRepeat } from "react-icons/bs";
+import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
 
-const statusColors = {
-  open: "success",
-  closed: "danger",
-  resolved: "primary",
-  reopened: "warning",
-  "in progress": "info",
+// Helper object for priority styling
+const priorityStyles = {
+  Critical: { className: "bg-danger", color: "white" }, // Red
+  High: { className: "bg-warning", color: "black" },   // Yellow
+  Medium: { className: "bg-info", color: "black" },     // Blue
+  Low: { className: "bg-success", color: "white" },    // Green
+};
+
+// Helper object for status styling
+const statusStyles = {
+  open: { className: "bg-danger", color: "white" },
+  'in progress': { className: "bg-warning", color: "black" },
+  resolved: { className: "bg-success", color: "white" },
+  closed: { className: "bg-secondary", color: "white" },
+  reopened: { className: "bg-info", color: "black" },
 };
 
 const UNIT_OPTIONS = [
@@ -49,7 +58,7 @@ const TYPE_OPTIONS = [
   "service",
 ];
 
-function TicketList({ onSelect, token, refresh }) {
+function TicketList({ refresh }) { // Removed 'onSelect' and 'token' as props
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -58,23 +67,28 @@ function TicketList({ onSelect, token, refresh }) {
   const [typeFilter, setTypeFilter] = useState("All");
   const [selectedTickets, setSelectedTickets] = useState(new Set());
 
+  const navigate = useNavigate(); // Initialize useNavigate hook
+
   useEffect(() => {
     setLoading(true);
     setError("");
     getAdminTickets()
       .then((res) => {
         const fetchedTickets = res.data ?? [];
+        console.log("AdminTicketList - All fetched tickets:", fetchedTickets);
+        
+        // Debug reassigned tickets specifically
+        const reassignedTickets = fetchedTickets.filter(t => t.reassigned);
+        console.log("AdminTicketList - Reassigned tickets:", reassignedTickets);
+        
         setTickets(fetchedTickets);
         setLoading(false);
-        if (fetchedTickets.length > 0) {
-          console.log("First ticket user:", fetchedTickets[0].user);
-        }
       })
       .catch((err) => {
         console.error("Error fetching tickets:", err);
         setError("Failed to fetch tickets.");
         toast.error(
-          err.response?.data?.error ||
+          err.response?.data?.message ||
             err.message ||
             "Failed to fetch tickets for admin dashboard."
         );
@@ -171,7 +185,7 @@ function TicketList({ onSelect, token, refresh }) {
 
   return (
     <Container className="mt-4">
-      <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+      <div style={{ maxWidth: 1400, margin: "0 auto" }}>
         <h2 className="mb-4 text-primary">
           <i className="bi bi-list-ul me-2"></i>All Tickets
         </h2>
@@ -179,12 +193,19 @@ function TicketList({ onSelect, token, refresh }) {
         {selectedTickets.size > 0 && (
           <Row className="mb-3">
             <Col>
-              <Alert variant="info" className="d-flex align-items-center justify-content-between">
+              <Alert
+                variant="info"
+                className="d-flex align-items-center justify-content-between"
+              >
                 <span>
                   <i className="bi bi-check-circle me-2"></i>
                   {selectedTickets.size} ticket(s) selected
                 </span>
-                <Button variant="danger" size="sm" onClick={handleDeleteSelected}>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={handleDeleteSelected}
+                >
                   <i className="bi bi-trash me-1"></i>
                   Delete Selected ({selectedTickets.size})
                 </Button>
@@ -244,100 +265,69 @@ function TicketList({ onSelect, token, refresh }) {
         {error && <Alert variant="danger">{error}</Alert>}
 
         {!loading && !error && (
-          <Table striped bordered hover responsive className="shadow-sm rounded" style={{ width: '100%' }}>
-            <thead style={{ background: "#f5f6fa" }}>
-              <tr>
-                <th>
-                  <Form.Check
-                    type="checkbox"
-                    checked={isAllSelected}
-                    ref={(input) => {
-                      if (input) input.indeterminate = isIndeterminate;
-                    }}
-                    onChange={(e) => handleSelectAll(e.target.checked)}
-                  />
-                </th>
-                <th>Subject</th>
-                <th>Type</th>
-                <th>Assigned Unit</th>
-                <th>Requester</th>
-                <th>Assigned To</th>
-                <th>Reassigned Unit</th>
-                <th>Reassigned To</th>
-                <th style={{ minWidth: 130, width: 150 }}><i className="bi bi-info-circle me-1"></i>Status</th>
-                <th>Last Update</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTickets.map((ticket) => (
-                <tr
-                  key={ticket._id}
-                  style={{
-                    background: ticket.status === "open" ? "#e6ffe6" : undefined,
-                    cursor: "pointer",
-                  }}
-                  onClick={() => onSelect(ticket)}
-                  onMouseOver={(e) => (e.currentTarget.style.background = "#f0f4ff")}
-                  onMouseOut={(e) =>
-                    (e.currentTarget.style.background =
-                      ticket.status === "open" ? "#e6ffe6" : "")
-                  }
-                >
-                  <td onClick={(e) => e.stopPropagation()}>
-                    <Form.Check
-                      type="checkbox"
-                      checked={selectedTickets.has(ticket._id)}
-                      onChange={(e) =>
-                        handleSelectTicket(ticket._id, e.target.checked)
-                      }
-                    />
-                  </td>
-                  <td>{ticket.subject}</td>
-                  <td>
-                    <Badge bg="info" text="dark" className="text-capitalize">
-                      {ticket.type}
-                    </Badge>
-                  </td>
-                  <td>
-                    <Badge bg="secondary" className="text-capitalize">
-                      {ticket.assignedUnit || "—"}
-                    </Badge>
-                  </td>
-                  <td>{ticket.user?.name || "N/A"}</td>
-                  <td>
-                    <Badge bg="info" className="text-capitalize">
-                      {ticket.assignedTo?.name || "—"}
-                    </Badge>
-                  </td>
-                  <td>
-                    <Badge bg="secondary" className="text-capitalize">
-                      {ticket.reassigned ? (ticket.previousAssignedUnit || "—") : "—"}
-                    </Badge>
-                  </td>
-                  <td>
-                    <Badge bg="info" className="text-capitalize">
-                      {ticket.reassigned ? (ticket.previousAssignedTo?.name || "—") : "—"}
-                    </Badge>
-                  </td>
-                  <td style={{ verticalAlign: 'middle' }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <>
+            <Table
+              hover
+              className="bg-white rounded shadow-sm table"
+              style={{ borderCollapse: "separate", borderSpacing: 0 }}
+            >
+              <thead>
+                <tr>
+                  <th className="px-4 py-3">SUBJECT</th>
+                  <th className="px-4 py-3">TYPE</th>
+                  <th className="px-4 py-3">ASSIGNED UNIT</th>
+                  <th className="px-4 py-3">REQUESTER</th>
+                  <th className="px-4 py-3">ASSIGNED TO</th>
+                  <th className="px-4 py-3">PRIORITY</th>
+                  <th className="px-4 py-3">REASSIGNED UNIT</th>
+                  <th className="px-4 py-3">REASSIGNED TO</th>
+                  <th className="px-4 py-3">STATUS</th>
+                  <th className="px-4 py-3">LAST UPDATE</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTickets.map((ticket) => (
+                  <tr
+                    key={ticket._id}
+                    onClick={() => navigate(`/admin/tickets/${ticket._id}`)}
+                    style={{ cursor: "pointer" }}
+                    className="border-bottom"
+                  >
+                    <td className="px-4 py-3">{ticket.subject}</td>
+                    <td className="px-4 py-3">{ticket.type}</td>
+                    <td className="px-4 py-3">{ticket.assignedUnit || "Unassigned"}</td>
+                    <td className="px-4 py-3">{ticket.user?.name || "N/A"}</td>
+                    <td className="px-4 py-3">{ticket.assignedTo?.name || "—"}</td>
+                    <td className="px-4 py-3">
                       <Badge
-                        bg={statusColors[ticket.status] || "secondary"}
-                        className="px-3 py-2 text-capitalize"
+                        bg={priorityStyles[ticket.priority]?.className}
+                        style={{ color: priorityStyles[ticket.priority]?.color }}
+                      >
+                        {ticket.priority}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      {ticket.reassigned && ticket.reassignedUnit ? ticket.reassignedUnit : "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      {ticket.reassigned && ticket.reassignedTo?.name ? ticket.reassignedTo.name : "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge
+                        bg={statusStyles[ticket.status]?.className}
+                        style={{ color: statusStyles[ticket.status]?.color }}
                       >
                         {ticket.status}
                       </Badge>
-                    </span>
-                  </td>
-                  <td>
-                    {ticket.updatedAt
-                      ? new Date(ticket.updatedAt).toLocaleString()
-                      : "N/A"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
+                    </td>
+                    <td className="px-4 py-3">
+                      {new Date(ticket.updatedAt).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </>
         )}
       </div>
     </Container>

@@ -10,10 +10,7 @@ import {
     BsCalendar,
     BsPlusCircle,
     BsCheck2Circle,
-    BsPeopleFill, // These icons are no longer strictly needed if the section is removed, but keeping imports for safety
-    BsCpuFill,
-    BsBarChartFill,
-    BsClipboardCheck,
+    BsPeopleFill, 
     BsGearFill,
     BsHeadset,
     BsArrowRepeat
@@ -195,7 +192,7 @@ const adminHome = () => { // Changed component name to PascalCase for convention
                         <Col md={10} lg={8}>
                             <h1 className="display-4 fw-bold text-white mb-3" style={{ letterSpacing: 0.5 }}>Welcome to ICT Support Services</h1>
                             <p className="lead text-white-50 mb-4" style={{ fontSize: 20 }}>
-                                Get technical assistance for all your IT needs. Submit tickets, track progress, and access resources 24/7.
+                                Get technical assistance for all your IT needs. Submit tickets, track progress, and access resources 24/777777.
                             </p>
                         
                         </Col>
@@ -268,7 +265,7 @@ const adminHome = () => { // Changed component name to PascalCase for convention
             <Card className="h-100 shadow-sm border-0 rounded-3 transition-all duration-200 hover:scale-[1.03] hover:shadow-lg bg-white" style={{ cursor: 'pointer' }} onClick={() => { setSelectedUnit("System & Network Administration Unit"); setShowUnitModal(true); }}>
               <Card.Body className="d-flex flex-column align-items-center justify-content-center p-4">
                 <BsCpuFill size={38} className="mb-3 text-info" />
-                <Card.Title className="fw-bold mb-2" style={{ fontSize: 20 }}>System & Network Administration Unit</Card.Title>
+                <Card.Title className="fw-bold mb-2 align-items-center justify-content-center" style={{ fontSize: 20 }}>System & Network Administration Unit</Card.Title>
                 <Card.Text className="text-muted text-center">Manages servers, networks, and IT infrastructure.</Card.Text>
               </Card.Body>
             </Card>

@@ -37,6 +37,7 @@ const UnitUsersModal = ({ show, unit, onHide, token, userData }) => {
     } else {
       url = `/api/user/by-unit/${encodeURIComponent(unit)}`;
     }
+
     fetch(url, {
       credentials: "include",
       headers: token ? { Authorization: `Bearer ${token}` } : {},
